@@ -24,7 +24,7 @@ type CreationType = 'agent' | 'image' | 'video';
 type ModelKey = 'seedance20' | '35pro' | '30proplus' | '30fast' | '30';
 type FrameModeKey = 'omni' | 'startEnd' | 'multi' | 'subject';
 type RatioKey = '21:9' | '16:9' | '4:3' | '1:1' | '3:4' | '9:16';
-type DurationKey = '4' | '5' | '6' | '7' | '8' | '9';
+type DurationKey = '4' | '5' | '6' | '7' | '8' | '9' | '10'| '11'| '12'| '13'| '14'| '15';
 
 export function Canvas() {
   const { t } = useI18n();
@@ -88,13 +88,13 @@ export function Canvas() {
   };
 
   const ratios: RatioKey[] = ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'];
-  const durations: DurationKey[] = ['4', '5', '6', '7', '8', '9'];
+  const durations: DurationKey[] = ['4', '5', '6', '7', '8', '9', '10','11','12','13','14','15'];
 
   return (
     <div className="canvas-page">
       <h1 className="canvas-question">{p.canvasQuestion}</h1>
 
-      <div >
+      <div>
         <div className="canvas-card-body">
           <div className="canvas-frames-col">
             <div className="canvas-frame-box">
