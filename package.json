@@ -1,0 +1,33 @@
+{
+  "name": "react-playground",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@codesandbox/sandpack-react": "^2.20.0",
+    "@monaco-editor/react": "^4.7.0",
+    "@types/file-saver": "^2.0.7",
+    "antd-mobile": "^5.42.3",
+    "axios": "^1.13.2",
+    "dayjs": "^1.11.19",
+    "esbuild-wasm": "^0.27.2",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
+    "monaco-editor": "^0.45.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.9",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.2.1",
+    "sass": "^1.97.3",
+    "vite": "^5.0.12"
+  }
+}

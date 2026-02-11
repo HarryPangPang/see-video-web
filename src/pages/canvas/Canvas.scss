@@ -1,0 +1,461 @@
+.canvas-page {
+  padding: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.canvas-question {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #1f1f1f;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.canvas-card {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+}
+
+.canvas-card-body {
+  display: flex;
+  gap: 24px;
+  padding: 24px;
+  align-items: stretch;
+  background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+}
+
+.canvas-frames-col {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.canvas-frame-box {
+  width: 140px;
+  height: 175px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px dashed #d0d7de;
+  background: linear-gradient(135deg, #ffffff 0%, #f6f8fa 100%);
+  transition: all 0.3s ease;
+  position: relative;
+
+  &:hover {
+    border-color: #1677ff;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f4ff 100%);
+    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .canvas-frame-uploader {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    :global(.adm-image-uploader),
+    :global(.adm-image-uploader-upload),
+    :global(.adm-image-uploader-cell) {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      border: none;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    :global(.adm-image-uploader-cell-image) {
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      object-fit: cover;
+    }
+  }
+}
+
+.canvas-frame-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #6e7781;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  .canvas-frame-plus {
+    font-size: 36px;
+    line-height: 1;
+    margin-bottom: 8px;
+    font-weight: 300;
+    color: #1677ff;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+  }
+
+  &:hover .canvas-frame-plus {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.canvas-frames-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8c959f;
+  padding: 0 8px;
+  animation: fadeIn 0.3s ease;
+
+  svg {
+    width: 28px;
+    height: 28px;
+    opacity: 0.7;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.canvas-prompt-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.canvas-prompt-input {
+  width: 100%;
+  height: 100%;
+  min-height: 160px;
+  border: 2px solid #e1e4e8;
+  border-radius: 14px;
+  padding: 16px 18px;
+  font-size: 14px;
+  --font-size: 14px;
+  --color: #1f2328;
+  --placeholder-color: #6e7781;
+  background: #ffffff;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+  &:focus {
+    border-color: #1677ff;
+    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.1);
+    outline: none;
+  }
+}
+
+.canvas-card-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 28px;
+  border-top: 2px solid #f6f8fa;
+  background: linear-gradient(to bottom, #fafbfc 0%, #ffffff 100%);
+}
+
+.canvas-opt-wrap {
+  position: relative;
+}
+
+.canvas-opt-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #1f2328;
+  background: #ffffff;
+  border: 1.5px solid #d0d7de;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  .canvas-opt-icon {
+    width: 17px;
+    height: 17px;
+    color: #656d76;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+  }
+  .canvas-opt-arrow {
+    font-size: 10px;
+    color: #8c959f;
+    margin-left: 2px;
+    transition: all 0.2s ease;
+  }
+}
+
+.canvas-opt-dropdown {
+  cursor: pointer;
+  &:hover {
+    border-color: #1677ff;
+    color: #1677ff;
+    background: #f6f8ff;
+    box-shadow: 0 2px 8px rgba(22, 119, 255, 0.12);
+    transform: translateY(-1px);
+
+    .canvas-opt-icon {
+      color: #1677ff;
+    }
+    .canvas-opt-arrow {
+      color: #1677ff;
+      transform: translateY(1px);
+    }
+  }
+  &.is-open {
+    border-color: #1677ff;
+    background: #e6f4ff;
+    color: #1677ff;
+    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.1);
+
+    .canvas-opt-icon {
+      color: #1677ff;
+    }
+    .canvas-opt-arrow {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.canvas-opt-label {
+  cursor: default;
+}
+
+.canvas-submit-btn {
+  margin-left: auto;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 3px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #1677ff 0%, #0d5cd7 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(22, 119, 255, 0.4);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(22, 119, 255, 0.5);
+  }
+
+  &:active {
+    transform: translateY(0) scale(1);
+  }
+
+  .canvas-submit-icon {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.canvas-section-title {
+  margin: 0 0 14px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f1f1f;
+}
+
+.canvas-quick-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 3px;
+  }
+}
+
+.canvas-quick-card {
+  flex-shrink: 0;
+  width: 220px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #eee;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s, transform 0.2s;
+
+  &:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+}
+
+.canvas-quick-thumb {
+  width: 100%;
+  padding-bottom: 56%;
+  background-size: cover;
+  background-position: center;
+}
+
+.canvas-quick-title {
+  padding: 12px 14px 4px;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.canvas-quick-arrow {
+  padding: 0 14px 12px;
+  font-size: 14px;
+  color: #1677ff;
+}
+
+.canvas-recent {
+  display: flex;
+  flex-direction: column;
+}
+
+.canvas-new-project {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 200px;
+  border-radius: 16px;
+  border: 2px dashed #d9d9d9;
+  background: #fafafa;
+  cursor: pointer;
+  padding: 24px;
+  transition: border-color 0.2s, background 0.2s;
+
+  &:hover {
+    border-color: #1677ff;
+    background: #f0f7ff;
+    .canvas-new-plus {
+      color: #1677ff;
+    }
+    .canvas-new-label {
+      color: #1677ff;
+    }
+  }
+}
+
+.canvas-new-plus {
+  font-size: 56px;
+  color: #bbb;
+  line-height: 1;
+}
+
+.canvas-new-label {
+  font-size: 15px;
+  color: #666;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .canvas-page {
+    padding: 16px;
+    gap: 22px;
+  }
+
+  .canvas-question {
+    font-size: 22px;
+  }
+
+  .canvas-card-body {
+    flex-direction: column;
+    padding: 20px;
+    gap: 20px;
+  }
+
+  .canvas-frames-col {
+    flex-direction: row;
+    width: 100%;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .canvas-frames-arrow {
+    padding: 0 6px;
+    svg {
+      width: 22px;
+      height: 22px;
+    }
+  }
+
+  .canvas-frame-box {
+    width: 112px;
+    height: 140px;
+  }
+
+  .canvas-card-options {
+    padding: 16px 20px;
+    gap: 10px;
+  }
+
+  .canvas-opt-item {
+    padding: 8px 12px;
+    font-size: 12.5px;
+  }
+
+  .canvas-submit-btn {
+    width: 56px;
+    height: 56px;
+    margin-left: 0;
+  }
+
+  .canvas-quick-card {
+    width: 180px;
+  }
+
+  .canvas-new-project {
+    min-height: 160px;
+  }
+
+  .canvas-new-plus {
+    font-size: 44px;
+  }
+}

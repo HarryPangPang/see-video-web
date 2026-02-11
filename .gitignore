@@ -1,0 +1,12 @@
+node_modules
+dist
+.vite
+.idea
+.vscode
+.DS_Store
+.demo
+
+# Environment variables - IMPORTANT: Never commit these!
+.env
+.env.local
+.env.production

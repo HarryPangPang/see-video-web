@@ -1,0 +1,210 @@
+.inspire-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.inspire-header .inspire-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  color: #1f1f1f;
+  .title-highlight {
+    color: #1677ff;
+  }
+  .title-arrow {
+    font-size: 14px;
+    color: #666;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+}
+
+.inspire-announcement-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  .announcement-plus {
+    font-size: 28px;
+    color: #bbb;
+    flex-shrink: 0;
+  }
+  .announcement-text {
+    flex: 1;
+    margin: 0;
+    font-size: 15px;
+    color: #333;
+    line-height: 1.5;
+  }
+  .announcement-arrow {
+    color: #999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.inspire-mode-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  .mode-item {
+    padding: 10px 16px;
+    background: #f7f8fa;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    .arrow {
+      font-size: 10px;
+      color: #999;
+    }
+    .mode-pin {
+      font-size: 14px;
+    }
+  }
+  .mode-dropdown {
+    cursor: pointer;
+    background: #e6f4ff;
+    color: #1677ff;
+    font-weight: 500;
+  }
+  .mode-search {
+    flex: 1;
+    min-width: 160px;
+    padding: 6px 12px;
+    :global(.adm-search-bar) {
+      --height: 36px;
+      --background: transparent;
+    }
+  }
+}
+
+.inspire-feature-cards {
+  :global(.adm-grid) {
+    --gap: 12px;
+  }
+}
+.inspire-feature-cards .feature-card {
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid #f0f0f0;
+  background: #fff;
+  cursor: default;
+  .feature-card-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 8px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e6f4ff 0%, #bae0ff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    .badge {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1677ff;
+    }
+  }
+  .feature-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f1f1f;
+    margin-bottom: 4px;
+  }
+  .feature-card-desc {
+    font-size: 12px;
+    color: #666;
+  }
+  &.feature-video {
+    cursor: pointer;
+    border-color: #1677ff;
+    background: #f0f7ff;
+    &:hover {
+      box-shadow: 0 4px 12px rgba(22, 119, 255, 0.2);
+    }
+  }
+}
+
+.inspire-discover {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.inspire-discover .discover-tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.inspire-discover .discover-tabs :global(.adm-tabs-header) {
+  border: none;
+}
+.inspire-discover .discover-tabs :global(.adm-tabs-tab-active) {
+  font-weight: 600;
+  color: #1677ff;
+}
+.inspire-discover .discover-search-wrap {
+  flex: 1;
+  min-width: 160px;
+  max-width: 240px;
+}
+.inspire-discover .discover-search {
+  --background: #f5f5f5;
+  --border-radius: 20px;
+  --height: 36px;
+}
+.inspire-discover .discover-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+.inspire-discover .discover-item {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f5f5f5;
+  .discover-item-thumb {
+    width: 100%;
+    padding-bottom: 100%;
+    background-size: cover;
+    background-position: center;
+  }
+  .discover-item-title {
+    padding: 8px 10px;
+    font-size: 13px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 768px) {
+  .inspire-page {
+    padding: 16px;
+  }
+  .inspire-feature-cards :global(.adm-grid-item) {
+    flex: 0 0 33.33%;
+  }
+}
