@@ -45,6 +45,9 @@ export function Canvas() {
 
   // 根据 frameMode 判断是否显示2张图片框（智能多帧模式）
   const showTwoFrames = frameMode === 'startEnd';
+  // 仅当实际上传了 2 张图（起始帧+结束帧都有）时，3.0 PRO、3.0 Fast 不可选；一张图时所有都可选
+  const isTwoImages = frameMode === 'startEnd' && startFrame.length > 0 && endFrame.length > 0;
+  const disable30ProAndFast = isTwoImages;
 
   const creationTypeRef = useRef<HTMLDivElement>(null);
   const modelRef = useRef<HTMLDivElement>(null);
@@ -102,6 +105,13 @@ export function Canvas() {
       setDuration('5');
     }
   }, [model]);
+
+  // 上传了第二张图且当前为 3.0 PRO / 3.0 Fast 时，自动切到 seedance20
+  useEffect(() => {
+    if (isTwoImages && (model === '30pro' || model === '30fast')) {
+      setModel('seedance20');
+    }
+  }, [isTwoImages, model]);
 
   // 处理表单提交
   const handleSubmit = async () => {
@@ -288,8 +298,8 @@ export function Canvas() {
             >
               <OptionItem icon="S2.0" label={g.modelSeedance20} desc={modelDesc.seedance20} badge={g.badgeNew} active={model === 'seedance20'} onClick={() => { setModel('seedance20'); setOpenDropdown(null); }} />
               <OptionItem icon="3.5 PRO" label={g.model35Pro} desc={modelDesc['35pro']} badge={g.badgeNew} active={model === '35pro'} onClick={() => { setModel('35pro'); setOpenDropdown(null); }} />
-              <OptionItem icon="3.0 PRO" label={g.model30ProPlus} desc={modelDesc['30pro']} active={model === '30pro'} onClick={() => { setModel('30pro'); setOpenDropdown(null); }} />
-              <OptionItem icon="3.0 Fast" label={g.model30Fast} desc={modelDesc['30fast']} active={model === '30fast'} onClick={() => { setModel('30fast'); setOpenDropdown(null); }} />
+              <OptionItem icon="3.0 PRO" label={g.model30ProPlus} desc={modelDesc['30pro']} active={model === '30pro'} disabled={disable30ProAndFast} onClick={() => { setModel('30pro'); setOpenDropdown(null); }} />
+              <OptionItem icon="3.0 Fast" label={g.model30Fast} desc={modelDesc['30fast']} active={model === '30fast'} disabled={disable30ProAndFast} onClick={() => { setModel('30fast'); setOpenDropdown(null); }} />
               <OptionItem icon="3.0" label={g.model30} desc={modelDesc['30']} active={model === '30'} onClick={() => { setModel('30'); setOpenDropdown(null); }} />
             </OptionDropdown>
           </div>

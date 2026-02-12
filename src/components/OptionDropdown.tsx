@@ -55,6 +55,7 @@ export function OptionDropdown({
 
 interface OptionItemProps {
   active?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
   icon?: React.ReactNode;
   label: React.ReactNode;
@@ -65,6 +66,7 @@ interface OptionItemProps {
 
 export function OptionItem({
   active,
+  disabled,
   onClick,
   icon,
   label,
@@ -75,8 +77,9 @@ export function OptionItem({
   return (
     <button
       type="button"
-      className={`option-dropdown-item ${active ? 'is-active' : ''} ${className}`}
-      onClick={onClick}
+      className={`option-dropdown-item ${active ? 'is-active' : ''} ${disabled ? 'is-disabled' : ''} ${className}`}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
     >
       {icon && <span className="option-dropdown-item-icon">{icon}</span>}
       <span className="option-dropdown-item-main">

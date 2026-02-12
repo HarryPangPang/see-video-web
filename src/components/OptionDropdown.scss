@@ -125,6 +125,12 @@
       border-radius: 0 2px 2px 0;
     }
   }
+
+  &.is-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
 }
 
 .option-dropdown-item-icon {
