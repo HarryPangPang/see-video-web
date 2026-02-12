@@ -2,7 +2,7 @@ import { ConfigEnv, defineConfig, loadEnv, ProxyOptions, UserConfig } from 'vite
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
-const outDir = path.resolve(__dirname, '../see-video-web/dist');
+const outDir = path.resolve(__dirname, '../see-video-server/dist');
 const proxy = (target: string) => {
   const ProxyList: Record<string, string | ProxyOptions> = {
     '/api': {
