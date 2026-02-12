@@ -7,6 +7,9 @@ import './Assets.scss';
 interface VideoAsset {
   id: string;
   type: number;
+  local_video_url?: string;  // 本地视频 URL
+  local_cover_url?: string;  // 本地封面 URL
+  has_local_cache?: boolean; // 是否有本地缓存
   video?: {
     created_time?: number;
     item_list?: Array<{
@@ -66,13 +69,26 @@ export function Assets() {
     }
   };
 
-  // 获取视频 URL
+  // 获取 API 基础 URL
+  const API_HOST = (_GLOBAL_VARS_ as any).VITE_API_HOST || 'http://localhost';
+
+  // 获取视频 URL（优先使用本地缓存）
   const getVideoUrl = (video: VideoAsset): string | undefined => {
+    // 优先使用本地 URL
+    if (video.local_video_url) {
+      return `${API_HOST}${video.local_video_url}`;
+    }
+    // 降级到远程 URL
     return video.video?.item_list?.[0]?.video?.transcoded_video?.origin?.video_url;
   };
 
-  // 获取封面 URL
+  // 获取封面 URL（优先使用本地缓存）
   const getCoverUrl = (video: VideoAsset): string | undefined => {
+    // 优先使用本地 URL
+    if (video.local_cover_url) {
+      return `${API_HOST}${video.local_cover_url}`;
+    }
+    // 降级到远程 URL
     return video.video?.item_list?.[0]?.common_attr?.cover_url ||
            video.video?.item_list?.[0]?.video?.cover_url;
   };
@@ -208,6 +224,9 @@ export function Assets() {
                     <div key={video.id} className="assets-video-item" onClick={() => downloadVideo(video)}>
                       <div className="assets-video-thumb" style={{ backgroundImage: `url(${getCoverUrl(video)})` }}>
                         <span className="assets-video-duration">{formatDuration(video)}</span>
+                        {video.has_local_cache && (
+                          <span className="assets-video-cached" title="本地缓存">📦</span>
+                        )}
                         <div className="assets-video-download">⬇️ 下载</div>
                       </div>
                       <div className="assets-video-prompt">
