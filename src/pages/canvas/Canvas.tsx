@@ -34,6 +34,7 @@ export function Canvas() {
   const g = t.seedance.generate;
   const [startFrame, setStartFrame] = useState<ImageUploadItem[]>([]);
   const [endFrame, setEndFrame] = useState<ImageUploadItem[]>([]);
+  const [omniFrames, setOmniFrames] = useState<ImageUploadItem[]>([]); // 全能参考模式：支持1-5张图
   const [prompt, setPrompt] = useState('');
   const [openDropdown, setOpenDropdown] = useState<'creationType' | 'model' | 'frameMode' | 'ratio' | 'duration' | null>(null);
   const [creationType, setCreationType] = useState<CreationType>('video');
@@ -43,13 +44,13 @@ export function Canvas() {
   const [duration, setDuration] = useState<DurationKey>('5');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 根据 frameMode 判断是否显示2张图片框（智能多帧模式）
-  const showTwoFrames = frameMode === 'startEnd';
+  // 根据 frameMode 判断显示逻辑
+  const isOmniMode = frameMode === 'omni';
+  const isStartEndMode = frameMode === 'startEnd';
   // 仅当实际上传了 2 张图（起始帧+结束帧都有）时，3.0 PRO、3.0 Fast 不可选；一张图时所有都可选
-  const isTwoImages = frameMode === 'startEnd' && startFrame.length > 0 && endFrame.length > 0;
+  const isTwoImages = isStartEndMode && startFrame.length > 0 && endFrame.length > 0;
   const disable30ProAndFast = isTwoImages;
   // omni 模式下只允许选择 seedance20 和 seedance20fast
-  const isOmniMode = frameMode === 'omni';
   const disableNonSeedance20Models = isOmniMode;
 
   const creationTypeRef = useRef<HTMLDivElement>(null);
@@ -145,6 +146,14 @@ export function Canvas() {
       return;
     }
 
+    if (frameMode === 'omni' && omniFrames.length === 0) {
+      Toast.show({
+        icon: 'fail',
+        content: '请至少上传1张参考图片',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     const loadingToast = Toast.show({
       icon: 'loading',
@@ -163,8 +172,26 @@ export function Canvas() {
         prompt: prompt.trim(),
       };
 
-      // 处理起始帧图片
-      if (startFrame.length > 0 && startFrame[0].url) {
+      // 全能参考模式：处理多张图片
+      if (frameMode === 'omni' && omniFrames.length > 0) {
+        const omniFramesBase64 = [];
+        for (const frame of omniFrames) {
+          if (frame.url) {
+            if (frame.url.startsWith('blob:')) {
+              const response = await fetch(frame.url);
+              const blob = await response.blob();
+              const file = new File([blob], `omni-frame-${omniFramesBase64.length}.png`, { type: blob.type });
+              omniFramesBase64.push(await fileToBase64(file));
+            } else {
+              omniFramesBase64.push(frame.url);
+            }
+          }
+        }
+        requestData.omniFrames = omniFramesBase64;
+      }
+
+      // 处理起始帧图片（startEnd 模式）
+      if (frameMode === 'startEnd' && startFrame.length > 0 && startFrame[0].url) {
         // 如果是 blob URL，需要转换为 base64
         if (startFrame[0].url.startsWith('blob:')) {
           const response = await fetch(startFrame[0].url);
@@ -192,14 +219,23 @@ export function Canvas() {
       const result = await createGeneration(requestData);
 
       loadingToast.close();
-      Toast.show({
-        icon: 'success',
-        content: result.message || '提交成功，已打开即梦页面',
-      });
+      if(!result.success){
+        Toast.show({
+          icon: 'fail',
+          content: result.message || '提交失败，请重试',
+        });
+        return;
+      }else{
+        Toast.show({
+          icon: 'success',
+          content: result.message || '提交成功，已打开即梦页面',
+        });
 
-      if (result.data?.projectId) {
-        navigate('/');
+        if (result.data?.projectId) {
+          navigate('/');
+        }
       }
+
     } catch (error) {
       loadingToast.close();
       const errorMessage = error instanceof Error ? error.message : '提交失败，请重试';
@@ -250,30 +286,41 @@ export function Canvas() {
       <div>
         <div className="canvas-card-body">
           <div className="canvas-frames-col">
-            <div className="canvas-frame-box">
-              <ImageUploader
-                value={startFrame}
-                onChange={setStartFrame}
-                upload={mockUpload}
-                maxCount={1}
-                accept="image/*"
-                className="canvas-frame-uploader"
-              >
-                <div className="canvas-frame-placeholder">
-                  <span className="canvas-frame-plus">+</span>
-                  <span className="canvas-frame-label">{g.startFrame}</span>
-                </div>
-              </ImageUploader>
-            </div>
-            {showTwoFrames && (
+            {isOmniMode ? (
+              // 全能参考模式：支持1-5张图片多选，平铺展示
+              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <ImageUploader
+                  value={omniFrames}
+                  onChange={setOmniFrames}
+                  upload={mockUpload}
+                  maxCount={5}
+                  accept="image/*"
+                  className="canvas-frame-uploader"
+                  multiple
+                  style={{
+                    '--cell-size': '80px',
+                    '--gap-horizontal': '8px',
+                    '--gap-vertical': '8px',
+                  }}
+                >
+                  <div className="canvas-frame-placeholder" style={{ width: '80px', height: '80px' }}>
+                    <span className="canvas-frame-plus">+</span>
+                    <span className="canvas-frame-label" style={{ fontSize: '12px' }}>{g.uploadReferenceImages}</span>
+                  </div>
+                </ImageUploader>
+                {omniFrames.length > 0 && (
+                  <div style={{ fontSize: '12px', color: '#666', textAlign: 'center' }}>
+                    {g.uploadedCount.replace('{count}', omniFrames.length.toString())}
+                  </div>
+                )}
+              </div>
+            ) : (
+              // 起始帧+结束帧模式
               <>
-                <div className="canvas-frames-arrow">
-                  <IconArrowLeftRight />
-                </div>
                 <div className="canvas-frame-box">
                   <ImageUploader
-                    value={endFrame}
-                    onChange={setEndFrame}
+                    value={startFrame}
+                    onChange={setStartFrame}
                     upload={mockUpload}
                     maxCount={1}
                     accept="image/*"
@@ -281,10 +328,32 @@ export function Canvas() {
                   >
                     <div className="canvas-frame-placeholder">
                       <span className="canvas-frame-plus">+</span>
-                      <span className="canvas-frame-label">{g.endFrame}</span>
+                      <span className="canvas-frame-label">{g.startFrame}</span>
                     </div>
                   </ImageUploader>
                 </div>
+                {isStartEndMode && (
+                  <>
+                    <div className="canvas-frames-arrow">
+                      <IconArrowLeftRight />
+                    </div>
+                    <div className="canvas-frame-box">
+                      <ImageUploader
+                        value={endFrame}
+                        onChange={setEndFrame}
+                        upload={mockUpload}
+                        maxCount={1}
+                        accept="image/*"
+                        className="canvas-frame-uploader"
+                      >
+                        <div className="canvas-frame-placeholder">
+                          <span className="canvas-frame-plus">+</span>
+                          <span className="canvas-frame-label">{g.endFrame}</span>
+                        </div>
+                      </ImageUploader>
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
@@ -303,8 +372,9 @@ export function Canvas() {
           <div className="canvas-opt-wrap" ref={creationTypeRef}>
             <button
               type="button"
+              disabled
               className={`canvas-opt-item canvas-opt-dropdown ${openDropdown === 'creationType' ? 'is-open' : ''}`}
-              onClick={() => setOpenDropdown(openDropdown === 'creationType' ? null : 'creationType')}
+              // onClick={() => setOpenDropdown(openDropdown === 'creationType' ? null : 'creationType')}
             >
               <IconRefresh className="canvas-opt-icon" />
               <span>{creationTypeLabel[creationType]}</span>
@@ -316,8 +386,6 @@ export function Canvas() {
               triggerRef={creationTypeRef}
               title={g.dropdownTitleCreationType}
             >
-              <OptionItem icon="◇" label={p.agentMode} active={creationType === 'agent'} onClick={() => { setCreationType('agent'); setOpenDropdown(null); }} />
-              <OptionItem icon="▣" label={g.creationTypeImage} active={creationType === 'image'} onClick={() => { setCreationType('image'); setOpenDropdown(null); }} />
               <OptionItem icon="▶" label={g.creationTypeVideo} active={creationType === 'video'} onClick={() => { setCreationType('video'); setOpenDropdown(null); }} />
             </OptionDropdown>
           </div>

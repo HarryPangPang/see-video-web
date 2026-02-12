@@ -295,6 +295,8 @@ export const zhCN = {
             frameModeMulti: '智能多帧',
             frameModeSubject: '主体参考',
             badgeNew: 'New',
+            uploadedCount: '已上传 {count}/5 张图片',
+            uploadReferenceImages: '上传参考图',
         },
         pages: {
             inspireTitle: '灵感',
@@ -634,6 +636,8 @@ export const enUS = {
             frameModeMulti: 'Smart multi-frame',
             frameModeSubject: 'Subject reference',
             badgeNew: 'New',
+            uploadedCount: 'Uploaded {count}/5 images',
+            uploadReferenceImages: 'Upload reference images',
         },
         pages: {
             inspireTitle: 'Inspire',

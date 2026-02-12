@@ -10,6 +10,7 @@ export interface CreateGenerationRequest {
   prompt: string;
   startFrame?: string; // base64 或 URL
   endFrame?: string; // base64 或 URL
+  omniFrames?: string[]; // 全能参考模式：1-5张图片的 base64 或 URL 数组
 }
 
 // API 响应接口
@@ -74,7 +75,7 @@ export async function createGeneration(
     headers,
     body: JSON.stringify(data),
   });
-
+  
   if (!response.ok) {
     throw new Error(`请求失败: ${response.status} ${response.statusText}`);
   }
@@ -82,7 +83,7 @@ export async function createGeneration(
   const result: ApiResponse = await response.json();
 
   if (!result.success) {
-    throw new Error(result.message || result.error || '生成任务创建失败');
+    throw new Error(result.message || result.error || result?.data?.message || result?.data?.error || 'Create generation failed');
   }
 
   return result;
@@ -93,7 +94,6 @@ export async function getList(taskId: string): Promise<ApiResponse> {
   const response = await fetch(`${API_BASE_URL}/list`, {
     method: 'GET',
   });
-
   if (!response.ok) {
     throw new Error(`请求失败: ${response.status} ${response.statusText}`);
   }
