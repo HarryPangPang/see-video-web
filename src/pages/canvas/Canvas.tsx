@@ -48,6 +48,9 @@ export function Canvas() {
   // 仅当实际上传了 2 张图（起始帧+结束帧都有）时，3.0 PRO、3.0 Fast 不可选；一张图时所有都可选
   const isTwoImages = frameMode === 'startEnd' && startFrame.length > 0 && endFrame.length > 0;
   const disable30ProAndFast = isTwoImages;
+  // omni 模式下只允许选择 seedance20 和 seedance20fast
+  const isOmniMode = frameMode === 'omni';
+  const disableNonSeedance20Models = isOmniMode;
 
   const creationTypeRef = useRef<HTMLDivElement>(null);
   const modelRef = useRef<HTMLDivElement>(null);
@@ -114,6 +117,13 @@ export function Canvas() {
       setModel('seedance20');
     }
   }, [isTwoImages, model]);
+
+  // omni 模式下，如果当前模型不是 seedance20 或 seedance20fast，自动切换到 seedance20
+  useEffect(() => {
+    if (isOmniMode && model !== 'seedance20' && model !== 'seedance20fast') {
+      setModel('seedance20');
+    }
+  }, [isOmniMode, model]);
 
   // 处理表单提交
   const handleSubmit = async () => {
@@ -206,6 +216,36 @@ export function Canvas() {
   return (
     <div className="canvas-page">
       <h1 className="canvas-question">{p.canvasQuestion}</h1>
+
+      <div style={{ textAlign: 'center', margin: '16px 0' }}>
+        <a
+          href="https://discord.com/invite/94YKekdH"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-block',
+            padding: '10px 24px',
+            backgroundColor: '#7289DA',
+            color: '#ffffff',
+            borderRadius: '8px',
+            textDecoration: 'none',
+            fontWeight: '600',
+            fontSize: '16px',
+            boxShadow: '0 2px 8px rgba(114, 137, 218, 0.4)',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#5B6EAE';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(114, 137, 218, 0.5)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#7289DA';
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(114, 137, 218, 0.4)';
+          }}
+        >
+          🎮 Join our Discord Community
+        </a>
+      </div>
 
       <div>
         <div className="canvas-card-body">
@@ -300,19 +340,18 @@ export function Canvas() {
             >
               <OptionItem icon="S2.0" label={g.modelSeedance20} desc={modelDesc.seedance20} badge={g.badgeNew} active={model === 'seedance20'} onClick={() => { setModel('seedance20'); setOpenDropdown(null); }} />
               <OptionItem icon="S2.0 Fast" label={g.modelSeedance20Fast} desc={modelDesc.seedance20fast} badge={g.badgeNew} active={model === 'seedance20fast'} onClick={() => { setModel('seedance20fast'); setOpenDropdown(null); }} />
-              <OptionItem icon="3.5 PRO" label={g.model35Pro} desc={modelDesc['35pro']} badge={g.badgeNew} active={model === '35pro'} onClick={() => { setModel('35pro'); setOpenDropdown(null); }} />
-              <OptionItem icon="3.0 PRO" label={g.model30ProPlus} desc={modelDesc['30pro']} active={model === '30pro'} disabled={disable30ProAndFast} onClick={() => { setModel('30pro'); setOpenDropdown(null); }} />
-              <OptionItem icon="3.0 Fast" label={g.model30Fast} desc={modelDesc['30fast']} active={model === '30fast'} disabled={disable30ProAndFast} onClick={() => { setModel('30fast'); setOpenDropdown(null); }} />
-              <OptionItem icon="3.0" label={g.model30} desc={modelDesc['30']} active={model === '30'} onClick={() => { setModel('30'); setOpenDropdown(null); }} />
+              <OptionItem icon="3.5 PRO" label={g.model35Pro} desc={modelDesc['35pro']} badge={g.badgeNew} active={model === '35pro'} disabled={disableNonSeedance20Models} onClick={() => { setModel('35pro'); setOpenDropdown(null); }} />
+              <OptionItem icon="3.0 PRO" label={g.model30ProPlus} desc={modelDesc['30pro']} active={model === '30pro'} disabled={disable30ProAndFast || disableNonSeedance20Models} onClick={() => { setModel('30pro'); setOpenDropdown(null); }} />
+              <OptionItem icon="3.0 Fast" label={g.model30Fast} desc={modelDesc['30fast']} active={model === '30fast'} disabled={disable30ProAndFast || disableNonSeedance20Models} onClick={() => { setModel('30fast'); setOpenDropdown(null); }} />
+              <OptionItem icon="3.0" label={g.model30} desc={modelDesc['30']} active={model === '30'} disabled={disableNonSeedance20Models} onClick={() => { setModel('30'); setOpenDropdown(null); }} />
             </OptionDropdown>
           </div>
           {/* 帧模式下拉 */}
           <div className="canvas-opt-wrap" ref={frameModeRef}>
             <button
               type="button"
-              disabled
               className={`canvas-opt-item canvas-opt-dropdown ${openDropdown === 'frameMode' ? 'is-open' : ''}`}
-              // onClick={() => setOpenDropdown(openDropdown === 'frameMode' ? null : 'frameMode')}
+              onClick={() => setOpenDropdown(openDropdown === 'frameMode' ? null : 'frameMode')}
             >
               <IconDoc className="canvas-opt-icon" />
               <span>{frameModeLabel[frameMode]}</span>
@@ -326,8 +365,8 @@ export function Canvas() {
             >
               <OptionItem icon="✦" label={g.frameModeOmni} badge={g.badgeNew} active={frameMode === 'omni'} onClick={() => { setFrameMode('omni'); setOpenDropdown(null); }} />
               <OptionItem icon="▤" label={g.frameModeStartEnd} active={frameMode === 'startEnd'} onClick={() => { setFrameMode('startEnd'); setOpenDropdown(null); }} />
-              <OptionItem icon="▦" label={g.frameModeMulti} active={frameMode === 'multi'} onClick={() => { setFrameMode('multi'); setOpenDropdown(null); }} />
-              <OptionItem icon="👤" label={g.frameModeSubject} active={frameMode === 'subject'} onClick={() => { setFrameMode('subject'); setOpenDropdown(null); }} />
+              {/* <OptionItem icon="▦" label={g.frameModeMulti} active={frameMode === 'multi'} onClick={() => { setFrameMode('multi'); setOpenDropdown(null); }} />
+              <OptionItem icon="👤" label={g.frameModeSubject} active={frameMode === 'subject'} onClick={() => { setFrameMode('subject'); setOpenDropdown(null); }} /> */}
             </OptionDropdown>
           </div>
 
