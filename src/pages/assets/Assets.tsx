@@ -55,8 +55,6 @@ export function Assets() {
     }
   };
 
-  // 获取 API 基础 URL
-  const API_HOST = (_GLOBAL_VARS_ as any).VITE_API_HOST || 'http://localhost';
 
   // 获取视频 URL（优先使用本地缓存）
   const getVideoUrl = (video: VideoAsset): string | undefined => {
@@ -72,7 +70,7 @@ export function Assets() {
   const getCoverUrl = (video: VideoAsset): string | null => {
     // 优先使用本地 URL（后端已返回完整路径）
     if (video.cover_local_path) {
-      return `${API_HOST}${video.cover_local_path}`;
+      return `${window.location.origin}${video.cover_local_path}`;
     }
     // 降级到远程 URL
     return video.cover_url || null;
