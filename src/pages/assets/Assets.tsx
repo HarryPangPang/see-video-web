@@ -62,7 +62,7 @@ export function Assets() {
   const getVideoUrl = (video: VideoAsset): string | undefined => {
     // 优先使用本地 URL（后端已返回完整路径）
     if (video.video_local_path) {
-      return `${API_HOST}${video.video_local_path}`;
+      return `${window.location.origin}${video.video_local_path}`;
     }
     // 降级到远程 URL
     return video.video_url;
