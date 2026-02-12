@@ -2,36 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, SearchBar, Toast, DotLoading } from 'antd-mobile';
 import { useI18n } from '../../context/I18nContext';
 import { getVideoList } from '../../services/api';
+import recordLoadingVideo from '../../assets/record-loading.mp4';
 import './Assets.scss';
 
 interface VideoAsset {
   id: string;
-  type: number;
-  local_video_url?: string;  // 本地视频 URL
-  local_cover_url?: string;  // 本地封面 URL
-  has_local_cache?: boolean; // 是否有本地缓存
-  video?: {
-    created_time?: number;
-    item_list?: Array<{
-      common_attr?: {
-        cover_url?: string;
-      };
-      video?: {
-        cover_url?: string;
-        duration_info?: string;
-        transcoded_video?: {
-          origin?: {
-            video_url?: string;
-          };
-        };
-      };
-    }>;
-  };
-  aigc_image_params?: {
-    text2video_params?: {
-      video_gen_inputs?: Array<{ prompt: string }>;
-    };
-  };
+  generate_id?: string;
+  duration: string;           // 时长如 "5"
+  model: string;              // 模型
+  ratio: string;              // 比例如 "16:9"
+  created_at: number;         // 创建时间（毫秒时间戳）
+  updated_at: number;         // 更新时间（毫秒时间戳）
+  video_local_path?: string;  // 本地视频 URL（已是 URL 格式）
+  cover_local_path?: string;  // 本地封面 URL（已是 URL 格式）
+  prompt?: string;            // 提示词
+  video_url?: string;         // 远程视频 URL
+  cover_url?: string;         // 远程封面 URL
 }
 
 export function Assets() {
@@ -53,8 +39,8 @@ export function Assets() {
     try {
       const result = await getVideoList();
       if (result.success && result.data?.asset_list) {
-        // 过滤出包含 video 字段的资源（type 2 和 type 7 都是视频）
-        const videos = result.data.asset_list.filter((item: VideoAsset) => item.video);
+        // 直接使用返回的视频列表
+        const videos = result.data.asset_list;
         setVideoList(videos);
         console.log('[Assets] 获取到的视频列表:', videos);
         Toast.show({ content: `加载了 ${videos.length} 个视频` });
@@ -74,28 +60,32 @@ export function Assets() {
 
   // 获取视频 URL（优先使用本地缓存）
   const getVideoUrl = (video: VideoAsset): string | undefined => {
-    // 优先使用本地 URL
-    if (video.local_video_url) {
-      return `${API_HOST}${video.local_video_url}`;
+    // 优先使用本地 URL（后端已返回完整路径）
+    if (video.video_local_path) {
+      return `${API_HOST}${video.video_local_path}`;
     }
     // 降级到远程 URL
-    return video.video?.item_list?.[0]?.video?.transcoded_video?.origin?.video_url;
+    return video.video_url;
   };
 
-  // 获取封面 URL（优先使用本地缓存）
-  const getCoverUrl = (video: VideoAsset): string | undefined => {
-    // 优先使用本地 URL
-    if (video.local_cover_url) {
-      return `${API_HOST}${video.local_cover_url}`;
+  // 获取封面 URL（只返回图片封面，不返回视频）
+  const getCoverUrl = (video: VideoAsset): string | null => {
+    // 优先使用本地 URL（后端已返回完整路径）
+    if (video.cover_local_path) {
+      return `${API_HOST}${video.cover_local_path}`;
     }
     // 降级到远程 URL
-    return video.video?.item_list?.[0]?.common_attr?.cover_url ||
-           video.video?.item_list?.[0]?.video?.cover_url;
+    return video.cover_url || null;
   };
 
-  // 获取时长信息
+  // 检查是否有封面
+  const hasCover = (video: VideoAsset): boolean => {
+    return !!(video.cover_local_path || video.cover_url);
+  };
+
+  // 获取时长信息（新接口直接返回秒数字符串）
   const getDurationInfo = (video: VideoAsset): string | undefined => {
-    return video.video?.item_list?.[0]?.video?.duration_info;
+    return video.duration;
   };
 
   // 下载视频
@@ -132,13 +122,13 @@ export function Assets() {
     }
   };
 
-  // 格式化时长
+  // 格式化时长（新接口 duration 是秒数字符串如 "5"）
   const formatDuration = (video: VideoAsset) => {
     const durationInfo = getDurationInfo(video);
     if (!durationInfo) return '00:00';
     try {
-      const parsed = JSON.parse(durationInfo);
-      const seconds = Math.floor(parsed.play_info_duration || 0);
+      const seconds = parseInt(durationInfo, 10);
+      if (isNaN(seconds)) return '00:00';
       const mins = Math.floor(seconds / 60);
       const secs = seconds % 60;
       return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
@@ -147,10 +137,10 @@ export function Assets() {
     }
   };
 
-  // 格式化日期
+  // 格式化日期（新接口 created_at 已是毫秒时间戳）
   const formatDate = (timestamp?: number) => {
     if (!timestamp) return '未知日期';
-    const date = new Date(timestamp * 1000);
+    const date = new Date(timestamp);
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -169,7 +159,7 @@ export function Assets() {
 
   // 按日期分组
   const groupedVideos = videoList.reduce((acc, video) => {
-    const date = formatDate(video.video?.created_time);
+    const date = formatDate(video.created_at);
     if (!acc[date]) acc[date] = [];
     acc[date].push(video);
     return acc;
@@ -222,15 +212,36 @@ export function Assets() {
                 <div className="assets-video-grid">
                   {videos.map((video) => (
                     <div key={video.id} className="assets-video-item" onClick={() => downloadVideo(video)}>
-                      <div className="assets-video-thumb" style={{ backgroundImage: `url(${getCoverUrl(video)})` }}>
-                        <span className="assets-video-duration">{formatDuration(video)}</span>
-                        {video.has_local_cache && (
-                          <span className="assets-video-cached" title="本地缓存">📦</span>
+                      <div className="assets-video-thumb">
+                        {hasCover(video) ? (
+                          // 有封面：显示背景图片
+                          <div className="assets-video-cover" style={{ backgroundImage: `url(${getCoverUrl(video)})` }} />
+                        ) : (
+                          // 无封面：显示 record-loading 视频
+                          <video
+                            className="assets-video-cover"
+                            src={recordLoadingVideo}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                          />
                         )}
-                        <div className="assets-video-download">⬇️ 下载</div>
+                        <span className="assets-video-duration">{formatDuration(video)}</span>
+                        {!hasCover(video) ? (
+                          // 没有封面：显示"生成中"标签
+                          <span className="assets-video-status assets-video-generating">生成中</span>
+                        ) : video.video_local_path ? (
+                          // 有本地缓存：显示缓存标签
+                          <span className="assets-video-status assets-video-cached" title="本地缓存">📦</span>
+                        ) : null}
+                        {/* 只有有封面时才显示下载按钮 */}
+                        {hasCover(video) && (
+                          <div className="assets-video-download">⬇️ 下载</div>
+                        )}
                       </div>
                       <div className="assets-video-prompt">
-                        {video.aigc_image_params?.text2video_params?.video_gen_inputs?.[0]?.prompt?.slice(0, 20) || '无标题'}
+                        {video.prompt?.slice(0, 20) || '无标题'}
                       </div>
                     </div>
                   ))}
