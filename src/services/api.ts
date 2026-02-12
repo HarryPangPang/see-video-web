@@ -75,19 +75,74 @@ export async function createGeneration(
     headers,
     body: JSON.stringify(data),
   });
-  
-  if (!response.ok) {
-    throw new Error(`请求失败: ${response.status} ${response.statusText}`);
-  }
 
+  // 先读取 JSON 响应体
   const result: ApiResponse = await response.json();
 
-  if (!result.success) {
-    throw new Error(result.message || result.error || result?.data?.message || result?.data?.error || 'Create generation failed');
+  // 调试日志
+  console.log('[API] Generate response:', { status: response.status, ok: response.ok, result });
+
+  // 检查业务层面的错误（包括 400 等客户端错误）
+  if (!response.ok || !result.success) {
+    // 优先使用响应体中的详细错误信息
+    const errorMessage = result.message || result.error || result?.data?.message || result?.data?.error || `请求失败: ${response.status} ${response.statusText}`;
+    console.log('[API] Error message extracted:', errorMessage);
+    throw new Error(errorMessage);
   }
 
   return result;
 }
+// ========== 积分和支付相关 API ==========
+
+// 获取当前积分余额
+export async function getCreditsBalance(): Promise<ApiResponse<{ credits: number }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE_URL}/credits/balance`, {
+    method: 'GET',
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`请求失败: ${response.status}`);
+  }
+
+  const result: ApiResponse = await response.json();
+  if (!result.success) {
+    throw new Error(result.message || '获取积分失败');
+  }
+
+  return result;
+}
+
+// 创建支付订单
+export async function createPayment(amount: number, credits: number): Promise<ApiResponse<{ orderId: string; checkoutUrl: string }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE_URL}/payment/create`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ amount, credits }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`请求失败: ${response.status}`);
+  }
+
+  const result: ApiResponse = await response.json();
+  if (!result.success) {
+    throw new Error(result.message || '创建支付订单失败');
+  }
+
+  return result;
+}
+
 // 获取所有视频列表
 
 export async function getList(taskId: string): Promise<ApiResponse> {

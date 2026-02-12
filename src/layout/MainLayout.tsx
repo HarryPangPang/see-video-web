@@ -12,6 +12,7 @@ import {
 } from '../components/Icons';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
+import { Credits } from '../components/Credits';
 import './MainLayout.scss';
 
 interface MainLayoutProps {
@@ -87,6 +88,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </nav>
 
         <div className="sidebar-footer">
+          <Credits />
+
           <div className="sidebar-user" ref={userMenuRef}>
             <button
               type="button"

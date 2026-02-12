@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, TextArea, ImageUploader, SearchBar, Toast } from 'antd-mobile';
 import type { ImageUploadItem } from 'antd-mobile/es/components/image-uploader';
 import { IconArrowUp, IconRefresh, IconCube, IconDoc, IconRect, IconClock } from '../../components/Icons';
 import { useI18n } from '../../context/I18nContext';
-import { createGeneration, fileToBase64, type CreateGenerationRequest } from '../../services/api';
+import { createGeneration, fileToBase64, getCreditsBalance, type CreateGenerationRequest } from '../../services/api';
+import { RechargeDialog } from '../../components/RechargeDialog';
 import './Generate.scss';
 
 const demoSrc = 'https://images.unsplash.com/photo-1567945716310-4745a6b7844f?w=400';
@@ -17,6 +18,24 @@ export function Generate() {
   const [endFrame, setEndFrame] = useState<ImageUploadItem[]>([]);
   const [prompt, setPrompt] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [rechargeDialogVisible, setRechargeDialogVisible] = useState(false);
+  const [currentCredits, setCurrentCredits] = useState(0);
+
+  // 获取当前积分
+  useEffect(() => {
+    fetchCredits();
+  }, []);
+
+  const fetchCredits = async () => {
+    try {
+      const result = await getCreditsBalance();
+      if (result.data?.credits !== undefined) {
+        setCurrentCredits(result.data.credits);
+      }
+    } catch (err) {
+      console.error('Failed to fetch credits:', err);
+    }
+  };
 
   const mockUpload = (file: File): Promise<ImageUploadItem> =>
     new Promise((resolve) => {
@@ -63,12 +82,34 @@ export function Generate() {
       await createGeneration(requestData);
       loadingToast.close();
       Toast.show({ icon: 'success', content: '提交成功，已打开即梦页面' });
+      // 刷新积分
+      fetchCredits();
     } catch (err) {
       loadingToast.close();
-      Toast.show({ icon: 'fail', content: err instanceof Error ? err.message : '提交失败' });
+      const errorMessage = err instanceof Error ? err.message : '提交失败';
+
+      // 调试日志：查看错误信息
+      console.log('[Generate] Error caught:', errorMessage);
+
+      // 检测是否是积分不足错误
+      if (errorMessage.includes('积分不足') || errorMessage.includes('Insufficient credits')) {
+        console.log('[Generate] Detected insufficient credits, showing recharge dialog');
+        // 刷新积分并显示充值对话框
+        await fetchCredits();
+        setRechargeDialogVisible(true);
+      } else {
+        console.log('[Generate] Showing error toast');
+        Toast.show({ icon: 'fail', content: errorMessage });
+      }
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleRechargeClose = () => {
+    setRechargeDialogVisible(false);
+    // 关闭对话框后刷新积分
+    fetchCredits();
   };
 
   const generatedVideos = [
@@ -77,6 +118,12 @@ export function Generate() {
 
   return (
     <div className="generate-page">
+      <RechargeDialog
+        visible={rechargeDialogVisible}
+        onClose={handleRechargeClose}
+        currentCredits={currentCredits}
+      />
+
       <div className="generate-top-bar">
         <SearchBar placeholder={p.inspirationSearch} className="generate-search" />
         <div className="generate-filters">

@@ -3,7 +3,8 @@ import { useI18n } from '../../context/I18nContext';
 import { useNavigate } from 'react-router-dom';
 import { Button, TextArea, ImageUploader, Toast } from 'antd-mobile';
 import type { ImageUploadItem } from 'antd-mobile/es/components/image-uploader';
-import { createGeneration, fileToBase64, type CreateGenerationRequest } from '../../services/api';
+import { createGeneration, fileToBase64, getCreditsBalance, type CreateGenerationRequest } from '../../services/api';
+import { RechargeDialog } from '../../components/RechargeDialog';
 import {
   IconArrowUp,
   IconRefresh,
@@ -43,6 +44,24 @@ export function Canvas() {
   const [ratio, setRatio] = useState<RatioKey>('16:9');
   const [duration, setDuration] = useState<DurationKey>('5');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rechargeDialogVisible, setRechargeDialogVisible] = useState(false);
+  const [currentCredits, setCurrentCredits] = useState(0);
+
+  // 获取当前积分
+  useEffect(() => {
+    fetchCredits();
+  }, []);
+
+  const fetchCredits = async () => {
+    try {
+      const result = await getCreditsBalance();
+      if (result.data?.credits !== undefined) {
+        setCurrentCredits(result.data.credits);
+      }
+    } catch (err) {
+      console.error('Failed to fetch credits:', err);
+    }
+  };
 
   // 根据 frameMode 判断显示逻辑
   const isOmniMode = frameMode === 'omni';
@@ -231,6 +250,9 @@ export function Canvas() {
           content: result.message || '提交成功，已打开即梦页面',
         });
 
+        // 刷新积分
+        fetchCredits();
+
         if (result.data?.projectId) {
           navigate('/');
         }
@@ -239,18 +261,43 @@ export function Canvas() {
     } catch (error) {
       loadingToast.close();
       const errorMessage = error instanceof Error ? error.message : '提交失败，请重试';
-      Toast.show({
-        icon: 'fail',
-        content: errorMessage,
-      });
+
+      // 调试日志
+      console.log('[Canvas] Error caught:', errorMessage);
+
+      // 检测是否是积分不足错误
+      if (errorMessage.includes('积分不足') || errorMessage.includes('Insufficient credits')) {
+        console.log('[Canvas] Detected insufficient credits, showing recharge dialog');
+        // 刷新积分并显示充值对话框
+        await fetchCredits();
+        setRechargeDialogVisible(true);
+      } else {
+        console.log('[Canvas] Showing error toast');
+        Toast.show({
+          icon: 'fail',
+          content: errorMessage,
+        });
+      }
       console.error('Submit error:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleRechargeClose = () => {
+    setRechargeDialogVisible(false);
+    // 关闭对话框后刷新积分
+    fetchCredits();
+  };
+
   return (
     <div className="canvas-page">
+      <RechargeDialog
+        visible={rechargeDialogVisible}
+        onClose={handleRechargeClose}
+        currentCredits={currentCredits}
+      />
+
       <h1 className="canvas-question">{p.canvasQuestion}</h1>
 
       <div style={{ textAlign: 'center', margin: '16px 0' }}>
