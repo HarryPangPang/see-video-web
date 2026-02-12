@@ -102,3 +102,23 @@ export async function getList(taskId: string): Promise<ApiResponse> {
 
   return result;
 }
+
+// 获取即梦视频列表
+export async function getVideoList(): Promise<ApiResponse> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE_URL}/video-list`, {
+    method: 'GET',
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`请求失败: ${response.status} ${response.statusText}`);
+  }
+
+  const result: ApiResponse = await response.json();
+
+  return result;
+}

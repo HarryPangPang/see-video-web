@@ -1,9 +1,35 @@
-import React, { useState } from 'react';
-import { Tabs, SearchBar } from 'antd-mobile';
+import React, { useState, useEffect } from 'react';
+import { Tabs, SearchBar, Toast, DotLoading } from 'antd-mobile';
 import { useI18n } from '../../context/I18nContext';
+import { getVideoList } from '../../services/api';
 import './Assets.scss';
 
-const videoThumb = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400';
+interface VideoAsset {
+  id: string;
+  type: number;
+  video?: {
+    created_time?: number;
+    item_list?: Array<{
+      common_attr?: {
+        cover_url?: string;
+      };
+      video?: {
+        cover_url?: string;
+        duration_info?: string;
+        transcoded_video?: {
+          origin?: {
+            video_url?: string;
+          };
+        };
+      };
+    }>;
+  };
+  aigc_image_params?: {
+    text2video_params?: {
+      video_gen_inputs?: Array<{ prompt: string }>;
+    };
+  };
+}
 
 export function Assets() {
   const { t } = useI18n();
@@ -11,10 +37,127 @@ export function Assets() {
   const [contentTab, setContentTab] = useState('videos');
   const [filterTab, setFilterTab] = useState('all');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [videoList, setVideoList] = useState<VideoAsset[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const videoList = [
-    { id: '1', date: '12月16日', thumb: videoThumb, duration: '00:05' },
-  ];
+  // 获取视频列表
+  useEffect(() => {
+    fetchVideoList();
+  }, []);
+
+  const fetchVideoList = async () => {
+    setLoading(true);
+    try {
+      const result = await getVideoList();
+      if (result.success && result.data?.asset_list) {
+        // 过滤出包含 video 字段的资源（type 2 和 type 7 都是视频）
+        const videos = result.data.asset_list.filter((item: VideoAsset) => item.video);
+        setVideoList(videos);
+        console.log('[Assets] 获取到的视频列表:', videos);
+        Toast.show({ content: `加载了 ${videos.length} 个视频` });
+      } else {
+        Toast.show({ content: '获取视频列表失败', icon: 'fail' });
+      }
+    } catch (err: any) {
+      console.error('[Assets] 获取视频列表错误:', err);
+      Toast.show({ content: err.message || '网络错误', icon: 'fail' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 获取视频 URL
+  const getVideoUrl = (video: VideoAsset): string | undefined => {
+    return video.video?.item_list?.[0]?.video?.transcoded_video?.origin?.video_url;
+  };
+
+  // 获取封面 URL
+  const getCoverUrl = (video: VideoAsset): string | undefined => {
+    return video.video?.item_list?.[0]?.common_attr?.cover_url ||
+           video.video?.item_list?.[0]?.video?.cover_url;
+  };
+
+  // 获取时长信息
+  const getDurationInfo = (video: VideoAsset): string | undefined => {
+    return video.video?.item_list?.[0]?.video?.duration_info;
+  };
+
+  // 下载视频
+  const downloadVideo = async (video: VideoAsset) => {
+    const videoUrl = getVideoUrl(video);
+    if (!videoUrl) {
+      Toast.show({ content: '视频地址不可用', icon: 'fail' });
+      return;
+    }
+
+    try {
+      Toast.show({ content: '开始下载...', icon: 'loading', duration: 0 });
+
+      // 使用 fetch 下载视频
+      const response = await fetch(videoUrl);
+      const blob = await response.blob();
+
+      // 创建下载链接
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `video_${video.id}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      Toast.clear();
+      Toast.show({ content: '下载成功', icon: 'success' });
+    } catch (err: any) {
+      console.error('[Assets] 下载视频错误:', err);
+      Toast.clear();
+      Toast.show({ content: '下载失败', icon: 'fail' });
+    }
+  };
+
+  // 格式化时长
+  const formatDuration = (video: VideoAsset) => {
+    const durationInfo = getDurationInfo(video);
+    if (!durationInfo) return '00:00';
+    try {
+      const parsed = JSON.parse(durationInfo);
+      const seconds = Math.floor(parsed.play_info_duration || 0);
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    } catch {
+      return '00:00';
+    }
+  };
+
+  // 格式化日期
+  const formatDate = (timestamp?: number) => {
+    if (!timestamp) return '未知日期';
+    const date = new Date(timestamp * 1000);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // 判断是否是今天
+    if (date.toDateString() === today.toDateString()) {
+      return '今天';
+    }
+    // 判断是否是昨天
+    if (date.toDateString() === yesterday.toDateString()) {
+      return '昨天';
+    }
+    // 否则显示月日
+    return `${date.getMonth() + 1}月${date.getDate()}日`;
+  };
+
+  // 按日期分组
+  const groupedVideos = videoList.reduce((acc, video) => {
+    const date = formatDate(video.video?.created_time);
+    if (!acc[date]) acc[date] = [];
+    acc[date].push(video);
+    return acc;
+  }, {} as Record<string, VideoAsset[]>);
 
   return (
     <div className="assets-page">
@@ -46,24 +189,35 @@ export function Assets() {
       </div>
 
       <div className="assets-video-list">
-        {videoList.length === 0 ? (
+        {loading ? (
+          <div className="assets-loading">
+            <DotLoading color="primary" />
+            <p>加载中...</p>
+          </div>
+        ) : videoList.length === 0 ? (
           <div className="assets-empty">
             <p>{p.assetsDesc}</p>
           </div>
         ) : (
           <>
-            <div className="assets-date-group">
-              <div className="assets-date-label">{videoList[0].date}</div>
-              <div className="assets-video-grid">
-                {videoList.map((v) => (
-                  <div key={v.id} className="assets-video-item">
-                    <div className="assets-video-thumb" style={{ backgroundImage: `url(${v.thumb})` }}>
-                      <span className="assets-video-duration">{v.duration}</span>
+            {Object.entries(groupedVideos).map(([date, videos]) => (
+              <div key={date} className="assets-date-group">
+                <div className="assets-date-label">{date}</div>
+                <div className="assets-video-grid">
+                  {videos.map((video) => (
+                    <div key={video.id} className="assets-video-item" onClick={() => downloadVideo(video)}>
+                      <div className="assets-video-thumb" style={{ backgroundImage: `url(${getCoverUrl(video)})` }}>
+                        <span className="assets-video-duration">{formatDuration(video)}</span>
+                        <div className="assets-video-download">⬇️ 下载</div>
+                      </div>
+                      <div className="assets-video-prompt">
+                        {video.aigc_image_params?.text2video_params?.video_gen_inputs?.[0]?.prompt?.slice(0, 20) || '无标题'}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            ))}
           </>
         )}
       </div>
