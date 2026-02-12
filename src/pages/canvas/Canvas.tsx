@@ -22,7 +22,7 @@ const demoSrc = 'https://images.unsplash.com/photo-1567945716310-4745a6b7844f?w=
 const TEMPLATE_IDS = ['templateTea', 'templateIP', 'templateSpace', 'templatePerfume'] as const;
 
 type CreationType = 'agent' | 'image' | 'video';
-type ModelKey = 'seedance20' | '35pro' | '30pro' | '30fast' | '30';
+type ModelKey = 'seedance20' | 'seedance20fast' | '35pro' | '30pro' | '30fast' | '30';
 type FrameModeKey = 'omni' | 'startEnd' | 'multi' | 'subject';
 type RatioKey = 'auto size' | '21:9' | '16:9' | '4:3' | '1:1' | '3:4' | '9:16';
 type DurationKey = '4' | '5' | '6' | '7' | '8' | '9' | '10'| '11'| '12'| '13'| '14'| '15';
@@ -73,6 +73,7 @@ export function Canvas() {
   };
   const modelLabel: Record<ModelKey, string> = {
     seedance20: g.modelSeedance20,
+    seedance20fast: g.modelSeedance20Fast,
     '35pro': g.model35Pro,
     '30pro': g.model30ProPlus,
     '30fast': g.model30Fast,
@@ -80,6 +81,7 @@ export function Canvas() {
   };
   const modelDesc: Record<ModelKey, string> = {
     seedance20: g.modelSeedance20Desc,
+    seedance20fast: g.modelSeedance20FastDesc,
     '35pro': g.model35ProDesc,
     '30pro': g.model30ProPlusDesc,
     '30fast': g.model30FastDesc,
@@ -93,15 +95,15 @@ export function Canvas() {
   };
 
   const ratios: RatioKey[] = ['auto size','21:9', '16:9', '4:3', '1:1', '3:4', '9:16'];
-  // seedance20 支持 4–15s；其他模型仅 5s、10s
+  // seedance20 和 seedance20fast 支持 4–15s；其他模型仅 5s、10s
   const durations: DurationKey[] = useMemo(
-    () => (model === 'seedance20' ? ['4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'] : ['5', '10']),
+    () => (model === 'seedance20' || model === 'seedance20fast' ? ['4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'] : ['5', '10']),
     [model]
   );
 
-  // 切换为非 seedance20 时，若当前时长不在 5s/10s 则重置为 5s
+  // 切换为非 seedance20/seedance20fast 时，若当前时长不在 5s/10s 则重置为 5s
   useEffect(() => {
-    if (model !== 'seedance20' && duration !== '5' && duration !== '10') {
+    if (model !== 'seedance20' && model !== 'seedance20fast' && duration !== '5' && duration !== '10') {
       setDuration('5');
     }
   }, [model]);
@@ -297,6 +299,7 @@ export function Canvas() {
               title={`${g.dropdownTitleModel}: ${g.modelSeedance20} by seed`}
             >
               <OptionItem icon="S2.0" label={g.modelSeedance20} desc={modelDesc.seedance20} badge={g.badgeNew} active={model === 'seedance20'} onClick={() => { setModel('seedance20'); setOpenDropdown(null); }} />
+              <OptionItem icon="S2.0 Fast" label={g.modelSeedance20Fast} desc={modelDesc.seedance20fast} badge={g.badgeNew} active={model === 'seedance20fast'} onClick={() => { setModel('seedance20fast'); setOpenDropdown(null); }} />
               <OptionItem icon="3.5 PRO" label={g.model35Pro} desc={modelDesc['35pro']} badge={g.badgeNew} active={model === '35pro'} onClick={() => { setModel('35pro'); setOpenDropdown(null); }} />
               <OptionItem icon="3.0 PRO" label={g.model30ProPlus} desc={modelDesc['30pro']} active={model === '30pro'} disabled={disable30ProAndFast} onClick={() => { setModel('30pro'); setOpenDropdown(null); }} />
               <OptionItem icon="3.0 Fast" label={g.model30Fast} desc={modelDesc['30fast']} active={model === '30fast'} disabled={disable30ProAndFast} onClick={() => { setModel('30fast'); setOpenDropdown(null); }} />

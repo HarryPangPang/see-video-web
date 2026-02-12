@@ -3,7 +3,7 @@ const API_BASE_URL = `${API_HOST}/api`;
 // 创建生成任务的请求数据接口
 export interface CreateGenerationRequest {
   creationType: 'agent' | 'image' | 'video';
-  model: 'seedance20' | '35pro' | '30pro' | '30fast' | '30';
+  model: 'seedance20' | 'seedance20fast' | '35pro' | '30pro' | '30fast' | '30';
   frameMode: 'omni' | 'startEnd' | 'multi' | 'subject';
   ratio: '21:9' | '16:9' | '4:3' | '1:1' | '3:4' | '9:16';
   duration: string;
