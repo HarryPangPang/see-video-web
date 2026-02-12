@@ -282,7 +282,7 @@ export const zhCN = {
             modelSeedance20Desc: '全能王者,音视文图均可参考(暂不支持真人人脸)',
             model35Pro: '视频 3.5 Pro',
             model35ProDesc: '音画同出,全新体验',
-            model30ProPlus: '视频 3.0 Pro +',
+            model30ProPlus: '视频 3.0 Pro',
             model30ProPlusDesc: '效果最佳,画质超清',
             model30Fast: '视频 3.0 Fast',
             model30FastDesc: 'Pro级表现,加量不加价',

@@ -9,6 +9,7 @@ interface OptionDropdownProps {
   className?: string;
   align?: 'left' | 'center' | 'right';
   layout?: 'list' | 'row';
+  disabled?: boolean;
 }
 
 export function OptionDropdown({
@@ -20,6 +21,7 @@ export function OptionDropdown({
   className = '',
   align = 'left',
   layout = 'list',
+  disabled = false,
 }: OptionDropdownProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +44,8 @@ export function OptionDropdown({
   return (
     <div
       ref={panelRef}
-      className={`option-dropdown-panel option-dropdown-panel--${layout} option-dropdown-panel--${align} ${className}`}
+      className={`option-dropdown-panel option-dropdown-panel--${layout} option-dropdown-panel--${align} ${disabled ? 'is-disabled' : ''} ${className}`}
+      aria-disabled={disabled}
     >
       <div className="option-dropdown-title">{title}</div>
       <div className="option-dropdown-content">{children}</div>

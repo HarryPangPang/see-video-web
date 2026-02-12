@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Button, TextArea, ImageUploader, SearchBar } from 'antd-mobile';
+import { Button, TextArea, ImageUploader, SearchBar, Toast } from 'antd-mobile';
 import type { ImageUploadItem } from 'antd-mobile/es/components/image-uploader';
 import { IconArrowUp, IconRefresh, IconCube, IconDoc, IconRect, IconClock } from '../../components/Icons';
 import { useI18n } from '../../context/I18nContext';
+import { createGeneration, fileToBase64, type CreateGenerationRequest } from '../../services/api';
 import './Generate.scss';
 
 const demoSrc = 'https://images.unsplash.com/photo-1567945716310-4745a6b7844f?w=400';
@@ -24,9 +25,47 @@ export function Generate() {
     });
 
   const handleSubmit = async () => {
+    if (!prompt.trim()) {
+      Toast.show({ icon: 'fail', content: g.promptPlaceholder || '请输入提示词' });
+      return;
+    }
     setSubmitting(true);
+    const loadingToast = Toast.show({ icon: 'loading', content: '正在提交...', duration: 0 });
     try {
-      await new Promise((r) => setTimeout(r, 1500));
+      const requestData: CreateGenerationRequest = {
+        creationType: 'video',
+        model: 'seedance20',
+        frameMode: 'startEnd',
+        ratio: '16:9',
+        duration: '5',
+        prompt: prompt.trim(),
+      };
+      if (startFrame.length > 0 && startFrame[0].url) {
+        if (startFrame[0].url.startsWith('blob:')) {
+          const res = await fetch(startFrame[0].url);
+          const blob = await res.blob();
+          const file = new File([blob], 'start-frame.png', { type: blob.type });
+          requestData.startFrame = await fileToBase64(file);
+        } else {
+          requestData.startFrame = startFrame[0].url;
+        }
+      }
+      if (endFrame.length > 0 && endFrame[0].url) {
+        if (endFrame[0].url.startsWith('blob:')) {
+          const res = await fetch(endFrame[0].url);
+          const blob = await res.blob();
+          const file = new File([blob], 'end-frame.png', { type: blob.type });
+          requestData.endFrame = await fileToBase64(file);
+        } else {
+          requestData.endFrame = endFrame[0].url;
+        }
+      }
+      await createGeneration(requestData);
+      loadingToast.close();
+      Toast.show({ icon: 'success', content: '提交成功，已打开即梦页面' });
+    } catch (err) {
+      loadingToast.close();
+      Toast.show({ icon: 'fail', content: err instanceof Error ? err.message : '提交失败' });
     } finally {
       setSubmitting(false);
     }
