@@ -21,8 +21,9 @@ interface VideoAsset {
 }
 
 export function Assets() {
-  const { t } = useI18n();
+  const { t, $l } = useI18n();
   const p = t.seedance.pages;
+  const c = t.common;
   const [contentTab, setContentTab] = useState('videos');
   const [filterTab, setFilterTab] = useState('all');
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -43,13 +44,13 @@ export function Assets() {
         const videos = result.data.asset_list;
         setVideoList(videos);
         console.log('[Assets] 获取到的视频列表:', videos);
-        Toast.show({ content: `加载了 ${videos.length} 个视频` });
+        Toast.show({ content: $l('seedance.toast.videoLoadSuccess').replace('{count}', videos.length.toString()) });
       } else {
-        Toast.show({ content: '获取视频列表失败', icon: 'fail' });
+        Toast.show({ content: $l('seedance.toast.videoLoadFailed'), icon: 'fail' });
       }
     } catch (err: any) {
       console.error('[Assets] 获取视频列表错误:', err);
-      Toast.show({ content: err.message || '网络错误', icon: 'fail' });
+      Toast.show({ content: err.message || $l('seedance.toast.networkError'), icon: 'fail' });
     } finally {
       setLoading(false);
     }
@@ -90,12 +91,12 @@ export function Assets() {
   const downloadVideo = async (video: VideoAsset) => {
     const videoUrl = getVideoUrl(video);
     if (!videoUrl) {
-      Toast.show({ content: '视频地址不可用', icon: 'fail' });
+      Toast.show({ content: $l('seedance.toast.videoNotAvailable'), icon: 'fail' });
       return;
     }
 
     try {
-      Toast.show({ content: '开始下载...', icon: 'loading', duration: 0 });
+      Toast.show({ content: $l('seedance.toast.downloadStarting'), icon: 'loading', duration: 0 });
 
       // 使用 fetch 下载视频
       const response = await fetch(videoUrl);
@@ -112,11 +113,11 @@ export function Assets() {
       window.URL.revokeObjectURL(url);
 
       Toast.clear();
-      Toast.show({ content: '下载成功', icon: 'success' });
+      Toast.show({ content: $l('seedance.toast.downloadSuccess'), icon: 'success' });
     } catch (err: any) {
       console.error('[Assets] 下载视频错误:', err);
       Toast.clear();
-      Toast.show({ content: '下载失败', icon: 'fail' });
+      Toast.show({ content: $l('seedance.toast.downloadFailed'), icon: 'fail' });
     }
   };
 
@@ -137,7 +138,7 @@ export function Assets() {
 
   // 格式化日期（新接口 created_at 已是毫秒时间戳）
   const formatDate = (timestamp?: number) => {
-    if (!timestamp) return '未知日期';
+    if (!timestamp) return $l('seedance.date.unknownDate');
     const date = new Date(timestamp);
     const today = new Date();
     const yesterday = new Date(today);
@@ -145,14 +146,14 @@ export function Assets() {
 
     // 判断是否是今天
     if (date.toDateString() === today.toDateString()) {
-      return '今天';
+      return $l('seedance.date.today');
     }
     // 判断是否是昨天
     if (date.toDateString() === yesterday.toDateString()) {
-      return '昨天';
+      return $l('seedance.date.yesterday');
     }
     // 否则显示月日
-    return `${date.getMonth() + 1}月${date.getDate()}日`;
+    return $l('seedance.date.monthDay').replace('{month}', (date.getMonth() + 1).toString()).replace('{day}', date.getDate().toString());
   };
 
   // 按日期分组
@@ -170,7 +171,7 @@ export function Assets() {
           <Tabs.Tab title={p.assetsVideos} key="videos" />
         </Tabs>
         <div className="assets-top-actions">
-          <SearchBar placeholder="Q" value={searchKeyword} onChange={setSearchKeyword} className="assets-search" />
+          <SearchBar placeholder={c.searchPlaceholder} value={searchKeyword} onChange={setSearchKeyword} className="assets-search" />
           <span className="assets-batch">{p.batchOps}</span>
         </div>
       </div>
@@ -196,7 +197,7 @@ export function Assets() {
         {loading ? (
           <div className="assets-loading">
             <DotLoading color="primary" />
-            <p>加载中...</p>
+            <p>{c.loading}</p>
           </div>
         ) : videoList.length === 0 ? (
           <div className="assets-empty">
@@ -228,18 +229,18 @@ export function Assets() {
                         <span className="assets-video-duration">{formatDuration(video)}</span>
                         {!hasCover(video) ? (
                           // 没有封面：显示"生成中"标签
-                          <span className="assets-video-status assets-video-generating">生成中</span>
+                          <span className="assets-video-status assets-video-generating">{$l('seedance.video.generating')}</span>
                         ) : video.video_local_path ? (
                           // 有本地缓存：显示缓存标签
-                          <span className="assets-video-status assets-video-cached" title="本地缓存">📦</span>
+                          <span className="assets-video-status assets-video-cached" title={$l('seedance.video.localCached')}>📦</span>
                         ) : null}
                         {/* 只有有封面时才显示下载按钮 */}
                         {hasCover(video) && (
-                          <div className="assets-video-download">⬇️ 下载</div>
+                          <div className="assets-video-download">{$l('seedance.video.download')}</div>
                         )}
                       </div>
                       <div className="assets-video-prompt">
-                        {video.prompt?.slice(0, 20) || '无标题'}
+                        {video.prompt?.slice(0, 20) || $l('seedance.video.noTitle')}
                       </div>
                     </div>
                   ))}

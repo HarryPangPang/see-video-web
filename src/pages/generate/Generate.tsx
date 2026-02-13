@@ -11,7 +11,7 @@ const demoSrc = 'https://images.unsplash.com/photo-1567945716310-4745a6b7844f?w=
 const videoThumb = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400';
 
 export function Generate() {
-  const { t } = useI18n();
+  const { t, $l } = useI18n();
   const g = t.seedance.generate;
   const p = t.seedance.pages;
   const [startFrame, setStartFrame] = useState<ImageUploadItem[]>([]);
@@ -45,11 +45,11 @@ export function Generate() {
 
   const handleSubmit = async () => {
     if (!prompt.trim()) {
-      Toast.show({ icon: 'fail', content: g.promptPlaceholder || '请输入提示词' });
+      Toast.show({ icon: 'fail', content: $l('seedance.toast.pleaseInputPrompt') });
       return;
     }
     setSubmitting(true);
-    const loadingToast = Toast.show({ icon: 'loading', content: '正在提交...', duration: 0 });
+    const loadingToast = Toast.show({ icon: 'loading', content: $l('seedance.toast.submitting'), duration: 0 });
     try {
       const requestData: CreateGenerationRequest = {
         creationType: 'video',
@@ -81,12 +81,12 @@ export function Generate() {
       }
       await createGeneration(requestData);
       loadingToast.close();
-      Toast.show({ icon: 'success', content: '提交成功，已打开即梦页面' });
+      Toast.show({ icon: 'success', content: $l('seedance.toast.submitSuccess') });
       // 刷新积分
       fetchCredits();
     } catch (err) {
       loadingToast.close();
-      const errorMessage = err instanceof Error ? err.message : '提交失败';
+      const errorMessage = err instanceof Error ? err.message : $l('seedance.toast.submitFailed');
 
       // 调试日志：查看错误信息
       console.log('[Generate] Error caught:', errorMessage);

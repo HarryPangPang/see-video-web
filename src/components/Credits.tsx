@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getCreditsBalance } from '../services/api';
 import { RechargeDialog } from './RechargeDialog';
+import { useI18n } from '../context/I18nContext';
 import './Credits.scss';
 
 export const Credits: React.FC = () => {
+  const { t } = useI18n();
+  const c = t.common;
   const [credits, setCredits] = useState<number>(0);
   const [rechargeDialogVisible, setRechargeDialogVisible] = useState(false);
 
@@ -43,14 +46,14 @@ export const Credits: React.FC = () => {
         <div className="credits-balance">
           <span className="credits-icon">💎</span>
           <span className="credits-amount">{credits}</span>
-          <span className="credits-label">积分</span>
+          <span className="credits-label">{c.credits}</span>
         </div>
         <button
           type="button"
           className="credits-recharge-btn"
           onClick={() => setRechargeDialogVisible(true)}
         >
-          充值
+          {c.recharge}
         </button>
       </div>
     </>

@@ -29,7 +29,7 @@ type RatioKey = 'auto size' | '21:9' | '16:9' | '4:3' | '1:1' | '3:4' | '9:16';
 type DurationKey = '4' | '5' | '6' | '7' | '8' | '9' | '10'| '11'| '12'| '13'| '14'| '15';
 
 export function Canvas() {
-  const { t } = useI18n();
+  const { t, $l } = useI18n();
   const navigate = useNavigate();
   const p = t.seedance.pages;
   const g = t.seedance.generate;
@@ -151,7 +151,7 @@ export function Canvas() {
     if (!prompt.trim()) {
       Toast.show({
         icon: 'fail',
-        content: g.promptPlaceholder || '请输入提示词',
+        content: $l('seedance.toast.pleaseInputPrompt'),
       });
       return;
     }
@@ -160,7 +160,7 @@ export function Canvas() {
     if (frameMode === 'startEnd' && startFrame.length === 0) {
       Toast.show({
         icon: 'fail',
-        content: '请上传起始帧图片',
+        content: $l('seedance.toast.uploadStartFrame'),
       });
       return;
     }
@@ -168,7 +168,7 @@ export function Canvas() {
     if (frameMode === 'omni' && omniFrames.length === 0) {
       Toast.show({
         icon: 'fail',
-        content: '请至少上传1张参考图片',
+        content: $l('seedance.toast.uploadReference'),
       });
       return;
     }
@@ -176,7 +176,7 @@ export function Canvas() {
     setIsSubmitting(true);
     const loadingToast = Toast.show({
       icon: 'loading',
-      content: '正在提交...',
+      content: $l('seedance.toast.submitting'),
       duration: 0,
     });
 
@@ -241,13 +241,13 @@ export function Canvas() {
       if(!result.success){
         Toast.show({
           icon: 'fail',
-          content: result.message || '提交失败，请重试',
+          content: result.message || $l('seedance.toast.submitFailedRetry'),
         });
         return;
       }else{
         Toast.show({
           icon: 'success',
-          content: result.message || '提交成功，已打开即梦页面',
+          content: result.message || $l('seedance.toast.submitSuccess'),
         });
 
         // 刷新积分
@@ -260,13 +260,13 @@ export function Canvas() {
 
     } catch (error) {
       loadingToast.close();
-      const errorMessage = error instanceof Error ? error.message : '提交失败，请重试';
+      const errorMessage = error instanceof Error ? error.message : $l('seedance.toast.submitFailedRetry');
 
       // 调试日志
       console.log('[Canvas] Error caught:', errorMessage);
 
       // 检测是否是积分不足错误
-      if (errorMessage.includes('积分不足') || errorMessage.includes('Insufficient credits')) {
+      if (errorMessage.includes($l('seedance.toast.insufficientCredits')) || errorMessage.includes('Insufficient credits')) {
         console.log('[Canvas] Detected insufficient credits, showing recharge dialog');
         // 刷新积分并显示充值对话框
         await fetchCredits();
@@ -326,7 +326,7 @@ export function Canvas() {
             e.currentTarget.style.boxShadow = '0 2px 8px rgba(114, 137, 218, 0.4)';
           }}
         >
-          🎮 Join our Discord Community
+          {p.discordInvite}
         </a>
       </div>
 
@@ -569,13 +569,13 @@ export function Canvas() {
         </div>
       </section>
 
-      <section className="canvas-recent">
+      {/* <section className="canvas-recent">
         <h2 className="canvas-section-title">{p.recentProjects}</h2>
         <button type="button" className="canvas-new-project" onClick={() => navigate('/')}>
           <span className="canvas-new-plus">+</span>
           <span className="canvas-new-label">{p.newProject}</span>
         </button>
-      </section>
+      </section> */}
     </div>
   );
 }

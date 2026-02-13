@@ -70,10 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         type,
       });
       if (!response.data.success) {
-        throw new Error(response.data.message || '发送验证码失败');
+        throw new Error(response.data.message || 'Failed to send verification code');
       }
     } catch (error: any) {
-      const message = error.response?.data?.message || error.message || '发送验证码失败';
+      const message = error.response?.data?.message || error.message || 'Failed to send verification code';
       throw new Error(message);
     }
   };
@@ -95,10 +95,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('auth_token', newToken);
         localStorage.setItem('auth_user', JSON.stringify(newUser));
       } else {
-        throw new Error(response.data.message || '注册失败');
+        throw new Error(response.data.message || 'Registration failed');
       }
     } catch (error: any) {
-      const message = error.response?.data?.message || error.message || '注册失败';
+      const message = error.response?.data?.message || error.message || 'Registration failed';
       throw new Error(message);
     }
   };
@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('auth_token', newToken);
         localStorage.setItem('auth_user', JSON.stringify(newUser));
       } else {
-        throw new Error(response.data.message || '登录失败');
+        throw new Error(response.data.message || 'Login failed');
       }
     } catch (error: any) {
       const message = error.response?.data?.message || error.message || '登录失败';
@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('auth_token', newToken);
         localStorage.setItem('auth_user', JSON.stringify(newUser));
       } else {
-        throw new Error(response.data.message || '登录失败');
+        throw new Error(response.data.message || 'Login failed');
       }
     } catch (error: any) {
       const message = error.response?.data?.message || error.message || '登录失败';

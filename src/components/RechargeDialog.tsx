@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, Button, Toast } from 'antd-mobile';
 import { createPayment } from '../services/api';
+import { useI18n } from '../context/I18nContext';
 import './RechargeDialog.scss';
 
 interface RechargeDialogProps {
@@ -17,15 +18,19 @@ interface RechargePlan {
   popular?: boolean;
 }
 
-const rechargePlans: RechargePlan[] = [
-   { id: 'plan_test', amount: 1, credits: 0, label: '测试', popular: true  },
-  { id: 'plan_1', amount: 1, credits: 1, label: '按次使用', popular: true  },
-  { id: 'plan_10', amount: 10, credits: 10, label: '标准套餐'},
-  { id: 'plan_30', amount: 30, credits: 30, label: '标准套餐' },
-  { id: 'plan_50', amount: 50, credits: 50, label: '专业套餐' },
-];
-
 export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose, currentCredits = 0 }) => {
+  const { t, $l } = useI18n();
+  const r = t.seedance.recharge;
+  const c = t.common;
+
+  const rechargePlans: RechargePlan[] = [
+    { id: 'plan_test', amount: 1, credits: 1, label: r.planTest, popular: true  },
+    { id: 'plan_1', amount: 1, credits: 1, label: r.planPayPerUse, popular: true  },
+    { id: 'plan_10', amount: 10, credits: 10, label: r.planStandard},
+    { id: 'plan_30', amount: 30, credits: 30, label: r.planStandard },
+    { id: 'plan_50', amount: 50, credits: 50, label: r.planProfessional },
+  ];
+
   const [selectedPlan, setSelectedPlan] = useState<RechargePlan>(rechargePlans[0]);
   const [loading, setLoading] = useState(false);
 
@@ -36,12 +41,12 @@ export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose
       if (result.data?.checkoutUrl) {
         // 打开支付链接
         window.open(result.data.checkoutUrl, '_blank');
-        Toast.show({ content: '已打开支付页面，完成支付后积分将自动到账', icon: 'success', duration: 3000 });
+        Toast.show({ content: $l('seedance.toast.paymentOpened'), icon: 'success', duration: 3000 });
         // 可选：关闭对话框
         // onClose();
       }
     } catch (err) {
-      Toast.show({ content: err instanceof Error ? err.message : '创建订单失败', icon: 'fail' });
+      Toast.show({ content: err instanceof Error ? err.message : $l('seedance.toast.createOrderFailed'), icon: 'fail' });
     } finally {
       setLoading(false);
     }
@@ -51,14 +56,14 @@ export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose
     <Dialog
       visible={visible}
       onClose={onClose}
-      title="充值积分"
+      title={r.title}
       content={
         <div className="recharge-dialog-content">
           <div className="recharge-balance">
-            <span className="balance-label">当前余额</span>
+            <span className="balance-label">{r.currentBalance}</span>
             <span className="balance-amount">
               <span className="balance-icon">💎</span>
-              {currentCredits} 积分
+              {currentCredits} {c.credits}
             </span>
           </div>
 
@@ -69,10 +74,10 @@ export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose
                 className={`recharge-plan-card ${selectedPlan.id === plan.id ? 'selected' : ''} ${plan.popular ? 'popular' : ''}`}
                 onClick={() => setSelectedPlan(plan)}
               >
-                {plan.popular && <div className="plan-badge">推荐</div>}
+                {plan.popular && <div className="plan-badge">{r.recommended}</div>}
                 <div className="plan-credits">
                   <span className="plan-credits-amount">{plan.credits}</span>
-                  <span className="plan-credits-label">积分</span>
+                  <span className="plan-credits-label">{c.credits}</span>
                 </div>
                 <div className="plan-price">¥{plan.amount}</div>
                 <div className="plan-label">{plan.label}</div>
@@ -81,11 +86,11 @@ export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose
           </div>
 
           <div className="recharge-tips">
-            <p>💡 温馨提示：</p>
+            <p>{r.tips}</p>
             <ul>
-              <li>每次生成视频消耗 1 积分</li>
-              <li>生成失败自动退还积分</li>
-              <li>支付完成后积分即时到账</li>
+              <li>{r.tip1}</li>
+              <li>{r.tip2}</li>
+              <li>{r.tip3}</li>
             </ul>
           </div>
         </div>
@@ -93,12 +98,12 @@ export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose
       actions={[
         {
           key: 'cancel',
-          text: '取消',
+          text: c.cancel,
           onClick: onClose,
         },
         {
           key: 'confirm',
-          text: loading ? '处理中...' : `支付 ¥${selectedPlan.amount}`,
+          text: loading ? r.processing : r.pay.replace('{amount}', selectedPlan.amount.toString()),
           primary: true,
           disabled: loading,
           onClick: handleRecharge,

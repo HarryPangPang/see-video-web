@@ -25,6 +25,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const { t, language, setLanguage } = useI18n();
   const layout = t.seedance.layout;
+  const c = t.common;
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -98,7 +99,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               aria-expanded={isUserMenuOpen}
             >
               <span className="sidebar-user-avatar">{user?.email?.[0]?.toUpperCase() || 'U'}</span>
-              <span className="sidebar-user-membership">{user?.username || user?.email?.split('@')[0] || '用户'}</span>
+              <span className="sidebar-user-membership">{user?.username || user?.email?.split('@')[0] || c.user}</span>
             </button>
             {isUserMenuOpen && (
               <div className="sidebar-user-dropdown">

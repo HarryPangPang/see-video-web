@@ -32,13 +32,13 @@ export async function uploadImage(file: File): Promise<string> {
   });
 
   if (!response.ok) {
-    throw new Error('图片上传失败');
+    throw new Error('Image upload failed');
   }
 
   const result: ApiResponse<{ url: string }> = await response.json();
 
   if (!result.success || !result.data?.url) {
-    throw new Error(result.message || '图片上传失败');
+    throw new Error(result.message || 'Image upload failed');
   }
 
   return result.data.url;
@@ -85,7 +85,7 @@ export async function createGeneration(
   // 检查业务层面的错误（包括 400 等客户端错误）
   if (!response.ok || !result.success) {
     // 优先使用响应体中的详细错误信息
-    const errorMessage = result.message || result.error || result?.data?.message || result?.data?.error || `请求失败: ${response.status} ${response.statusText}`;
+    const errorMessage = result.message || result.error || result?.data?.message || result?.data?.error || `Request failed: ${response.status} ${response.statusText}`;
     console.log('[API] Error message extracted:', errorMessage);
     throw new Error(errorMessage);
   }
@@ -106,12 +106,12 @@ export async function getCreditsBalance(): Promise<ApiResponse<{ credits: number
   });
 
   if (!response.ok) {
-    throw new Error(`请求失败: ${response.status}`);
+    throw new Error(`Request failed: ${response.status}`);
   }
 
   const result: ApiResponse = await response.json();
   if (!result.success) {
-    throw new Error(result.message || '获取积分失败');
+    throw new Error(result.message || 'Failed to get credits');
   }
 
   return result;
@@ -137,7 +137,7 @@ export async function createPayment(amount: number, credits: number): Promise<Ap
 
   const result: ApiResponse = await response.json();
   if (!result.success) {
-    throw new Error(result.message || '创建支付订单失败');
+    throw new Error(result.message || 'Failed to create payment order');
   }
 
   return result;
@@ -150,7 +150,7 @@ export async function getList(taskId: string): Promise<ApiResponse> {
     method: 'GET',
   });
   if (!response.ok) {
-    throw new Error(`请求失败: ${response.status} ${response.statusText}`);
+    throw new Error(`Request failed: ${response.status} ${response.statusText}`);
   }
 
   const result: ApiResponse = await response.json();
@@ -170,7 +170,7 @@ export async function getVideoList(): Promise<ApiResponse> {
   });
 
   if (!response.ok) {
-    throw new Error(`请求失败: ${response.status} ${response.statusText}`);
+    throw new Error(`Request failed: ${response.status} ${response.statusText}`);
   }
 
   const result: ApiResponse = await response.json();
