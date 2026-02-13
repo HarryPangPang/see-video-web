@@ -24,8 +24,8 @@ export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose
   const c = t.common;
 
   const rechargePlans: RechargePlan[] = [
-    { id: 'plan_test', amount: 0, credits: 1, label: r.planTest, popular: true  },
-    { id: 'plan_1', amount: 1, credits: 1, label: r.planPayPerUse, popular: true  },
+    { id: 'plan_test', amount: -1, credits: 1, label: r.planTest, popular: true  },
+    { id: 'plan_1', amount: 1, credits: 1, label: r.planPayPerUse, popular: false  },
     { id: 'plan_10', amount: 10, credits: 10, label: r.planStandard},
     { id: 'plan_30', amount: 30, credits: 30, label: r.planStandard },
     { id: 'plan_50', amount: 50, credits: 50, label: r.planProfessional },
