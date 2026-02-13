@@ -18,14 +18,15 @@ interface RechargePlan {
 }
 
 const rechargePlans: RechargePlan[] = [
+   { id: 'plan_test', amount: 1, credits: 0, label: '测试', popular: true  },
   { id: 'plan_1', amount: 1, credits: 1, label: '按次使用', popular: true  },
   { id: 'plan_10', amount: 10, credits: 10, label: '标准套餐'},
-  { id: 'plan_30', amount: 30, credits: 30, label: '专业套餐' },
-  { id: 'plan_50', amount: 50, credits: 50, label: '企业套餐' },
+  { id: 'plan_30', amount: 30, credits: 30, label: '标准套餐' },
+  { id: 'plan_50', amount: 50, credits: 50, label: '专业套餐' },
 ];
 
 export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose, currentCredits = 0 }) => {
-  const [selectedPlan, setSelectedPlan] = useState<RechargePlan>(rechargePlans[1]);
+  const [selectedPlan, setSelectedPlan] = useState<RechargePlan>(rechargePlans[0]);
   const [loading, setLoading] = useState(false);
 
   const handleRecharge = async () => {
