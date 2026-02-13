@@ -214,25 +214,41 @@ export function Assets() {
                     const videoUrl = getVideoUrl(video);
                     const hasVideo = hasCover(video) && videoUrl;
 
-                    // 处理点击封面查看视频
-                    const handleCoverClick = () => {
-                      if (hasVideo && videoUrl) {
-                        window.open(videoUrl, '_blank', 'noopener,noreferrer');
+                    // 在缩略图容器上统一处理点击事件
+                    const handleThumbClick = (e: React.MouseEvent) => {
+                      // 检查是否点击了下载按钮
+                      const target = e.target as HTMLElement;
+                      if (target.closest('.assets-video-download')) {
+                        console.log('[Assets] 点击下载视频:', video);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        downloadVideo(video);
+                        return;
+                      }
+
+                      // 点击了其他区域（封面），预览视频
+                      if (hasCover(video)) {
+                        console.log('[Assets] 点击预览视频:', video);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (hasVideo && videoUrl) {
+                          window.open(videoUrl, '_blank', 'noopener,noreferrer');
+                        }
                       }
                     };
 
                     return (
                       <div key={video.id} className="assets-video-item">
-                        <div className="assets-video-thumb">
+                        <div
+                          className="assets-video-thumb"
+                          onClick={handleThumbClick}
+                          style={{ cursor: hasCover(video) ? 'pointer' : 'default' }}
+                        >
                           {hasCover(video) ? (
                             // 有封面：显示背景图片，点击可查看视频
                             <div
                               className="assets-video-cover"
-                              style={{
-                                backgroundImage: `url(${getCoverUrl(video)})`,
-                                cursor: hasVideo ? 'pointer' : 'default'
-                              }}
-                              onClick={handleCoverClick}
+                              style={{ backgroundImage: `url(${getCoverUrl(video)})` }}
                             />
                           ) : !video.error_message ? (
                             // 无封面且无错误：显示 record-loading 视频（生成中）
@@ -261,14 +277,7 @@ export function Assets() {
                           ) : null}
                           {/* 只有有封面时才显示下载按钮 */}
                           {hasCover(video) && (
-                            <div
-                              className="assets-video-download"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                downloadVideo(video);
-                              }}
-                            >
+                            <div className="assets-video-download">
                               {$l('seedance.video.download')}
                             </div>
                           )}

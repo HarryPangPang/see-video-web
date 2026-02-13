@@ -88,6 +88,8 @@
 
     .assets-video-download {
       opacity: 1;
+      z-index: 100;
+      pointer-events: auto;
     }
   }
 
