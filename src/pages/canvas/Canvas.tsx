@@ -265,8 +265,15 @@ export function Canvas() {
       // 调试日志
       console.log('[Canvas] Error caught:', errorMessage);
 
-      // 检测是否是积分不足错误
-      if (errorMessage.includes($l('seedance.toast.insufficientCredits')) || errorMessage.includes('Insufficient credits')) {
+      // 检测是否是积分不足错误（不区分大小写，支持多种表达）
+      const lowerMessage = errorMessage.toLowerCase();
+      const isInsufficientCredits =
+        errorMessage.includes('积分不足') ||
+        lowerMessage.includes('insufficient') ||
+        lowerMessage.includes('not enough credit') ||
+        lowerMessage.includes('credit') && (lowerMessage.includes('insufficient') || lowerMessage.includes('not enough'));
+
+      if (isInsufficientCredits) {
         console.log('[Canvas] Detected insufficient credits, showing recharge dialog');
         // 刷新积分并显示充值对话框
         await fetchCredits();
