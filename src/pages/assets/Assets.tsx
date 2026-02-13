@@ -210,46 +210,69 @@ export function Assets() {
               <div key={date} className="assets-date-group">
                 <div className="assets-date-label">{date}</div>
                 <div className="assets-video-grid">
-                  {videos.map((video) => (
-                    <div key={video.id} className="assets-video-item" onClick={() => downloadVideo(video)}>
-                      <div className="assets-video-thumb">
-                        {hasCover(video) ? (
-                          // 有封面：显示背景图片
-                          <div className="assets-video-cover" style={{ backgroundImage: `url(${getCoverUrl(video)})` }} />
-                        ) : (
-                          // 无封面：显示 record-loading 视频
-                          <video
-                            className="assets-video-cover"
-                            src={recordLoadingVideo}
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
-                          />
-                        )}
-                        <span className="assets-video-duration">{formatDuration(video)}</span>
-                        {!hasCover(video) ? (
-                          // 没有封面：显示"生成中"标签
-                          <span className="assets-video-status assets-video-generating">{$l('seedance.video.generating')}</span>
-                        ) : video.video_local_path ? (
-                          // 有本地缓存：显示缓存标签
-                          <span className="assets-video-status assets-video-cached" title={$l('seedance.video.localCached')}>📦</span>
-                        ) : null}
-                        {/* 只有有封面时才显示下载按钮 */}
-                        {hasCover(video) && (
-                          <div className="assets-video-download">{$l('seedance.video.download')}</div>
-                        )}
-                      </div>
-                      <div className="assets-video-prompt" title={video.prompt || $l('seedance.video.noTitle')}>
-                        {video.prompt?.slice(0, 20) || $l('seedance.video.noTitle')}
-                      </div>
-                      {video.error_message && (
-                        <div className="assets-video-error" title={video.error_message}>
-                          {video.error_message}
+                  {videos.map((video) => {
+                    const videoUrl = getVideoUrl(video);
+                    const hasVideo = hasCover(video) && videoUrl;
+
+                    // 如果有视频，使用a标签；否则使用div
+                    const ItemWrapper = hasVideo ? 'a' : 'div';
+                    const itemProps = hasVideo
+                      ? { href: videoUrl, target: '_blank', rel: 'noopener noreferrer' }
+                      : { onClick: () => {} };
+
+                    return (
+                      <ItemWrapper key={video.id} className="assets-video-item" {...itemProps as any}>
+                        <div className="assets-video-thumb">
+                          {hasCover(video) ? (
+                            // 有封面：显示背景图片
+                            <div className="assets-video-cover" style={{ backgroundImage: `url(${getCoverUrl(video)})` }} />
+                          ) : (
+                            // 无封面：显示 record-loading 视频
+                            <video
+                              className="assets-video-cover"
+                              src={recordLoadingVideo}
+                              autoPlay
+                              loop
+                              muted
+                              playsInline
+                            />
+                          )}
+                          <span className="assets-video-duration">{formatDuration(video)}</span>
+                          {video.error_message ? (
+                            // 有错误信息：显示"生成失败"标签
+                            <span className="assets-video-status assets-video-failure">{$l('seedance.video.failure')}</span>
+                          ) : !hasCover(video) ? (
+                            // 没有封面：显示"生成中"标签
+                            <span className="assets-video-status assets-video-generating">{$l('seedance.video.generating')}</span>
+                          ) : video.video_local_path ? (
+                            // 有本地缓存：显示缓存标签
+                            <span className="assets-video-status assets-video-cached" title={$l('seedance.video.localCached')}>📦</span>
+                          ) : null}
+                          {/* 只有有封面时才显示下载按钮 */}
+                          {hasCover(video) && (
+                            <div
+                              className="assets-video-download"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                downloadVideo(video);
+                              }}
+                            >
+                              {$l('seedance.video.download')}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        <div className="assets-video-prompt" title={video.prompt || $l('seedance.video.noTitle')}>
+                          {video.prompt?.slice(0, 20) || $l('seedance.video.noTitle')}
+                        </div>
+                        {video.error_message && (
+                          <div className="assets-video-error" title={video.error_message}>
+                            {video.error_message}
+                          </div>
+                        )}
+                      </ItemWrapper>
+                    );
+                  })}
                 </div>
               </div>
             ))}

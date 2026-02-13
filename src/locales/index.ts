@@ -376,6 +376,7 @@ export const zhCN = {
         },
         video: {
             generating: '生成中',
+            failure: '生成失败',
             localCached: '本地缓存',
             download: '⬇️ 下载',
             noTitle: '无标题',
@@ -784,6 +785,7 @@ export const enUS = {
         },
         video: {
             generating: 'Generating',
+            failure: 'Failed',
             localCached: 'Cached locally',
             download: '⬇️ Download',
             noTitle: 'Untitled',
