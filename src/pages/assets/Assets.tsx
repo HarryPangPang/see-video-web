@@ -18,6 +18,7 @@ interface VideoAsset {
   prompt?: string;            // 提示词
   video_url?: string;         // 远程视频 URL
   cover_url?: string;         // 远程封面 URL
+  error_message?: string;     // 错误信息
 }
 
 export function Assets() {
@@ -239,9 +240,14 @@ export function Assets() {
                           <div className="assets-video-download">{$l('seedance.video.download')}</div>
                         )}
                       </div>
-                      <div className="assets-video-prompt">
+                      <div className="assets-video-prompt" title={video.prompt || $l('seedance.video.noTitle')}>
                         {video.prompt?.slice(0, 20) || $l('seedance.video.noTitle')}
                       </div>
+                      {video.error_message && (
+                        <div className="assets-video-error" title={video.error_message}>
+                          {video.error_message}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
