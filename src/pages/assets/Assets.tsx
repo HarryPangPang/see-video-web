@@ -214,29 +214,26 @@ export function Assets() {
                     const videoUrl = getVideoUrl(video);
                     const hasVideo = hasCover(video) && videoUrl;
 
-                    // 处理点击查看视频
-                    const handleItemClick = (e: React.MouseEvent) => {
-                      // 如果点击的是下载按钮，不处理
-                      if ((e.target as HTMLElement).closest('.assets-video-download')) {
-                        return;
-                      }
-                      // 如果有视频，打开新窗口查看
+                    // 处理点击封面查看视频
+                    const handleCoverClick = () => {
                       if (hasVideo && videoUrl) {
                         window.open(videoUrl, '_blank', 'noopener,noreferrer');
                       }
                     };
 
                     return (
-                      <div
-                        key={video.id}
-                        className="assets-video-item"
-                        onClick={handleItemClick}
-                        style={{ cursor: hasVideo ? 'pointer' : 'default' }}
-                      >
+                      <div key={video.id} className="assets-video-item">
                         <div className="assets-video-thumb">
                           {hasCover(video) ? (
-                            // 有封面：显示背景图片
-                            <div className="assets-video-cover" style={{ backgroundImage: `url(${getCoverUrl(video)})` }} />
+                            // 有封面：显示背景图片，点击可查看视频
+                            <div
+                              className="assets-video-cover"
+                              style={{
+                                backgroundImage: `url(${getCoverUrl(video)})`,
+                                cursor: hasVideo ? 'pointer' : 'default'
+                              }}
+                              onClick={handleCoverClick}
+                            />
                           ) : !video.error_message ? (
                             // 无封面且无错误：显示 record-loading 视频（生成中）
                             <video
