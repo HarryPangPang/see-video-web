@@ -302,7 +302,7 @@ export const zhCN = {
             frameModeSubject: '主体参考',
             badgeNew: 'New',
             uploadedCount: '已上传 {count}/5 张图片',
-            uploadReferenceImages: '上传参考图',
+            uploadReferenceImages: '添加图片',
         },
         pages: {
             discordInvite: '🎮 加入我们的 Discord 社区',
@@ -397,11 +397,11 @@ export const zhCN = {
         },
         submitTips: {
             title: '📋 提交须知',
-            processingTime: '⏰ 处理时间：提交后通常需要 5-10 分钟完成生成',
-            checkResults: '✅ 查看结果：完成后请前往「资产」页面查看您的作品',
-            autoRefund: '💰 自动退款：如生成失败，积分将自动退还到您的账户',
-            refreshPage: '🔄 实时更新：刷新页面即可查看最新的生成进度和积分余额',
-            contactSupport: '💬 遇到问题？欢迎加入我们的 Discord 社区联系管理员获取帮助',
+            processingTime: '⏰ 处理时长约 5-10 分钟',
+            checkResults: '✅ 生成完成后可在「资产」页面查看',
+            autoRefund: '💰 生成失败将自动退还积分',
+            refreshPage: '🔄 刷新页面查看最新进度',
+            contactSupport: '💬 遇到问题？加入 Discord 联系管理员',
         },
     }
 };
@@ -710,7 +710,7 @@ export const enUS = {
             frameModeSubject: 'Subject reference',
             badgeNew: 'New',
             uploadedCount: 'Uploaded {count}/5 images',
-            uploadReferenceImages: 'Upload reference images',
+            uploadReferenceImages: 'Add images',
         },
         pages: {
             discordInvite: '🎮 Join our Discord Community',
