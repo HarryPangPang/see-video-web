@@ -398,7 +398,7 @@ export const zhCN = {
         },
         submitTips: {
             title: '📋 提交须知',
-            processingTime: '⏰ 处理时长约 5-10 分钟',
+            processingTime: '⏰ 处理时长约 5-60 分钟，视排队情况可能有所不同',
             checkResults: '✅ 生成完成后可在「资产」页面查看',
             autoRefund: '💰 生成失败将自动退还积分',
             refreshPage: '🔄 刷新页面查看最新进度',
@@ -807,7 +807,7 @@ export const enUS = {
         },
         submitTips: {
             title: '📋 Submission Guide',
-            processingTime: '⏰ Processing Time: Usually takes 5-10 minutes to complete generation',
+            processingTime: '⏰ Processing Time: Usually takes 5-60 minutes to complete generation, the final time may vary based on queue status',
             checkResults: '✅ Check Results: Visit the "Assets" page to view your creations',
             autoRefund: '💰 Auto Refund: Credits will be automatically refunded if generation fails',
             refreshPage: '🔄 Real-time Updates: Refresh the page to see the latest progress and credit balance',
