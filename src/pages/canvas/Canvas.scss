@@ -113,6 +113,54 @@
   }
 }
 
+.canvas-frame-box-omni {
+  width: 100%;
+  padding: 16px 2px;
+  border-radius: 12px;
+  border: 2px dashed #d0d7de;
+  background: #ffffff;
+  position: relative;
+
+  &:hover {
+    border-color: #0969da;
+    background: #f6f8fa;
+    box-shadow: 0 4px 16px rgba(9, 105, 218, 0.12);
+  }
+
+  .canvas-frame-uploader {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    :global(.adm-image-uploader) {
+      width: 100%;
+    }
+
+    :global(.adm-image-uploader-upload-button) {
+      width: 120px;
+      height: 120px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+    }
+
+    :global(.adm-image-uploader-cell) {
+      width: 120px;
+      height: 120px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    :global(.adm-image-uploader-cell-image) {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+  }
+}
+
 .canvas-frame-placeholder {
   width: 100%;
   height: 100%;
@@ -138,6 +186,11 @@
 
   .canvas-frame-label {
     transition: all 0.3s ease;
+    text-align: center;
+    word-break: keep-all;
+    white-space: nowrap;
+    padding: 0 8px;
+    line-height: 1.4;
   }
 
   &:hover {
@@ -155,9 +208,9 @@
   align-items: center;
   justify-content: center;
   color: #8c959f;
-  padding: 0 8px;
   animation: fadeIn 0.3s ease;
-
+    font-size: 22px;
+    font-weight: bold
   svg {
     width: 28px;
     height: 28px;
@@ -436,36 +489,29 @@
 
 .canvas-quick-scroll {
   display: flex;
-  gap: 16px;
-  overflow-x: auto;
+  gap: 24px;
+  justify-content: space-between;
   padding-bottom: 8px;
-  &::-webkit-scrollbar {
-    height: 6px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #ddd;
-    border-radius: 3px;
-  }
 }
 
 .canvas-quick-card {
-  flex-shrink: 0;
-  width: 220px;
-  border-radius: 14px;
+  flex: 1;
+  max-width: 320px;
+  border-radius: 16px;
   overflow: hidden;
   background: #fff;
-  border: 1px solid #eee;
-  cursor: pointer;
+  border: 1px solid #e8ecef;
   display: flex;
   flex-direction: column;
   text-align: left;
   padding: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+    border-color: #d0d7de;
   }
 }
 
@@ -474,6 +520,14 @@
   padding-bottom: 56%;
   background-size: cover;
   background-position: center;
+}
+
+.canvas-quick-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  aspect-ratio: 16 / 9;
 }
 
 .canvas-quick-title {
@@ -601,8 +655,23 @@
     }
   }
 
+  .canvas-quick-scroll {
+    gap: 12px;
+    overflow-x: auto;
+
+    &::-webkit-scrollbar {
+      height: 6px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #ddd;
+      border-radius: 3px;
+    }
+  }
+
   .canvas-quick-card {
-    width: 180px;
+    flex: 0 0 auto;
+    width: 280px;
+    max-width: none;
   }
 
   .canvas-new-project {
@@ -612,4 +681,68 @@
   .canvas-new-plus {
     font-size: 44px;
   }
+
+  .canvas-submit-tips {
+    padding: 18px;
+    margin: 0;
+  }
+
+  .canvas-submit-tips-title {
+    font-size: 16px;
+    margin-bottom: 14px;
+  }
+
+  .canvas-submit-tips-item {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}
+
+.canvas-submit-tips {
+  background: linear-gradient(135deg, #f8fafc 0%, #e8f0fe 100%);
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin: 4px 0;
+  border: 1px solid #d6e4f5;
+  box-shadow: 0 2px 8px rgba(9, 105, 218, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  &:hover {
+    box-shadow: 0 4px 16px rgba(9, 105, 218, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    border-color: #b9d3f2;
+  }
+}
+
+.canvas-submit-tips-title {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0969da;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.01em;
+}
+
+.canvas-submit-tips-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.canvas-submit-tips-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 10px;
+  border: 1px solid rgba(9, 105, 218, 0.08);
+  backdrop-filter: blur(8px);
+
+}
+
+.canvas-submit-tips-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #24292f;
+  font-weight: 450;
 }

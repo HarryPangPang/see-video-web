@@ -17,10 +17,11 @@ import {
 import { OptionDropdown, OptionItem, OptionRatioItem } from '../../components/OptionDropdown';
 import '../../components/OptionDropdown.scss';
 import './Canvas.scss';
+import exampleImage1 from '../../assets/tos_0f73fd3acb6c712261a7e26166120267.webp';
+import exampleImage2 from '../../assets/tos_cc270a0f597d17627ff1f17b196dbe5d.jpg';
+import exampleImage3 from '../../assets/tos_fb5822a5502c5002c95598decab889e8.jpg';
 
-const demoSrc = 'https://images.unsplash.com/photo-1567945716310-4745a6b7844f?w=200';
-
-const TEMPLATE_IDS = ['templateTea', 'templateIP', 'templateSpace', 'templatePerfume'] as const;
+const EXAMPLE_IMAGES = [exampleImage1, exampleImage2, exampleImage3] as const;
 
 type CreationType = 'agent' | 'image' | 'video';
 type ModelKey = 'seedance20' | 'seedance20fast' | '35pro' | '30pro' | '30fast' | '30';
@@ -82,12 +83,6 @@ export function Canvas() {
     new Promise((resolve) => {
       setTimeout(() => resolve({ url: URL.createObjectURL(file) }), 300);
     });
-
-  const templates = TEMPLATE_IDS.map((id) => ({
-    id,
-    title: p[id],
-    thumb: demoSrc,
-  }));
 
   const creationTypeLabel = {
     agent: p.agentMode,
@@ -315,7 +310,7 @@ export function Canvas() {
           style={{
             display: 'inline-block',
             padding: '10px 24px',
-            backgroundColor: '#7289DA',
+            backgroundColor: '#faad14',
             color: '#ffffff',
             borderRadius: '8px',
             textDecoration: 'none',
@@ -323,14 +318,6 @@ export function Canvas() {
             fontSize: '16px',
             boxShadow: '0 2px 8px rgba(114, 137, 218, 0.4)',
             transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#5B6EAE';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(114, 137, 218, 0.5)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#7289DA';
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(114, 137, 218, 0.4)';
           }}
         >
           {p.discordInvite}
@@ -343,25 +330,27 @@ export function Canvas() {
             {isOmniMode ? (
               // 全能参考模式：支持1-5张图片多选，平铺展示
               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <ImageUploader
-                  value={omniFrames}
-                  onChange={setOmniFrames}
-                  upload={mockUpload}
-                  maxCount={5}
-                  accept="image/*"
-                  className="canvas-frame-uploader"
-                  multiple
-                  style={{
-                    '--cell-size': '80px',
-                    '--gap-horizontal': '8px',
-                    '--gap-vertical': '8px',
-                  }}
-                >
-                  <div className="canvas-frame-placeholder" style={{ width: '80px', height: '80px' }}>
-                    <span className="canvas-frame-plus">+</span>
-                    <span className="canvas-frame-label" style={{ fontSize: '12px' }}>{g.uploadReferenceImages}</span>
-                  </div>
-                </ImageUploader>
+                <div className="canvas-frame-box-omni">
+                  <ImageUploader
+                    value={omniFrames}
+                    onChange={setOmniFrames}
+                    upload={mockUpload}
+                    maxCount={5}
+                    accept="image/*"
+                    className="canvas-frame-uploader"
+                    multiple
+                    style={{
+                      '--cell-size': '120px',
+                      '--gap-horizontal': '12px',
+                      '--gap-vertical': '12px',
+                    }}
+                  >
+                    <div className="canvas-frame-placeholder">
+                      <span className="canvas-frame-plus">+</span>
+                      <span className="canvas-frame-label">{g.uploadReferenceImages}</span>
+                    </div>
+                  </ImageUploader>
+                </div>
                 {omniFrames.length > 0 && (
                   <div style={{ fontSize: '12px', color: '#666', textAlign: 'center' }}>
                     {g.uploadedCount.replace('{count}', omniFrames.length.toString())}
@@ -389,7 +378,7 @@ export function Canvas() {
                 {isStartEndMode && (
                   <>
                     <div className="canvas-frames-arrow">
-                      <IconArrowLeftRight />
+                      +
                     </div>
                     <div className="canvas-frame-box">
                       <ImageUploader
@@ -563,19 +552,41 @@ export function Canvas() {
         </div>
       </div>
 
+      {/* 提交须知 */}
+      <div className="canvas-submit-tips">
+        <h3 className="canvas-submit-tips-title">{t.seedance.submitTips.title}</h3>
+        <div className="canvas-submit-tips-content">
+          <div className="canvas-submit-tips-item">
+            <span className="canvas-submit-tips-text">{t.seedance.submitTips.processingTime}</span>
+          </div>
+          <div className="canvas-submit-tips-item">
+            <span className="canvas-submit-tips-text">{t.seedance.submitTips.checkResults}</span>
+          </div>
+          <div className="canvas-submit-tips-item">
+            <span className="canvas-submit-tips-text">{t.seedance.submitTips.autoRefund}</span>
+          </div>
+          <div className="canvas-submit-tips-item">
+            <span className="canvas-submit-tips-text">{t.seedance.submitTips.refreshPage}</span>
+          </div>
+          <div className="canvas-submit-tips-item">
+            <span className="canvas-submit-tips-text">
+              <a  href="https://discord.com/invite/94YKekdH"
+          target="_blank" rel='noopener noreferrer'>{t.seedance.submitTips.contactSupport}</a>
+            </span>          </div>
+        </div>
+      </div>
+
       <section className="canvas-quick-start">
         <h2 className="canvas-section-title">{p.quickStart}</h2>
         <div className="canvas-quick-scroll">
-          {templates.map((tpl) => (
-            <button key={tpl.id} type="button" className="canvas-quick-card" onClick={() => navigate('/')}>
-              <div className="canvas-quick-thumb" style={{ backgroundImage: `url(${tpl.thumb})` }} />
-              <span className="canvas-quick-title">{tpl.title}</span>
-              <span className="canvas-quick-arrow">→</span>
-            </button>
+          {EXAMPLE_IMAGES.map((image, index) => (
+            <div key={index} className="canvas-quick-card">
+              <img src={image} alt={`Example ${index + 1}`} className="canvas-quick-image" />
+            </div>
           ))}
         </div>
       </section>
-
+        
       {/* <section className="canvas-recent">
         <h2 className="canvas-section-title">{p.recentProjects}</h2>
         <button type="button" className="canvas-new-project" onClick={() => navigate('/')}>

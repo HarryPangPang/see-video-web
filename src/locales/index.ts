@@ -325,7 +325,7 @@ export const zhCN = {
             canvasTitle: '画布',
             canvasDesc: '无限画布，自由创作。',
             canvasQuestion: '今天想在无限画布创作什么?',
-            quickStart: '快速开始',
+            quickStart: '生成示例',
             recentProjects: '最近项目',
             newProject: '新建项目',
             templateTea: '中式茶饮品牌VI设计',
@@ -394,6 +394,14 @@ export const zhCN = {
             recommended: '推荐',
             processing: '处理中...',
             pay: '支付 ¥{amount}',
+        },
+        submitTips: {
+            title: '📋 提交须知',
+            processingTime: '⏰ 处理时间：提交后通常需要 5-10 分钟完成生成',
+            checkResults: '✅ 查看结果：完成后请前往「资产」页面查看您的作品',
+            autoRefund: '💰 自动退款：如生成失败，积分将自动退还到您的账户',
+            refreshPage: '🔄 实时更新：刷新页面即可查看最新的生成进度和积分余额',
+            contactSupport: '💬 遇到问题？欢迎加入我们的 Discord 社区联系管理员获取帮助',
         },
     }
 };
@@ -725,7 +733,7 @@ export const enUS = {
             canvasTitle: 'Canvas',
             canvasDesc: 'Infinite canvas, create freely.',
             canvasQuestion: 'What do you want to create on the canvas today?',
-            quickStart: 'Quick start',
+            quickStart: 'Generation Examples',
             recentProjects: 'Recent projects',
             newProject: 'New project',
             templateTea: 'Chinese tea brand VI',
@@ -794,6 +802,14 @@ export const enUS = {
             recommended: 'Recommended',
             processing: 'Processing...',
             pay: 'Pay ¥{amount}',
+        },
+        submitTips: {
+            title: '📋 Submission Guide',
+            processingTime: '⏰ Processing Time: Usually takes 5-10 minutes to complete generation',
+            checkResults: '✅ Check Results: Visit the "Assets" page to view your creations',
+            autoRefund: '💰 Auto Refund: Credits will be automatically refunded if generation fails',
+            refreshPage: '🔄 Real-time Updates: Refresh the page to see the latest progress and credit balance',
+            contactSupport: '💬 Need Help? Join our Discord community to contact administrators for assistance',
         },
     }
 };
