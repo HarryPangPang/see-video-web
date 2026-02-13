@@ -40,7 +40,7 @@ export function Canvas() {
   const [openDropdown, setOpenDropdown] = useState<'creationType' | 'model' | 'frameMode' | 'ratio' | 'duration' | null>(null);
   const [creationType, setCreationType] = useState<CreationType>('video');
   const [model, setModel] = useState<ModelKey>('seedance20');
-  const [frameMode, setFrameMode] = useState<FrameModeKey>('startEnd');
+  const [frameMode, setFrameMode] = useState<FrameModeKey>('omni');
   const [ratio, setRatio] = useState<RatioKey>('16:9');
   const [duration, setDuration] = useState<DurationKey>('5');
   const [isSubmitting, setIsSubmitting] = useState(false);
