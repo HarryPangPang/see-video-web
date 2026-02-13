@@ -394,7 +394,7 @@ export const zhCN = {
             planProfessional: '专业套餐',
             recommended: '推荐',
             processing: '处理中...',
-            pay: '支付 ¥{amount}',
+            pay: '支付 ${amount}',
         },
         submitTips: {
             title: '📋 提交须知',
@@ -803,7 +803,7 @@ export const enUS = {
             planProfessional: 'Professional Plan',
             recommended: 'Recommended',
             processing: 'Processing...',
-            pay: 'Pay ¥{amount}',
+            pay: 'Pay ${amount}',
         },
         submitTips: {
             title: '📋 Submission Guide',

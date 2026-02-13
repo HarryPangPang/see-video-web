@@ -79,7 +79,7 @@ export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose
                   <span className="plan-credits-amount">{plan.credits}</span>
                   <span className="plan-credits-label">{c.credits}</span>
                 </div>
-                <div className="plan-price">¥{plan.amount}</div>
+                <div className="plan-price">${plan.amount}</div>
                 <div className="plan-label">{plan.label}</div>
               </div>
             ))}
