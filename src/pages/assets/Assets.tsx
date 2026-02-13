@@ -214,20 +214,31 @@ export function Assets() {
                     const videoUrl = getVideoUrl(video);
                     const hasVideo = hasCover(video) && videoUrl;
 
-                    // 如果有视频，使用a标签；否则使用div
-                    const ItemWrapper = hasVideo ? 'a' : 'div';
-                    const itemProps = hasVideo
-                      ? { href: videoUrl, target: '_blank', rel: 'noopener noreferrer' }
-                      : { onClick: () => {} };
+                    // 处理点击查看视频
+                    const handleItemClick = (e: React.MouseEvent) => {
+                      // 如果点击的是下载按钮，不处理
+                      if ((e.target as HTMLElement).closest('.assets-video-download')) {
+                        return;
+                      }
+                      // 如果有视频，打开新窗口查看
+                      if (hasVideo && videoUrl) {
+                        window.open(videoUrl, '_blank', 'noopener,noreferrer');
+                      }
+                    };
 
                     return (
-                      <ItemWrapper key={video.id} className="assets-video-item" {...itemProps as any}>
+                      <div
+                        key={video.id}
+                        className="assets-video-item"
+                        onClick={handleItemClick}
+                        style={{ cursor: hasVideo ? 'pointer' : 'default' }}
+                      >
                         <div className="assets-video-thumb">
                           {hasCover(video) ? (
                             // 有封面：显示背景图片
                             <div className="assets-video-cover" style={{ backgroundImage: `url(${getCoverUrl(video)})` }} />
-                          ) : (
-                            // 无封面：显示 record-loading 视频
+                          ) : !video.error_message ? (
+                            // 无封面且无错误：显示 record-loading 视频（生成中）
                             <video
                               className="assets-video-cover"
                               src={recordLoadingVideo}
@@ -236,6 +247,9 @@ export function Assets() {
                               muted
                               playsInline
                             />
+                          ) : (
+                            // 无封面但有错误：显示空白占位
+                            <div className="assets-video-cover" />
                           )}
                           <span className="assets-video-duration">{formatDuration(video)}</span>
                           {video.error_message ? (
@@ -270,7 +284,7 @@ export function Assets() {
                             {video.error_message}
                           </div>
                         )}
-                      </ItemWrapper>
+                      </div>
                     );
                   })}
                 </div>
