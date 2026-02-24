@@ -5,6 +5,8 @@ import { Button, TextArea, ImageUploader, Toast } from 'antd-mobile';
 import type { ImageUploadItem } from 'antd-mobile/es/components/image-uploader';
 import { createGeneration, fileToBase64, getCreditsBalance, type CreateGenerationRequest } from '../../services/api';
 import { RechargeDialog } from '../../components/RechargeDialog';
+import { LoginDialog } from '../../components/LoginDialog';
+import { useAuth } from '../../context/AuthContext';
 import {
   IconArrowUp,
   IconRefresh,
@@ -31,6 +33,7 @@ type DurationKey = '4' | '5' | '6' | '7' | '8' | '9' | '10'| '11'| '12'| '13'| '
 
 export function Canvas() {
   const { t, $l } = useI18n();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const p = t.seedance.pages;
   const g = t.seedance.generate;
@@ -46,12 +49,13 @@ export function Canvas() {
   const [duration, setDuration] = useState<DurationKey>('5');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rechargeDialogVisible, setRechargeDialogVisible] = useState(false);
+  const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [currentCredits, setCurrentCredits] = useState(0);
 
-  // 获取当前积分
+  // 登录后刷新积分
   useEffect(() => {
-    fetchCredits();
-  }, []);
+    if (user) fetchCredits();
+  }, [user]);
 
   const fetchCredits = async () => {
     try {
@@ -80,7 +84,12 @@ export function Canvas() {
   const durationRef = useRef<HTMLDivElement>(null);
 
   const mockUpload = (file: File): Promise<ImageUploadItem> =>
-    new Promise((resolve) => {
+    new Promise((resolve, reject) => {
+      if (!user) {
+        setLoginDialogVisible(true);
+        reject(new Error('login required'));
+        return;
+      }
       setTimeout(() => resolve({ url: URL.createObjectURL(file) }), 300);
     });
 
@@ -142,6 +151,11 @@ export function Canvas() {
 
   // 处理表单提交
   const handleSubmit = async () => {
+    if (!user) {
+      setLoginDialogVisible(true);
+      return;
+    }
+
     // 验证必填项
     if (!prompt.trim()) {
       Toast.show({
@@ -294,6 +308,11 @@ export function Canvas() {
 
   return (
     <div className="canvas-page">
+      <LoginDialog
+        visible={loginDialogVisible}
+        onClose={() => setLoginDialogVisible(false)}
+        onLoginSuccess={fetchCredits}
+      />
       <RechargeDialog
         visible={rechargeDialogVisible}
         onClose={handleRechargeClose}

@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
 import { Credits } from '../components/Credits';
+import { LoginDialog } from '../components/LoginDialog';
 import './MainLayout.scss';
 
 interface MainLayoutProps {
@@ -27,6 +28,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const layout = t.seedance.layout;
   const c = t.common;
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,6 +58,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   return (
     <div className="main-layout seedance-layout">
+      <LoginDialog
+        visible={loginDialogVisible}
+        onClose={() => setLoginDialogVisible(false)}
+      />
       <aside className="sidebar">
         <div className="sidebar-brand">
           <button type="button" className="sidebar-logo" onClick={() => navigate('/')} aria-label="SeeLit">
@@ -92,29 +98,42 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           <Credits />
 
           <div className="sidebar-user" ref={userMenuRef}>
-            <button
-              type="button"
-              className="sidebar-user-trigger"
-              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              aria-expanded={isUserMenuOpen}
-            >
-              <span className="sidebar-user-avatar">{user?.email?.[0]?.toUpperCase() || 'U'}</span>
-              <span className="sidebar-user-membership">{user?.username || user?.email?.split('@')[0] || c.user}</span>
-            </button>
-            {isUserMenuOpen && (
-              <div className="sidebar-user-dropdown">
-                <div className="sidebar-user-dropdown-head">
-                  <span className="sidebar-user-avatar sidebar-user-avatar--lg">{user?.email?.[0]?.toUpperCase()}</span>
-                  <div className="sidebar-user-dropdown-info">
-                    <span className="sidebar-user-dropdown-name">{user?.username || user?.email?.split('@')[0] || '用户'}</span>
-                    <span className="sidebar-user-dropdown-email">{user?.email}</span>
-                  </div>
-                </div>
-                <div className="sidebar-user-dropdown-divider" />
-                <button type="button" className="sidebar-user-dropdown-item sidebar-user-dropdown-item--danger" onClick={handleLogout}>
-                  {layout.logout}
+            {user ? (
+              <>
+                <button
+                  type="button"
+                  className="sidebar-user-trigger"
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  aria-expanded={isUserMenuOpen}
+                >
+                  <span className="sidebar-user-avatar">{user.email?.[0]?.toUpperCase()}</span>
+                  <span className="sidebar-user-membership">{user.username || user.email?.split('@')[0]}</span>
                 </button>
-              </div>
+                {isUserMenuOpen && (
+                  <div className="sidebar-user-dropdown">
+                    <div className="sidebar-user-dropdown-head">
+                      <span className="sidebar-user-avatar sidebar-user-avatar--lg">{user.email?.[0]?.toUpperCase()}</span>
+                      <div className="sidebar-user-dropdown-info">
+                        <span className="sidebar-user-dropdown-name">{user.username || user.email?.split('@')[0]}</span>
+                        <span className="sidebar-user-dropdown-email">{user.email}</span>
+                      </div>
+                    </div>
+                    <div className="sidebar-user-dropdown-divider" />
+                    <button type="button" className="sidebar-user-dropdown-item sidebar-user-dropdown-item--danger" onClick={handleLogout}>
+                      {layout.logout}
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <button
+                type="button"
+                className="sidebar-login-btn"
+                onClick={() => setLoginDialogVisible(true)}
+              >
+                <span className="sidebar-login-icon">👤</span>
+                <span className="sidebar-login-text">{layout.login}</span>
+              </button>
             )}
           </div>
 

@@ -5,6 +5,8 @@ import { IconArrowUp, IconRefresh, IconCube, IconDoc, IconRect, IconClock } from
 import { useI18n } from '../../context/I18nContext';
 import { createGeneration, fileToBase64, getCreditsBalance, type CreateGenerationRequest } from '../../services/api';
 import { RechargeDialog } from '../../components/RechargeDialog';
+import { LoginDialog } from '../../components/LoginDialog';
+import { useAuth } from '../../context/AuthContext';
 import './Generate.scss';
 
 const demoSrc = 'https://images.unsplash.com/photo-1567945716310-4745a6b7844f?w=400';
@@ -12,6 +14,7 @@ const videoThumb = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23
 
 export function Generate() {
   const { t, $l } = useI18n();
+  const { user } = useAuth();
   const g = t.seedance.generate;
   const p = t.seedance.pages;
   const [startFrame, setStartFrame] = useState<ImageUploadItem[]>([]);
@@ -19,12 +22,13 @@ export function Generate() {
   const [prompt, setPrompt] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [rechargeDialogVisible, setRechargeDialogVisible] = useState(false);
+  const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [currentCredits, setCurrentCredits] = useState(0);
 
-  // 获取当前积分
+  // 登录后刷新积分
   useEffect(() => {
-    fetchCredits();
-  }, []);
+    if (user) fetchCredits();
+  }, [user]);
 
   const fetchCredits = async () => {
     try {
@@ -38,12 +42,22 @@ export function Generate() {
   };
 
   const mockUpload = (file: File): Promise<ImageUploadItem> =>
-    new Promise((resolve) => {
+    new Promise((resolve, reject) => {
+      if (!user) {
+        setLoginDialogVisible(true);
+        reject(new Error('login required'));
+        return;
+      }
       const url = URL.createObjectURL(file);
       setTimeout(() => resolve({ url }), 300);
     });
 
   const handleSubmit = async () => {
+    if (!user) {
+      setLoginDialogVisible(true);
+      return;
+    }
+
     if (!prompt.trim()) {
       Toast.show({ icon: 'fail', content: $l('seedance.toast.pleaseInputPrompt') });
       return;
@@ -125,6 +139,11 @@ export function Generate() {
 
   return (
     <div className="generate-page">
+      <LoginDialog
+        visible={loginDialogVisible}
+        onClose={() => setLoginDialogVisible(false)}
+        onLoginSuccess={fetchCredits}
+      />
       <RechargeDialog
         visible={rechargeDialogVisible}
         onClose={handleRechargeClose}

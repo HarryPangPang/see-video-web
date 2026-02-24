@@ -5,7 +5,6 @@ import { AuthProvider } from './context/AuthContext';
 import { I18nProvider } from './context/I18nContext';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
-import { ProtectedRoute } from './components/ProtectedRoute';
 import { Generate } from './pages/generate/Generate';
 import { Inspire } from './pages/inspire/Inspire';
 import { Assets } from './pages/assets/Assets';
@@ -24,42 +23,33 @@ export default function App() {
         <Route
           path="/inspire"
           element={
-            <ProtectedRoute>
-              <MainLayout>
-                <Generate />
-              </MainLayout>
-            </ProtectedRoute>
+            <MainLayout>
+              <Generate />
+            </MainLayout>
           }
         />
         <Route
           path="/"
           element={
-            <ProtectedRoute>
-              <MainLayout>
+            <MainLayout>
               <Canvas />
-              </MainLayout>
-            </ProtectedRoute>
+            </MainLayout>
           }
         />
         <Route
           path="/assets"
           element={
-            <ProtectedRoute>
-              <MainLayout>
-                <Assets />
-              </MainLayout>
-            </ProtectedRoute>
+            <MainLayout>
+              <Assets />
+            </MainLayout>
           }
         />
         <Route
           path="/canvas"
           element={
-            <ProtectedRoute>
-              <MainLayout>
+            <MainLayout>
               <Inspire />
-               
-              </MainLayout>
-            </ProtectedRoute>
+            </MainLayout>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

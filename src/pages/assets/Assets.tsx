@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, SearchBar, Toast, DotLoading } from 'antd-mobile';
 import { useI18n } from '../../context/I18nContext';
+import { useAuth } from '../../context/AuthContext';
 import { getVideoList } from '../../services/api';
+import { LoginDialog } from '../../components/LoginDialog';
 import recordLoadingVideo from '../../assets/record-loading.mp4';
 import './Assets.scss';
 
@@ -23,6 +25,7 @@ interface VideoAsset {
 
 export function Assets() {
   const { t, $l } = useI18n();
+  const { user } = useAuth();
   const p = t.seedance.pages;
   const c = t.common;
   const [contentTab, setContentTab] = useState('videos');
@@ -30,11 +33,19 @@ export function Assets() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [videoList, setVideoList] = useState<VideoAsset[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loginDialogVisible, setLoginDialogVisible] = useState(false);
 
-  // 获取视频列表
+  // 未登录时立即弹出登录框
   useEffect(() => {
-    fetchVideoList();
+    if (!user) {
+      setLoginDialogVisible(true);
+    }
   }, []);
+
+  // 登录后加载视频列表
+  useEffect(() => {
+    if (user) fetchVideoList();
+  }, [user]);
 
   const fetchVideoList = async () => {
     setLoading(true);
@@ -167,6 +178,10 @@ export function Assets() {
 
   return (
     <div className="assets-page">
+      <LoginDialog
+        visible={loginDialogVisible}
+        onClose={() => setLoginDialogVisible(false)}
+      />
       <div className="assets-top-tabs">
         <Tabs activeKey={contentTab} onChange={(k) => setContentTab(k as string)} className="assets-content-tabs">
           <Tabs.Tab title={p.assetsVideos} key="videos" />
