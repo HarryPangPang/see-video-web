@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from 'antd-mobile';
 import { useI18n } from '../../context/I18nContext';
 import { MainLayout } from '../../layout/MainLayout';
@@ -8,16 +7,11 @@ import './PaymentResult.scss';
 const DISCORD_INVITE_URL = 'https://discord.com/invite/94YKekdH';
 
 export function PaymentSuccess() {
-  const { t } = useI18n();
-  const navigate = useNavigate();
+  const { t, $l } = useI18n();
   const p = t.seedance?.payment;
 
-  const goBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate('/');
-    }
+  const refreshPage = () => {
+    window.location.reload();
   };
 
   return (
@@ -37,8 +31,8 @@ export function PaymentSuccess() {
         >
           {p?.joinDiscord ?? 'Join Discord'}
         </a>
-        <Button color="primary" onClick={goBack} className="result-btn">
-          {p?.backToPage ?? p?.backToHome ?? 'Return to previous page'}
+        <Button color="primary" onClick={refreshPage} className="result-btn">
+          {$l('seedance.payment.refreshPage') || 'Refresh page'}
         </Button>
       </div>
     </MainLayout>

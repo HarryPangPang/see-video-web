@@ -4,6 +4,8 @@ import { createPayment } from '../services/api';
 import { useI18n } from '../context/I18nContext';
 import './RechargeDialog.scss';
 
+const DISCORD_INVITE_URL = 'https://discord.com/invite/94YKekdH';
+
 interface RechargeDialogProps {
   visible: boolean;
   onClose: () => void;
@@ -18,15 +20,26 @@ interface RechargePlan {
   popular?: boolean;
 }
 
+function getPayButtonText(
+  r: { processing?: string; payTest?: string; payAmount?: string },
+  loading: boolean,
+  amount: number
+): string {
+  if (loading && r.processing) return r.processing;
+  if (amount === -1) return r.payTest ?? 'Test payment';
+  const template = r.payAmount ?? 'Pay $%s';
+  return template.replace('%s', String(amount));
+}
+
 export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose, currentCredits = 0 }) => {
   const { t, $l } = useI18n();
   const r = t.seedance.recharge;
   const c = t.common;
 
   const rechargePlans: RechargePlan[] = [
-    { id: 'plan_test', amount: -1, credits: 1, label: r.planTest, popular: true  },
-    { id: 'plan_1', amount: 1, credits: 1, label: r.planPayPerUse, popular: false  },
-    { id: 'plan_10', amount: 10, credits: 10, label: r.planStandard},
+    { id: 'plan_test', amount: -1, credits: 1, label: r.planTest, popular: true },
+    { id: 'plan_1', amount: 1, credits: 1, label: r.planPayPerUse, popular: false },
+    { id: 'plan_10', amount: 10, credits: 10, label: r.planStandard },
     { id: 'plan_30', amount: 30, credits: 30, label: r.planStandard },
     { id: 'plan_50', amount: 50, credits: 50, label: r.planProfessional },
   ];
@@ -39,17 +52,19 @@ export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose
     try {
       const result = await createPayment(selectedPlan.amount, selectedPlan.credits);
       if (result.data?.checkoutUrl) {
-        // 打开支付链接
         window.open(result.data.checkoutUrl, '_blank');
         Toast.show({ content: $l('seedance.toast.paymentOpened'), icon: 'success', duration: 3000 });
-        // 可选：关闭对话框
-        // onClose();
       }
     } catch (err) {
       Toast.show({ content: err instanceof Error ? err.message : $l('seedance.toast.createOrderFailed'), icon: 'fail' });
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatPrice = (amount: number) => {
+    if (amount === -1) return 'Free';
+    return `$${amount}`;
   };
 
   return (
@@ -79,38 +94,39 @@ export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose
                   <span className="plan-credits-amount">{plan.credits}</span>
                   <span className="plan-credits-label">{c.credits}</span>
                 </div>
-                <div className="plan-price">${plan.amount}</div>
+                <div className="plan-price">{formatPrice(plan.amount)}</div>
                 <div className="plan-label">{plan.label}</div>
               </div>
             ))}
           </div>
 
           <div className="recharge-tips">
-            <p>{r.tips}</p>
-            <ul>
-              <li>{r.tip1}</li>
-              <li>{r.tip2}</li>
-              <li>{r.tip3}</li>
-            </ul>
+            <p className="recharge-tip-short">{r.tipShort}</p>
             {r.stripePoweredBy && (
               <p className="recharge-stripe-brand">🔒 {r.stripePoweredBy}</p>
             )}
+            <a
+              href={DISCORD_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="recharge-discord-link"
+            >
+              {r.needHelp ?? 'Need help? Join our Discord'}
+            </a>
           </div>
         </div>
       }
       actions={[
-        {
-          key: 'cancel',
-          text: c.cancel,
-          onClick: onClose,
-        },
-        {
-          key: 'confirm',
-          text: loading ? r.processing : r.pay.replace(/\$\{amount\}|\{amount\}/g, selectedPlan.amount === -1 ? '0' : selectedPlan.amount.toString()),
-          primary: true,
-          disabled: loading,
-          onClick: handleRecharge,
-        },
+        [
+          { key: 'cancel', text: c.cancel, onClick: onClose },
+          {
+            key: 'confirm',
+            text: getPayButtonText(r, loading, selectedPlan.amount),
+            primary: true,
+            disabled: loading,
+            onClick: handleRecharge,
+          },
+        ],
       ]}
     />
   );
