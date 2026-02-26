@@ -5,13 +5,14 @@ import { MainLayout } from '../../layout/MainLayout';
 import './PaymentResult.scss';
 
 const DISCORD_INVITE_URL = 'https://discord.com/invite/94YKekdH';
+const SITE_HOME_URL = 'https://see.lightchaser.xyz/';
 
 export function PaymentSuccess() {
   const { t, $l } = useI18n();
   const p = t.seedance?.payment;
 
-  const refreshPage = () => {
-    window.location.reload();
+  const goHome = () => {
+    window.location.href = SITE_HOME_URL;
   };
 
   return (
@@ -31,7 +32,7 @@ export function PaymentSuccess() {
         >
           {p?.joinDiscord ?? 'Join Discord'}
         </a>
-        <Button color="primary" onClick={refreshPage} className="result-btn">
+        <Button color="primary" onClick={goHome} className="result-btn">
           {$l('seedance.payment.refreshPage') || 'Refresh page'}
         </Button>
       </div>
