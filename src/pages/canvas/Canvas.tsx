@@ -165,23 +165,7 @@ export function Canvas() {
       return;
     }
 
-    // 根据帧模式验证图片
-    if (frameMode === 'startEnd' && startFrame.length === 0) {
-      Toast.show({
-        icon: 'fail',
-        content: $l('seedance.toast.uploadStartFrame'),
-      });
-      return;
-    }
-
-    if (frameMode === 'omni' && omniFrames.length === 0) {
-      Toast.show({
-        icon: 'fail',
-        content: $l('seedance.toast.uploadReference'),
-      });
-      return;
-    }
-
+    // 图片为可选，不强制要求上传
     setIsSubmitting(true);
     const loadingToast = Toast.show({
       icon: 'loading',
