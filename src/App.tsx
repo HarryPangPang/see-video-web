@@ -9,6 +9,8 @@ import { Generate } from './pages/generate/Generate';
 import { Inspire } from './pages/inspire/Inspire';
 import { Assets } from './pages/assets/Assets';
 import { Canvas } from './pages/canvas/Canvas';
+import { PaymentSuccess } from './pages/payment/PaymentSuccess';
+import { PaymentCancel } from './pages/payment/PaymentCancel';
 import 'antd-mobile/es/global';
 import './index.scss';
 
@@ -52,6 +54,8 @@ export default function App() {
             </MainLayout>
           }
         />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/cancel" element={<PaymentCancel />} />
         <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

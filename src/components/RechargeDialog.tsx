@@ -92,6 +92,9 @@ export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose
               <li>{r.tip2}</li>
               <li>{r.tip3}</li>
             </ul>
+            {r.stripePoweredBy && (
+              <p className="recharge-stripe-brand">🔒 {r.stripePoweredBy}</p>
+            )}
           </div>
         </div>
       }
@@ -103,7 +106,7 @@ export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose
         },
         {
           key: 'confirm',
-          text: loading ? r.processing : r.pay.replace('{amount}', selectedPlan.amount.toString()),
+          text: loading ? r.processing : r.pay.replace(/\$\{amount\}|\{amount\}/g, selectedPlan.amount === -1 ? '0' : selectedPlan.amount.toString()),
           primary: true,
           disabled: loading,
           onClick: handleRecharge,
