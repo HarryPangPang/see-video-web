@@ -7,6 +7,15 @@ import { LoginDialog } from '../../components/LoginDialog';
 import recordLoadingVideo from '../../assets/record-loading.mp4';
 import './Assets.scss';
 
+interface QueueInfo {
+  位置?: number;
+  总人数?: number;
+  等待分钟?: number;
+  pos?: number;
+  total?: number;
+  wait?: number;
+}
+
 interface VideoAsset {
   id: string;
   generate_id?: string;
@@ -21,11 +30,12 @@ interface VideoAsset {
   video_url?: string;         // 远程视频 URL
   cover_url?: string;         // 远程封面 URL
   error_message?: string;     // 错误信息
+  queue_info?: QueueInfo;    // 排队信息 { pos, total, wait }
 }
 
 export function Assets() {
   const { t, $l } = useI18n();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const p = t.seedance.pages;
   const c = t.common;
   const [contentTab, setContentTab] = useState('videos');
@@ -35,38 +45,39 @@ export function Assets() {
   const [loading, setLoading] = useState(false);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
 
-  // 未登录时立即弹出登录框
+  // 仅在 auth 加载完成后且未登录时弹出登录框，避免刷新时误弹
   useEffect(() => {
-    if (!user) {
+    if (!authLoading && !user) {
       setLoginDialogVisible(true);
     }
-  }, []);
+  }, [authLoading, user]);
 
-  // 登录后加载视频列表
+  // 登录后加载视频列表（使用 AbortController 避免 Strict Mode 或依赖重复触发时发两次请求）
   useEffect(() => {
-    if (user) fetchVideoList();
-  }, [user]);
-
-  const fetchVideoList = async () => {
-    setLoading(true);
-    try {
-      const result = await getVideoList();
-      if (result.success && result.data?.asset_list) {
-        // 直接使用返回的视频列表
-        const videos = result.data.asset_list;
-        setVideoList(videos);
-        console.log('[Assets] 获取到的视频列表:', videos);
-        Toast.show({ content: $l('seedance.toast.videoLoadSuccess').replace('{count}', videos.length.toString()) });
-      } else {
-        Toast.show({ content: $l('seedance.toast.videoLoadFailed'), icon: 'fail' });
+    if (!user) return;
+    const controller = new AbortController();
+    const load = async () => {
+      setLoading(true);
+      try {
+        const result = await getVideoList(controller.signal);
+        if (result.success && result.data?.asset_list) {
+          const videos = result.data.asset_list;
+          setVideoList(videos);
+          Toast.show({ content: $l('seedance.toast.videoLoadSuccess').replace('{count}', videos.length.toString()) });
+        } else {
+          Toast.show({ content: $l('seedance.toast.videoLoadFailed'), icon: 'fail' });
+        }
+      } catch (err: any) {
+        if ((err as Error).name === 'AbortError') return;
+        console.error('[Assets] 获取视频列表错误:', err);
+        Toast.show({ content: err.message || $l('seedance.toast.networkError'), icon: 'fail' });
+      } finally {
+        setLoading(false);
       }
-    } catch (err: any) {
-      console.error('[Assets] 获取视频列表错误:', err);
-      Toast.show({ content: err.message || $l('seedance.toast.networkError'), icon: 'fail' });
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    load();
+    return () => controller.abort();
+  }, [user]);
 
 
   // 获取视频 URL（优先使用本地缓存）
@@ -284,8 +295,18 @@ export function Assets() {
                             // 有错误信息：显示"生成失败"标签
                             <span className="assets-video-status assets-video-failure">{$l('seedance.video.failure')}</span>
                           ) : !hasCover(video) ? (
-                            // 没有封面：显示"生成中"标签
-                            <span className="assets-video-status assets-video-generating">{$l('seedance.video.generating')}</span>
+                            // 没有封面：剩余时间居中，Generating 右下角
+                            <>
+                              {video.queue_info ? (
+                                <span className="assets-video-queue-text">
+                                  {$l('seedance.video.queueStatus')
+                                    .replace('{pos}', String(video.queue_info.位置 ?? video.queue_info.pos ?? 0))
+                                    .replace('{total}', String(video.queue_info.总人数 ?? video.queue_info.total ?? 0))
+                                    .replace('{wait}', String(video.queue_info.等待分钟 ?? video.queue_info.wait ?? 0))}
+                                </span>
+                              ) : null}
+                              <span className="assets-video-generating-badge">{$l('seedance.video.generating')}</span>
+                            </>
                           ) : video.video_local_path ? (
                             // 有本地缓存：显示缓存标签
                             <span className="assets-video-status assets-video-cached" title={$l('seedance.video.localCached')}>📦</span>

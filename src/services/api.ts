@@ -158,8 +158,8 @@ export async function getList(taskId: string): Promise<ApiResponse> {
   return result;
 }
 
-// 获取即梦视频列表
-export async function getVideoList(): Promise<ApiResponse> {
+// 获取即梦视频列表（支持 AbortSignal 避免重复请求）
+export async function getVideoList(signal?: AbortSignal): Promise<ApiResponse> {
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
   const headers: Record<string, string> = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -167,6 +167,7 @@ export async function getVideoList(): Promise<ApiResponse> {
   const response = await fetch(`${API_BASE_URL}/video-list`, {
     method: 'GET',
     headers,
+    signal,
   });
 
   if (!response.ok) {

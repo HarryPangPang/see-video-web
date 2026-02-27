@@ -119,8 +119,8 @@
     font-size: 12px;
     color: #fff;
     background: rgba(0, 0, 0, 0.6);
-    padding: 2px 8px;
-    border-radius: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
   }
 
   .assets-video-status {
@@ -148,6 +148,55 @@
     background: rgba(255, 77, 79, 0.9);
     color: #fff;
     font-weight: 500;
+  }
+
+  .assets-video-queue {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    font-size: 11px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 4px 8px;
+    border-radius: 4px;
+    max-width: calc(100% - 100px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 生成中：剩余时间居中可换行展示全，Generating 右下角 */
+  .assets-video-queue-text {
+    width: calc(100% - 48px);
+    padding: 0 12px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    line-height: 1.4;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+    padding: 8px 14px;
+    border-radius: 8px;
+    white-space: normal;
+    word-break: break-word;
+    max-width: calc(100% - 48px);
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  .assets-video-generating-badge {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+    background: #ed7b2e;
+    padding: 4px 10px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   }
 
   .assets-video-download {

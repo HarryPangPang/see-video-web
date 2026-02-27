@@ -381,6 +381,7 @@ export const zhCN = {
             localCached: '本地缓存',
             download: '⬇️ 下载',
             noTitle: '无标题',
+            queueStatus: '当前排队({pos}/{total}) 位，预计剩余 {wait} 分钟',
         },
         recharge: {
             title: '充值积分',
@@ -802,6 +803,7 @@ export const enUS = {
             localCached: 'Cached locally',
             download: '⬇️ Download',
             noTitle: 'Untitled',
+            queueStatus: 'Queue ({pos}/{total}), about {wait} min remaining',
         },
         recharge: {
             title: 'Recharge Credits',
