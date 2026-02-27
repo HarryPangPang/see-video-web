@@ -295,21 +295,20 @@ export function Assets() {
                             // 有错误信息：显示"生成失败"标签
                             <span className="assets-video-status assets-video-failure">{$l('seedance.video.failure')}</span>
                           ) : !hasCover(video) ? (
-                            // 没有封面：剩余时间居中，Generating 右下角
+                            // 没有封面：剩余时间居中，Generating 右下角；pos 为 0 时显示「造梦中」
                             <>
                               {video.queue_info ? (
                                 <span className="assets-video-queue-text">
-                                  {$l('seedance.video.queueStatus')
-                                    .replace('{pos}', String(video.queue_info.位置 ?? video.queue_info.pos ?? 0))
-                                    .replace('{total}', String(video.queue_info.总人数 ?? video.queue_info.total ?? 0))
-                                    .replace('{wait}', String(video.queue_info.等待分钟 ?? video.queue_info.wait ?? 0))}
+                                  {(video.queue_info.位置 ?? video.queue_info.pos) === 0
+                                    ? $l('seedance.video.creating')
+                                    : $l('seedance.video.queueStatus')
+                                        .replace('{pos}', String(video.queue_info.位置 ?? video.queue_info.pos ?? 0))
+                                        .replace('{total}', String(video.queue_info.总人数 ?? video.queue_info.total ?? 0))
+                                        .replace('{wait}', String(video.queue_info.等待分钟 ?? video.queue_info.wait ?? 0))}
                                 </span>
                               ) : null}
                               <span className="assets-video-generating-badge">{$l('seedance.video.generating')}</span>
                             </>
-                          ) : video.video_local_path ? (
-                            // 有本地缓存：显示缓存标签
-                            <span className="assets-video-status assets-video-cached" title={$l('seedance.video.localCached')}>📦</span>
                           ) : null}
                           {/* 只有有封面时才显示下载按钮 */}
                           {hasCover(video) && (
