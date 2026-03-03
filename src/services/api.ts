@@ -205,6 +205,8 @@ export interface WorksListParams {
   sort?: 'newest' | 'likes' | 'foryou';
   page?: number;
   limit?: number;
+  mine?: boolean;
+  source?: 'jimeng' | 'upload';
 }
 
 export interface WorksListData {
@@ -218,6 +220,8 @@ export async function getWorksList(params?: WorksListParams): Promise<ApiRespons
   if (params?.sort) qs.set('sort', params.sort);
   if (params?.page) qs.set('page', String(params.page));
   if (params?.limit) qs.set('limit', String(params.limit));
+  if (params?.mine) qs.set('mine', 'true');
+  if (params?.source) qs.set('source', params.source);
   const query = qs.toString() ? `?${qs}` : '';
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
   const headers: Record<string, string> = {};
