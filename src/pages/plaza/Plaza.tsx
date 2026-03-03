@@ -27,18 +27,23 @@ export function Plaza() {
 
   return (
     <div className="plaza-page">
+      <div className="plaza-bg" />
+
       <div className="plaza-header">
-        <h1>Plaza</h1>
-        <p className="plaza-desc">Discover published works from the community.</p>
+        <div className="plaza-header-badge">✦ Community</div>
+        <h1 className="plaza-header-title">创作广场</h1>
+        <p className="plaza-header-desc">探索来自社区的 AI 创作，发现无限灵感</p>
       </div>
+
       {loading ? (
         <div className="plaza-loading">
           <DotLoading color="primary" />
-          <p>Loading...</p>
+          <p>加载中...</p>
         </div>
       ) : list.length === 0 ? (
         <div className="plaza-empty">
-          <p>No works yet. Be the first to publish!</p>
+          <div className="plaza-empty-icon">✦</div>
+          <p>还没有作品，成为第一个发布的人！</p>
         </div>
       ) : (
         <div className="plaza-grid">
@@ -66,11 +71,15 @@ export function Plaza() {
                     />
                   </div>
                 )}
+                <div className="plaza-card-overlay" />
                 <span className="plaza-card-likes">♥ {work.like_count ?? 0}</span>
               </div>
               <div className="plaza-card-body">
                 <div className="plaza-card-title">{work.title}</div>
-                <div className="plaza-card-author">by {work.author}</div>
+                <div className="plaza-card-author">
+                  <span className="plaza-card-avatar">{work.author?.[0]?.toUpperCase() ?? '?'}</span>
+                  {work.author}
+                </div>
               </div>
             </button>
           ))}

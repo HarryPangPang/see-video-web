@@ -1,149 +1,293 @@
+// ===== WorkDetail 二次元深色风格 =====
+
 .work-detail-page {
-  padding: 24px;
-  max-width: 900px;
+  position: relative;
+  min-height: 100vh;
+  padding: 28px 24px 60px;
+  max-width: 960px;
   margin: 0 auto;
-  min-height: 100%;
+  color: #e0d4ff;
+
   &.work-detail-loading,
   &.work-detail-empty {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 48px;
-    color: #666;
-    p { margin: 12px 0 0; }
+    min-height: 60vh;
+    color: rgba(167, 139, 250, 0.5);
+
+    p { margin: 12px 0 0; font-size: 14px; }
   }
 }
 
+// 返回按钮
 .work-detail-back {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+
   button {
-    background: none;
-    border: none;
-    color: #1677ff;
-    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(167, 139, 250, 0.08);
+    border: 1px solid rgba(167, 139, 250, 0.18);
+    border-radius: 20px;
+    color: rgba(167, 139, 250, 0.7);
+    font-size: 13px;
+    font-family: inherit;
     cursor: pointer;
-    padding: 0;
-    &:hover { text-decoration: underline; }
+    padding: 6px 16px;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+
+    &:hover {
+      background: rgba(167, 139, 250, 0.14);
+      color: #a78bfa;
+      border-color: rgba(167, 139, 250, 0.35);
+    }
   }
 }
 
+// 主区域：左视频 右信息（宽屏）
 .work-detail-main {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: start;
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
 }
 
+// 播放器区域
 .work-detail-media {
-  border-radius: 12px;
+  position: relative;
+  border-radius: 20px;
   overflow: hidden;
-  background: #000;
+  background: #0a0814;
+  box-shadow:
+    0 0 0 1px rgba(167, 139, 250, 0.15),
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    0 0 60px rgba(124, 58, 237, 0.08);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(124,58,237,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
   .work-detail-video {
     width: 100%;
     display: block;
-    max-height: 70vh;
-  }
-}
-
-.work-detail-info {
-  .work-detail-title {
-    margin: 0 0 12px;
-    font-size: 20px;
-    color: #1f1f1f;
-  }
-  .label {
-    color: #888;
-    font-size: 12px;
-    margin-right: 6px;
-  }
-  .work-detail-author {
-    font-size: 14px;
-    color: #333;
-    margin-bottom: 12px;
-  }
-  .work-detail-prompt {
-    margin-bottom: 16px;
-    padding: 12px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border-left: 3px solid #1677ff;
-    .label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 12px;
-      color: #666;
-      font-weight: 600;
-    }
-    p {
-      margin: 0;
-      font-size: 14px;
-      color: #333;
-      line-height: 1.5;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-  }
-}
-
-.work-detail-actions {
-  margin-bottom: 24px;
-  .work-detail-like {
-    padding: 8px 16px;
-    border: 1px solid #e8e8e8;
+    max-height: 72vh;
     border-radius: 20px;
-    background: #fff;
+  }
+}
+
+// 信息面板
+.work-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+// 标题
+.work-detail-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.3;
+  background: linear-gradient(135deg, #e0c3fc 0%, #a78bfa 50%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// 作者信息
+.work-detail-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .wd-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed, #6366f1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 0 12px rgba(124, 58, 237, 0.4);
+  }
+
+  .wd-author-name {
     font-size: 14px;
+    color: rgba(167, 139, 250, 0.7);
+  }
+
+  .label {
+    display: none;
+  }
+}
+
+// Prompt 展示块
+.work-detail-prompt {
+  padding: 14px 16px;
+  background: rgba(124, 58, 237, 0.08);
+  border-radius: 14px;
+  border-left: 3px solid rgba(167, 139, 250, 0.5);
+
+  .label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(167, 139, 250, 0.5);
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(224, 212, 255, 0.75);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+// 点赞区域
+.work-detail-actions {
+  .work-detail-like {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 24px;
+    border: 1px solid rgba(167, 139, 250, 0.25);
+    background: rgba(167, 139, 250, 0.07);
+    color: rgba(167, 139, 250, 0.7);
+    font-size: 15px;
+    font-family: inherit;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-    &.liked {
-      background: #ff4d4f;
-      border-color: #ff4d4f;
-      color: #fff;
-    }
+    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+
     &:hover:not(.liked) {
-      background: #f5f5f5;
+      background: rgba(167, 139, 250, 0.13);
+      border-color: rgba(167, 139, 250, 0.4);
+      color: #a78bfa;
+      transform: translateY(-2px);
+    }
+
+    &.liked {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(239, 68, 68, 0.2));
+      border-color: rgba(236, 72, 153, 0.5);
+      color: #f472b6;
+      box-shadow: 0 0 20px rgba(236, 72, 153, 0.2);
     }
   }
 }
 
+// 评论区
 .work-detail-comments {
+  margin-top: 8px;
+
   h3 {
-    margin: 0 0 12px;
-    font-size: 16px;
-    color: #1f1f1f;
+    margin: 0 0 16px;
+    font-size: 15px;
+    font-weight: 700;
+    color: rgba(167, 139, 250, 0.8);
+    letter-spacing: 0.03em;
   }
+
   .work-detail-login-hint {
-    font-size: 14px;
-    color: #888;
-    margin-bottom: 12px;
-  }
-  .work-detail-comment-form {
+    font-size: 13px;
+    color: rgba(167, 139, 250, 0.4);
     margin-bottom: 16px;
+    padding: 12px 16px;
+    background: rgba(167, 139, 250, 0.05);
+    border-radius: 12px;
+    border: 1px dashed rgba(167, 139, 250, 0.15);
+    text-align: center;
+  }
+
+  .work-detail-comment-form {
+    margin-bottom: 20px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
+
+    // antd-mobile TextArea 覆盖
     :global(.adm-text-area) {
       --font-size: 14px;
+      background: rgba(255, 255, 255, 0.04) !important;
+      border: 1px solid rgba(167, 139, 250, 0.2) !important;
+      border-radius: 12px !important;
+      padding: 10px 12px !important;
+      color: #e0d4ff !important;
+
+      &:focus-within {
+        border-color: rgba(167, 139, 250, 0.5) !important;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12) !important;
+      }
+    }
+
+    // antd-mobile Button 覆盖
+    :global(.adm-button-primary) {
+      background: linear-gradient(135deg, #7c3aed, #6366f1) !important;
+      border: none !important;
+      border-radius: 10px !important;
+      align-self: flex-end;
+      padding: 0 20px !important;
+      box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35) !important;
     }
   }
+
   .work-detail-comment-list {
     list-style: none;
     margin: 0;
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
     li {
-      padding: 12px 0;
-      border-bottom: 1px solid #f0f0f0;
-      strong { font-size: 13px; color: #333; }
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(167, 139, 250, 0.07);
+      transition: background 0.15s;
+
+      &:hover {
+        background: rgba(167, 139, 250, 0.05);
+      }
+
+      strong {
+        font-size: 13px;
+        font-weight: 600;
+        color: #a78bfa;
+      }
+
       .work-detail-comment-time {
-        font-size: 12px;
-        color: #999;
+        font-size: 11px;
+        color: rgba(167, 139, 250, 0.35);
         margin-left: 8px;
       }
+
       p {
         margin: 6px 0 0;
-        font-size: 14px;
-        color: #555;
-        line-height: 1.5;
+        font-size: 13px;
+        color: rgba(224, 212, 255, 0.7);
+        line-height: 1.55;
       }
     }
   }

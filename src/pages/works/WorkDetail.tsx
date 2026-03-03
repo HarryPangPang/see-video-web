@@ -112,11 +112,12 @@ export function WorkDetail() {
         <div className="work-detail-info">
           <h1 className="work-detail-title">{work.title}</h1>
           <div className="work-detail-author">
-            <span className="label">Author:</span> {work.author}
+            <span className="wd-avatar">{work.author?.[0]?.toUpperCase() ?? '?'}</span>
+            <span className="wd-author-name">{work.author}</span>
           </div>
           {(work.prompt != null && work.prompt !== '') ? (
             <div className="work-detail-prompt">
-              <span className="label">Generated prompt:</span>
+              <span className="label">Generated prompt</span>
               <p>{work.prompt}</p>
             </div>
           ) : null}
