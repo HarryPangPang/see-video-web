@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
 import { Credits } from '../components/Credits';
 import { LoginDialog } from '../components/LoginDialog';
+import seelitLogo from '../assets/logo.png';
 import './MainLayout.scss';
 
 interface MainLayoutProps {
@@ -61,7 +62,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <aside className="sidebar">
         <div className="sidebar-brand">
           <button type="button" className="sidebar-logo" onClick={() => navigate('/')} aria-label="SeeLit">
-            <span className="sidebar-logo-icon" />
+            <img src={seelitLogo} alt="SeeLit" className="sidebar-logo-icon" />
           </button>
           <span className="sidebar-brand-name">SeeLit</span>
         </div>
