@@ -231,6 +231,110 @@
   border: 1px solid rgba(167, 139, 250, 0.3);
 }
 
+// 私密标签
+.plaza-card-private-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(219, 39, 119, 0.8);
+  backdrop-filter: blur(6px);
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(251, 113, 133, 0.4);
+}
+
+// 管理菜单按钮 & 下拉
+.plaza-card-menu-wrap {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+}
+
+.plaza-card-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(15, 10, 40, 0.6);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
+
+  &:hover {
+    background: rgba(124, 58, 237, 0.8);
+  }
+}
+
+// 卡片 hover 时显示管理按钮
+.plaza-card:hover .plaza-card-menu-btn {
+  opacity: 1;
+}
+
+.plaza-card--private .plaza-card-menu-btn {
+  opacity: 1;
+}
+
+.plaza-card-menu {
+  position: absolute;
+  top: 34px;
+  right: 0;
+  min-width: 120px;
+  background: rgba(20, 15, 45, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(124, 58, 237, 0.15);
+  animation: menuFadeIn 0.15s ease;
+}
+
+@keyframes menuFadeIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.plaza-card-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: #e0d4ff;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(124, 58, 237, 0.25);
+  }
+
+  & + & {
+    border-top: 1px solid rgba(167, 139, 250, 0.1);
+  }
+
+  &--danger {
+    color: #fb7185;
+
+    &:hover {
+      background: rgba(219, 39, 119, 0.2);
+    }
+  }
+}
+
 // Load More
 .plaza-load-more {
   position: relative;

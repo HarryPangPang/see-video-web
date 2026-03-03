@@ -193,6 +193,7 @@ export interface WorkItem {
   source: string;
   created_at: number;
   like_count?: number;
+  is_private?: number;
 }
 
 export interface WorkDetail extends WorkItem {
@@ -218,10 +219,38 @@ export async function getWorksList(params?: WorksListParams): Promise<ApiRespons
   if (params?.page) qs.set('page', String(params.page));
   if (params?.limit) qs.set('limit', String(params.limit));
   const query = qs.toString() ? `?${qs}` : '';
-  const response = await fetch(`${API_BASE_URL}/works${query}`);
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const response = await fetch(`${API_BASE_URL}/works${query}`, { headers });
   if (!response.ok) throw new Error(`Request failed: ${response.status}`);
   const result: ApiResponse<WorksListData> = await response.json();
   if (!result.success) throw new Error(result.message || 'Failed to fetch works');
+  return result;
+}
+
+export async function deleteWork(id: string): Promise<ApiResponse<void>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/works/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Delete failed');
+  return result;
+}
+
+export async function updateWorkPrivacy(id: string, isPrivate: boolean): Promise<ApiResponse<void>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/works/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ isPrivate }),
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Update failed');
   return result;
 }
 

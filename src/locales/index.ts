@@ -435,6 +435,11 @@ export const zhCN = {
             loading: '加载中...',
             empty: '还没有作品，成为第一个发布的人！',
             loadMore: '加载更多',
+            setPrivate: '设为私密',
+            setPublic: '设为公开',
+            deleteWork: '删除作品',
+            deleteConfirm: '确认删除该作品？删除后无法恢复。',
+            privateLabel: '私密',
         },
         works: {
             loading: '加载中...',
@@ -888,6 +893,11 @@ export const enUS = {
             loading: 'Loading...',
             empty: 'No works yet. Be the first to publish!',
             loadMore: 'Load more',
+            setPrivate: 'Set Private',
+            setPublic: 'Set Public',
+            deleteWork: 'Delete',
+            deleteConfirm: 'Delete this work? This cannot be undone.',
+            privateLabel: 'Private',
         },
         works: {
             loading: 'Loading...',

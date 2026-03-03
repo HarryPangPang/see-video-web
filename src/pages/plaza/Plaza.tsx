@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DotLoading, Toast } from 'antd-mobile';
-import { getWorksList, type WorkItem, type WorksListParams } from '../../services/api';
+import { DotLoading, Toast, Dialog } from 'antd-mobile';
+import { getWorksList, deleteWork, updateWorkPrivacy, type WorkItem, type WorksListParams } from '../../services/api';
 import { useI18n } from '../../context/I18nContext';
+import { useAuth } from '../../context/AuthContext';
 import './Plaza.scss';
 
 type SortType = 'foryou' | 'newest' | 'likes';
@@ -12,6 +13,7 @@ const PAGE_SIZE = 20;
 export function Plaza() {
   const navigate = useNavigate();
   const { t } = useI18n();
+  const { user } = useAuth();
   const p = t.seedance.plaza;
 
   const tabs: { key: SortType; label: string }[] = [
@@ -27,6 +29,8 @@ export function Plaza() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const fetchPage = useCallback(async (params: WorksListParams, append: boolean) => {
     try {
@@ -53,6 +57,17 @@ export function Plaza() {
     }
   }, [sort]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 点击外部关闭菜单
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    if (openMenuId) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [openMenuId]);
+
   const handleLoadMore = async () => {
     const nextPage = page + 1;
     setLoadingMore(true);
@@ -63,6 +78,38 @@ export function Plaza() {
 
   const handleTabChange = (key: SortType) => {
     if (key !== sort) setSort(key);
+  };
+
+  const handleToggleMenu = (e: React.MouseEvent, workId: string) => {
+    e.stopPropagation();
+    setOpenMenuId(prev => prev === workId ? null : workId);
+  };
+
+  const handleSetPrivacy = async (e: React.MouseEvent, work: WorkItem) => {
+    e.stopPropagation();
+    setOpenMenuId(null);
+    const isPrivate = !work.is_private;
+    try {
+      await updateWorkPrivacy(work.id, isPrivate);
+      setList(prev => prev.map(w => w.id === work.id ? { ...w, is_private: isPrivate ? 1 : 0 } : w));
+      Toast.show({ content: isPrivate ? p.setPrivate : p.setPublic, icon: 'success' });
+    } catch (e) {
+      Toast.show({ content: (e as Error).message, icon: 'fail' });
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent, workId: string) => {
+    e.stopPropagation();
+    setOpenMenuId(null);
+    const confirmed = await Dialog.confirm({ content: p.deleteConfirm });
+    if (!confirmed) return;
+    try {
+      await deleteWork(workId);
+      setList(prev => prev.filter(w => w.id !== workId));
+      Toast.show({ content: p.deleteWork, icon: 'success' });
+    } catch (e) {
+      Toast.show({ content: (e as Error).message, icon: 'fail' });
+    }
   };
 
   const fullUrl = (url: string) => (url?.startsWith('http') ? url : `${window.location.origin}${url || ''}`);
@@ -106,7 +153,7 @@ export function Plaza() {
               <button
                 key={work.id}
                 type="button"
-                className="plaza-card"
+                className={`plaza-card${work.is_private ? ' plaza-card--private' : ''}`}
                 onClick={() => navigate(`/works/${work.id}`)}
               >
                 <div className="plaza-card-cover">
@@ -127,7 +174,45 @@ export function Plaza() {
                     </div>
                   )}
                   <div className="plaza-card-overlay" />
-                  <span className="plaza-card-likes">♥ {work.like_count ?? 0}</span>
+                  {work.is_private ? (
+                    <span className="plaza-card-private-badge">{p.privateLabel}</span>
+                  ) : (
+                    <span className="plaza-card-likes">♥ {work.like_count ?? 0}</span>
+                  )}
+
+                  {/* 仅自己的作品显示管理按钮 */}
+                  {user && work.user_id === user.id && (
+                    <div
+                      className="plaza-card-menu-wrap"
+                      ref={openMenuId === work.id ? menuRef : null}
+                    >
+                      <button
+                        type="button"
+                        className="plaza-card-menu-btn"
+                        onClick={(e) => handleToggleMenu(e, work.id)}
+                      >
+                        ⋯
+                      </button>
+                      {openMenuId === work.id && (
+                        <div className="plaza-card-menu">
+                          <button
+                            type="button"
+                            className="plaza-card-menu-item"
+                            onClick={(e) => handleSetPrivacy(e, work)}
+                          >
+                            {work.is_private ? p.setPublic : p.setPrivate}
+                          </button>
+                          <button
+                            type="button"
+                            className="plaza-card-menu-item plaza-card-menu-item--danger"
+                            onClick={(e) => handleDelete(e, work.id)}
+                          >
+                            {p.deleteWork}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="plaza-card-body">
                   <div className="plaza-card-title">{work.title}</div>
