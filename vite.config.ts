@@ -41,7 +41,8 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig=>{
       headers: {
         'Service-Worker-Allowed': '/',
         'Cross-Origin-Embedder-Policy': 'require-corp',
-        'Cross-Origin-Opener-Policy': 'same-origin',
+        // 必须为 same-origin-allow-popups，否则 Google 登录弹窗会空白
+        'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
       }
     },
      // 全局变量替换 Record<string, string>

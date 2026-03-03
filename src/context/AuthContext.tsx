@@ -12,6 +12,7 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<void>;
   loginWithCode: (email: string, code: string) => Promise<void>;
   register: (email: string, password: string, code: string, username?: string) => Promise<void>;
   logout: () => void;
@@ -126,6 +127,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Google 登录
+  const loginWithGoogle = async (credential: string) => {
+    try {
+      const response = await axios.post(`${API_BASE}/api/auth/google`, {
+        credential,
+      });
+      if (response.data.success) {
+        const { token: newToken, user: newUser } = response.data.data;
+        setToken(newToken);
+        setUser(newUser);
+        localStorage.setItem('auth_token', newToken);
+        localStorage.setItem('auth_user', JSON.stringify(newUser));
+      } else {
+        throw new Error(response.data.message || 'Google 登录失败');
+      }
+    } catch (error: any) {
+      const message = error.response?.data?.message || error.message || 'Google 登录失败';
+      throw new Error(message);
+    }
+  };
+
   // 验证码登录
   const loginWithCode = async (email: string, code: string) => {
     try {
@@ -164,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token,
         loading,
         login,
+        loginWithGoogle,
         loginWithCode,
         register,
         logout,

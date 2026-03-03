@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
+import { buildGoogleRedirectUrl } from '../../utils/googleAuth';
 import './auth.scss';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 export function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
-  const { t } = useI18n();
+  const { login, loginWithGoogle } = useAuth();
+  const { t, language } = useI18n();
   const a = t.seedance.auth;
   // const { login, loginWithCode, sendVerificationCode } = useAuth(); // 完整版本
 
@@ -49,6 +53,19 @@ export function Login() {
     }
   };
   */
+
+  const handleGoogleSuccess = async (credential: string) => {
+    try {
+      setLoading(true);
+      setError('');
+      await loginWithGoogle(credential);
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 密码登录
   const handlePasswordLogin = async (e: React.FormEvent) => {
@@ -115,6 +132,33 @@ export function Login() {
 
         {error && <div className="auth-error">{error}</div>}
 
+        {GOOGLE_CLIENT_ID && (
+          <div className="auth-google-wrap">
+            <GoogleLogin
+              theme="filled_black"
+              size="large"
+              text="continue_with"
+              locale={language === 'zh-CN' ? 'zh_CN' : 'en'}
+              onSuccess={(res) => res.credential && handleGoogleSuccess(res.credential)}
+              onError={() => setError(a.loginGoogleFailed)}
+              useOneTap={false}
+            />
+            <button
+              type="button"
+              className="auth-google-redirect-btn"
+              onClick={() => { window.location.href = buildGoogleRedirectUrl(GOOGLE_CLIENT_ID); }}
+            >
+              {a.loginGoogleRedirect}
+            </button>
+          </div>
+        )}
+
+        {GOOGLE_CLIENT_ID && (
+          <div className="auth-divider">
+            <span>{a.orEmail}</span>
+          </div>
+        )}
+
         <form onSubmit={handlePasswordLogin}>
           <div className="form-group">
             <label>{a.email}</label>
@@ -171,6 +215,10 @@ export function Login() {
 
         <div className="auth-footer">
           {a.noAccount} <Link to="/register">{a.goRegister}</Link>
+          <span className="auth-footer-sep">·</span>
+          <Link to="/privacy-policy">Privacy Policy</Link>
+          <span className="auth-footer-sep">·</span>
+          <Link to="/terms-of-service">Terms of Service</Link>
         </div>
       </div>
     </div>

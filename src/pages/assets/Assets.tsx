@@ -4,6 +4,7 @@ import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { getVideoList } from '../../services/api';
 import { LoginDialog } from '../../components/LoginDialog';
+import { PublishDialog } from '../../components/PublishDialog';
 import recordLoadingVideo from '../../assets/record-loading.mp4';
 import './Assets.scss';
 
@@ -44,6 +45,7 @@ export function Assets() {
   const [videoList, setVideoList] = useState<VideoAsset[]>([]);
   const [loading, setLoading] = useState(false);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
+  const [publishVideo, setPublishVideo] = useState<VideoAsset | null>(null);
 
   // 仅在 auth 加载完成后且未登录时弹出登录框，避免刷新时误弹
   useEffect(() => {
@@ -193,6 +195,12 @@ export function Assets() {
         visible={loginDialogVisible}
         onClose={() => setLoginDialogVisible(false)}
       />
+      <PublishDialog
+        visible={!!publishVideo}
+        onClose={() => setPublishVideo(null)}
+        videoId={publishVideo?.id ?? ''}
+        defaultTitle={publishVideo?.prompt ?? ''}
+      />
       <div className="assets-top-tabs">
         <Tabs activeKey={contentTab} onChange={(k) => setContentTab(k as string)} className="assets-content-tabs">
           <Tabs.Tab title={p.assetsVideos} key="videos" />
@@ -242,13 +250,19 @@ export function Assets() {
 
                     // 在缩略图容器上统一处理点击事件
                     const handleThumbClick = (e: React.MouseEvent) => {
-                      // 检查是否点击了下载按钮
+                      // 检查是否点击了下载或发布按钮
                       const target = e.target as HTMLElement;
                       if (target.closest('.assets-video-download')) {
-                        console.log('[Assets] 点击下载视频:', video);
                         e.preventDefault();
                         e.stopPropagation();
                         downloadVideo(video);
+                        return;
+                      }
+                      if (target.closest('.assets-video-publish')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (user) setPublishVideo(video);
+                        else setLoginDialogVisible(true);
                         return;
                       }
 
@@ -310,11 +324,16 @@ export function Assets() {
                               <span className="assets-video-generating-badge">{$l('seedance.video.generating')}</span>
                             </>
                           ) : null}
-                          {/* 只有有封面时才显示下载按钮 */}
+                          {/* 只有有封面时才显示下载和发布按钮 */}
                           {hasCover(video) && (
-                            <div className="assets-video-download">
-                              {$l('seedance.video.download')}
-                            </div>
+                            <>
+                              <div className="assets-video-publish" title="Publish to Plaza">
+                                Publish
+                              </div>
+                              <div className="assets-video-download">
+                                {$l('seedance.video.download')}
+                              </div>
+                            </>
                           )}
                         </div>
                         <div className="assets-video-prompt" title={video.prompt || $l('seedance.video.noTitle')}>

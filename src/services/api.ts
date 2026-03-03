@@ -178,3 +178,109 @@ export async function getVideoList(signal?: AbortSignal): Promise<ApiResponse> {
 
   return result;
 }
+
+// ========== 作品广场、发布、点赞、评论 ==========
+
+export interface WorkItem {
+  id: string;
+  user_id: number;
+  author: string;
+  author_email?: string;
+  title: string;
+  prompt: string | null;
+  video_url: string;
+  cover_url: string | null;
+  source: string;
+  created_at: number;
+  like_count?: number;
+}
+
+export interface WorkDetail extends WorkItem {
+  liked: boolean;
+  comments: { id: number; content: string; created_at: number; author: string }[];
+}
+
+export async function getWorksList(): Promise<ApiResponse<{ list: WorkItem[] }>> {
+  const response = await fetch(`${API_BASE_URL}/works`);
+  if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+  const result: ApiResponse<{ list: WorkItem[] }> = await response.json();
+  if (!result.success) throw new Error(result.message || 'Failed to fetch works');
+  return result;
+}
+
+export async function getWorkDetail(id: string): Promise<ApiResponse<WorkDetail>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const response = await fetch(`${API_BASE_URL}/works/${id}`, { headers });
+  if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+  const result: ApiResponse<WorkDetail> = await response.json();
+  if (!result.success) throw new Error(result.message || 'Failed to fetch work');
+  return result;
+}
+
+export async function publishWork(videoGenerationId: string, title: string): Promise<ApiResponse<{ id: string }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/works`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ videoGenerationId, title }),
+  });
+  const result: ApiResponse<{ id: string }> = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Publish failed');
+  return result;
+}
+
+export async function publishWorkUpload(videoFile: File, title: string): Promise<ApiResponse<{ id: string }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const form = new FormData();
+  form.append('title', title);
+  form.append('video', videoFile);
+  const response = await fetch(`${API_BASE_URL}/works/upload`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  const result: ApiResponse<{ id: string }> = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Upload failed');
+  return result;
+}
+
+export async function likeWork(id: string): Promise<ApiResponse<{ liked: boolean; like_count: number }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/works/${id}/like`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result: ApiResponse<{ liked: boolean; like_count: number }> = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Like failed');
+  return result;
+}
+
+export async function unlikeWork(id: string): Promise<ApiResponse<{ liked: boolean; like_count: number }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/works/${id}/like`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result: ApiResponse<{ liked: boolean; like_count: number }> = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Unlike failed');
+  return result;
+}
+
+export async function addWorkComment(id: string, content: string): Promise<ApiResponse<{ id: number; content: string; created_at: number; author: string }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/works/${id}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ content }),
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Comment failed');
+  return result;
+}

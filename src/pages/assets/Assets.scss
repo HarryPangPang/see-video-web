@@ -86,7 +86,8 @@
   &:hover {
     transform: translateY(-4px);
 
-    .assets-video-download {
+    .assets-video-download,
+    .assets-video-publish {
       opacity: 1;
       z-index: 100;
       pointer-events: auto;
@@ -199,19 +200,30 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   }
 
-  .assets-video-download {
+  .assets-video-download,
+  .assets-video-publish {
     position: absolute;
     top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 14px;
+    transform: translateY(-50%);
+    font-size: 12px;
     color: #fff;
-    background: rgba(22, 119, 255, 0.9);
-    padding: 8px 16px;
-    border-radius: 20px;
+    padding: 6px 12px;
+    border-radius: 16px;
     opacity: 0;
     transition: opacity 0.2s;
     pointer-events: none;
+  }
+  .assets-video-publish {
+    left: 50%;
+    margin-left: -70px;
+    background: rgba(82, 196, 26, 0.9);
+  }
+  .assets-video-download {
+    left: 50%;
+    margin-left: 20px;
+    background: rgba(22, 119, 255, 0.9);
+    font-size: 14px;
+    padding: 8px 16px;
   }
 
   .assets-video-prompt {

@@ -1,14 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
-  IconHome,
   IconGenerate,
   IconFolder,
   IconGrid,
-  IconBell,
-  IconMessage,
-  IconApi,
-  IconMenu,
+  IconArrowUp,
 } from '../components/Icons';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
@@ -47,10 +43,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   };
 
   const menuItems = [
-    // { id: 'inspire', label: layout.navInspire, icon: IconHome, path: '/inspire' },
     { id: 'generate', label: layout.navGenerate, icon: IconGenerate, path: '/' },
     { id: 'assets', label: layout.navAssets, icon: IconFolder, path: '/assets' },
-    // { id: 'canvas', label: layout.navCanvas, icon: IconGrid, path: '/canvas' },
+    { id: 'plaza', label: layout.navPlaza, icon: IconGrid, path: '/plaza' },
+    { id: 'upload', label: layout.navUpload, icon: IconArrowUp, path: '/upload' },
   ];
 
   const isPathActive = (path: string) =>
@@ -156,6 +152,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             >
               中文
             </button>
+          </div>
+
+          <div className="sidebar-legal">
+            <Link to="/privacy-policy">Privacy Policy</Link>
+            <span className="sidebar-legal-sep">·</span>
+            <Link to="/terms-of-service">Terms of Service</Link>
           </div>
         </div>
       </aside>
