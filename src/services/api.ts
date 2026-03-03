@@ -193,6 +193,7 @@ export interface WorkItem {
   source: string;
   created_at: number;
   like_count?: number;
+  is_private?: number;
 }
 
 export interface WorkDetail extends WorkItem {
@@ -200,11 +201,60 @@ export interface WorkDetail extends WorkItem {
   comments: { id: number; content: string; created_at: number; author: string }[];
 }
 
-export async function getWorksList(): Promise<ApiResponse<{ list: WorkItem[] }>> {
-  const response = await fetch(`${API_BASE_URL}/works`);
+export interface WorksListParams {
+  sort?: 'newest' | 'likes' | 'foryou';
+  page?: number;
+  limit?: number;
+  mine?: boolean;
+  source?: 'jimeng' | 'upload';
+}
+
+export interface WorksListData {
+  list: WorkItem[];
+  total: number;
+  hasMore: boolean;
+}
+
+export async function getWorksList(params?: WorksListParams): Promise<ApiResponse<WorksListData>> {
+  const qs = new URLSearchParams();
+  if (params?.sort) qs.set('sort', params.sort);
+  if (params?.page) qs.set('page', String(params.page));
+  if (params?.limit) qs.set('limit', String(params.limit));
+  if (params?.mine) qs.set('mine', 'true');
+  if (params?.source) qs.set('source', params.source);
+  const query = qs.toString() ? `?${qs}` : '';
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const response = await fetch(`${API_BASE_URL}/works${query}`, { headers });
   if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-  const result: ApiResponse<{ list: WorkItem[] }> = await response.json();
+  const result: ApiResponse<WorksListData> = await response.json();
   if (!result.success) throw new Error(result.message || 'Failed to fetch works');
+  return result;
+}
+
+export async function deleteWork(id: string): Promise<ApiResponse<void>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/works/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Delete failed');
+  return result;
+}
+
+export async function updateWorkPrivacy(id: string, isPrivate: boolean): Promise<ApiResponse<void>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/works/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ isPrivate }),
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Update failed');
   return result;
 }
 
