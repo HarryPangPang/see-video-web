@@ -282,12 +282,13 @@ export async function publishWork(videoGenerationId: string, title: string): Pro
   return result;
 }
 
-export async function publishWorkUpload(videoFile: File, title: string): Promise<ApiResponse<{ id: string }>> {
+export async function publishWorkUpload(videoFile: File, title: string, coverBlob?: Blob): Promise<ApiResponse<{ id: string }>> {
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
   if (!token) throw new Error('Unauthorized');
   const form = new FormData();
   form.append('title', title);
   form.append('video', videoFile);
+  if (coverBlob) form.append('cover', coverBlob, 'cover.jpg');
   const response = await fetch(`${API_BASE_URL}/works/upload`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },

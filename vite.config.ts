@@ -22,6 +22,7 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig=>{
   return {
     build: {
       outDir: isBuild ? outDir : 'dist',
+      emptyOutDir: true,
       sourcemap: false,
     },
     plugins: [react()],

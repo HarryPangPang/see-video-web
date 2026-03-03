@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Toast } from 'antd-mobile';
 import { publishWorkUpload } from '../../services/api';
@@ -7,6 +7,33 @@ import { useI18n } from '../../context/I18nContext';
 import { LoginDialog } from '../../components/LoginDialog';
 import './UploadVideo.scss';
 
+function extractFirstFrame(videoFile: File): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    const url = URL.createObjectURL(videoFile);
+    video.src = url;
+    video.muted = true;
+    video.playsInline = true;
+    const cleanup = () => URL.revokeObjectURL(url);
+    video.addEventListener('loadedmetadata', () => { video.currentTime = 0.001; }, { once: true });
+    video.addEventListener('seeked', () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 360;
+        canvas.getContext('2d')!.drawImage(video, 0, 0);
+        cleanup();
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85);
+      } catch {
+        cleanup();
+        resolve(null);
+      }
+    }, { once: true });
+    video.addEventListener('error', () => { cleanup(); resolve(null); }, { once: true });
+    video.load();
+  });
+}
+
 export function UploadVideo() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -14,16 +41,29 @@ export function UploadVideo() {
   const p = t.seedance.pages;
   const [title, setTitle] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [coverBlob, setCoverBlob] = useState<Blob | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loginVisible, setLoginVisible] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const acceptFile = (f: File) => {
-    if (f.type.startsWith('video/')) {
-      setFile(f);
-    } else {
+  useEffect(() => {
+    return () => { if (coverPreview) URL.revokeObjectURL(coverPreview); };
+  }, [coverPreview]);
+
+  const acceptFile = async (f: File) => {
+    if (!f.type.startsWith('video/')) {
       Toast.show({ content: 'Please select a video file', icon: 'fail' });
+      return;
+    }
+    setFile(f);
+    setCoverBlob(null);
+    setCoverPreview(null);
+    const blob = await extractFirstFrame(f);
+    if (blob) {
+      setCoverBlob(blob);
+      setCoverPreview(URL.createObjectURL(blob));
     }
   };
 
@@ -56,7 +96,7 @@ export function UploadVideo() {
     }
     setLoading(true);
     try {
-      const res = await publishWorkUpload(file, title.trim());
+      const res = await publishWorkUpload(file, title.trim(), coverBlob ?? undefined);
       Toast.show({ content: p.uploadSuccess, icon: 'success' });
       navigate(res.data?.id ? `/works/${res.data.id}` : '/plaza');
     } catch (e) {
@@ -112,7 +152,11 @@ export function UploadVideo() {
             />
             {file ? (
               <div className="upload-file-info">
-                <span className="upload-file-icon">🎬</span>
+                {coverPreview ? (
+                  <img className="upload-file-thumb" src={coverPreview} alt="cover" />
+                ) : (
+                  <span className="upload-file-icon">🎬</span>
+                )}
                 <div className="upload-file-meta">
                   <span className="upload-file-name">{file.name}</span>
                   <span className="upload-file-size">{formatSize(file.size)}</span>
@@ -120,7 +164,13 @@ export function UploadVideo() {
                 <button
                   type="button"
                   className="upload-file-remove"
-                  onClick={e => { e.stopPropagation(); setFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setFile(null);
+                    setCoverBlob(null);
+                    if (coverPreview) { URL.revokeObjectURL(coverPreview); setCoverPreview(null); }
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  }}
                 >
                   ✕
                 </button>
