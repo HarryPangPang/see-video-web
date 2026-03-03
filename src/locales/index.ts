@@ -439,7 +439,11 @@ export const zhCN = {
             setPublic: '设为公开',
             deleteWork: '删除作品',
             deleteConfirm: '确认删除该作品？删除后无法恢复。',
+            deleteCancel: '取消',
+            deleteConfirmBtn: '确认删除',
             privateLabel: '私密',
+            prevPage: '上一页',
+            nextPage: '下一页',
         },
         works: {
             loading: '加载中...',
@@ -897,7 +901,11 @@ export const enUS = {
             setPublic: 'Set Public',
             deleteWork: 'Delete',
             deleteConfirm: 'Delete this work? This cannot be undone.',
+            deleteCancel: 'Cancel',
+            deleteConfirmBtn: 'Delete',
             privateLabel: 'Private',
+            prevPage: 'Prev',
+            nextPage: 'Next',
         },
         works: {
             loading: 'Loading...',

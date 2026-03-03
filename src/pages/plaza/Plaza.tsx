@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DotLoading, Toast, Dialog } from 'antd-mobile';
+import { DotLoading, Toast } from 'antd-mobile';
 import { getWorksList, deleteWork, updateWorkPrivacy, type WorkItem, type WorksListParams } from '../../services/api';
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
@@ -25,39 +25,40 @@ export function Plaza() {
   const [sort, setSort] = useState<SortType>('foryou');
   const [list, setList] = useState<WorkItem[]>([]);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const fetchPage = useCallback(async (params: WorksListParams, append: boolean) => {
+  const totalPages = total > 0 ? Math.ceil(total / PAGE_SIZE) : 1;
+
+  const fetchPage = useCallback(async (params: WorksListParams) => {
     try {
       const res = await getWorksList(params);
       if (res.data) {
-        setList(prev => append ? [...prev, ...res.data!.list] : res.data!.list);
-        setHasMore(res.data.hasMore);
+        setList(res.data.list);
+        setTotal(res.data.total);
       }
     } catch (e) {
       Toast.show({ content: (e as Error).message, icon: 'fail' });
     }
   }, []);
 
-  // 切换 tab 时重置
+  // 切换 tab 时重置到第 1 页
   useEffect(() => {
     setPage(1);
-    setHasMore(false);
     if (list.length === 0) {
       setLoading(true);
-      fetchPage({ sort, page: 1, limit: PAGE_SIZE }, false).finally(() => setLoading(false));
+      fetchPage({ sort, page: 1, limit: PAGE_SIZE }).finally(() => setLoading(false));
     } else {
       setTransitioning(true);
-      fetchPage({ sort, page: 1, limit: PAGE_SIZE }, false).finally(() => setTransitioning(false));
+      fetchPage({ sort, page: 1, limit: PAGE_SIZE }).finally(() => setTransitioning(false));
     }
   }, [sort]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 点击外部关闭菜单
+  // 点击外部关闭卡片菜单
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -68,16 +69,26 @@ export function Plaza() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [openMenuId]);
 
-  const handleLoadMore = async () => {
-    const nextPage = page + 1;
-    setLoadingMore(true);
-    await fetchPage({ sort, page: nextPage, limit: PAGE_SIZE }, true);
-    setPage(nextPage);
-    setLoadingMore(false);
-  };
-
   const handleTabChange = (key: SortType) => {
     if (key !== sort) setSort(key);
+  };
+
+  const handlePrevPage = async () => {
+    if (page <= 1 || transitioning) return;
+    const prevPage = page - 1;
+    setTransitioning(true);
+    await fetchPage({ sort, page: prevPage, limit: PAGE_SIZE });
+    setPage(prevPage);
+    setTransitioning(false);
+  };
+
+  const handleNextPage = async () => {
+    if (page >= totalPages || transitioning) return;
+    const nextPage = page + 1;
+    setTransitioning(true);
+    await fetchPage({ sort, page: nextPage, limit: PAGE_SIZE });
+    setPage(nextPage);
+    setTransitioning(false);
   };
 
   const handleToggleMenu = (e: React.MouseEvent, workId: string) => {
@@ -98,14 +109,19 @@ export function Plaza() {
     }
   };
 
-  const handleDelete = async (e: React.MouseEvent, workId: string) => {
+  const handleDeleteRequest = (e: React.MouseEvent, workId: string) => {
     e.stopPropagation();
     setOpenMenuId(null);
-    const confirmed = await Dialog.confirm({ content: p.deleteConfirm });
-    if (!confirmed) return;
+    setDeleteTarget(workId);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    const id = deleteTarget;
+    setDeleteTarget(null);
     try {
-      await deleteWork(workId);
-      setList(prev => prev.filter(w => w.id !== workId));
+      await deleteWork(id);
+      setList(prev => prev.filter(w => w.id !== id));
       Toast.show({ content: p.deleteWork, icon: 'success' });
     } catch (e) {
       Toast.show({ content: (e as Error).message, icon: 'fail' });
@@ -180,7 +196,6 @@ export function Plaza() {
                     <span className="plaza-card-likes">♥ {work.like_count ?? 0}</span>
                   )}
 
-                  {/* 仅自己的作品显示管理按钮 */}
                   {user && work.user_id === user.id && (
                     <div
                       className="plaza-card-menu-wrap"
@@ -205,7 +220,7 @@ export function Plaza() {
                           <button
                             type="button"
                             className="plaza-card-menu-item plaza-card-menu-item--danger"
-                            onClick={(e) => handleDelete(e, work.id)}
+                            onClick={(e) => handleDeleteRequest(e, work.id)}
                           >
                             {p.deleteWork}
                           </button>
@@ -225,18 +240,54 @@ export function Plaza() {
             ))}
           </div>
 
-          {hasMore && (
-            <div className="plaza-load-more">
+          {totalPages > 1 && (
+            <div className="plaza-pagination">
               <button
                 type="button"
-                className="plaza-load-more-btn"
-                onClick={handleLoadMore}
-                disabled={loadingMore}
+                className="plaza-page-btn"
+                onClick={handlePrevPage}
+                disabled={page <= 1 || transitioning}
               >
-                {loadingMore ? <DotLoading color="primary" /> : p.loadMore}
+                ← {p.prevPage}
+              </button>
+              <span className="plaza-page-info">{page} / {totalPages}</span>
+              <button
+                type="button"
+                className="plaza-page-btn"
+                onClick={handleNextPage}
+                disabled={page >= totalPages || transitioning}
+              >
+                {p.nextPage} →
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* 自定义删除确认弹窗 */}
+      {deleteTarget && (
+        <div className="plaza-confirm-overlay" onClick={() => setDeleteTarget(null)}>
+          <div className="plaza-confirm-dialog" onClick={e => e.stopPropagation()}>
+            <div className="plaza-confirm-icon">🗑</div>
+            <h3 className="plaza-confirm-title">{p.deleteWork}</h3>
+            <p className="plaza-confirm-desc">{p.deleteConfirm}</p>
+            <div className="plaza-confirm-actions">
+              <button
+                type="button"
+                className="plaza-confirm-btn plaza-confirm-btn--cancel"
+                onClick={() => setDeleteTarget(null)}
+              >
+                {p.deleteCancel}
+              </button>
+              <button
+                type="button"
+                className="plaza-confirm-btn plaza-confirm-btn--danger"
+                onClick={handleDeleteConfirm}
+              >
+                {p.deleteConfirmBtn}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

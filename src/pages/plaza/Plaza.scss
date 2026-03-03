@@ -335,31 +335,28 @@
   }
 }
 
-// Load More
-.plaza-load-more {
+// 分页
+.plaza-pagination {
   position: relative;
   z-index: 1;
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin-top: 32px;
+  gap: 16px;
+  margin-top: 36px;
   padding-bottom: 16px;
 }
 
-.plaza-load-more-btn {
-  padding: 10px 36px;
+.plaza-page-btn {
+  padding: 9px 24px;
   border-radius: 100px;
   border: none;
   background: #ede9fe;
   color: #111827;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  min-width: 120px;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: background 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
 
   &:hover:not(:disabled) {
     background: #ddd6fe;
@@ -367,8 +364,123 @@
   }
 
   &:disabled {
-    opacity: 0.4;
+    opacity: 0.3;
     cursor: not-allowed;
+  }
+}
+
+.plaza-page-info {
+  font-size: 13px;
+  font-weight: 600;
+  color: #9167e0;
+  min-width: 52px;
+  text-align: center;
+}
+
+// 删除确认弹窗
+.plaza-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(10, 5, 30, 0.55);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: overlayFadeIn 0.2s ease;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.plaza-confirm-dialog {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 32px 28px 24px;
+  width: 320px;
+  max-width: calc(100vw - 48px);
+  text-align: center;
+  box-shadow:
+    0 24px 64px rgba(124, 58, 237, 0.18),
+    0 0 0 1px rgba(124, 58, 237, 0.08);
+  animation: dialogSlideIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+
+  // 顶部紫色光晕装饰
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 24px 24px 0 0;
+    background: linear-gradient(90deg, #db2777, #7c3aed, #6366f1);
+  }
+}
+
+@keyframes dialogSlideIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.plaza-confirm-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 10px rgba(219, 39, 119, 0.3));
+}
+
+.plaza-confirm-title {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #7c3aed, #db2777);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.plaza-confirm-desc {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: #5b21b6;
+  line-height: 1.6;
+}
+
+.plaza-confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.plaza-confirm-btn {
+  flex: 1;
+  padding: 11px 0;
+  border-radius: 100px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+
+  &--cancel {
+    background: #f3f4f6;
+    color: #111827;
+
+    &:hover {
+      background: #e5e7eb;
+      transform: translateY(-1px);
+    }
+  }
+
+  &--danger {
+    background: #7c3aed;
+    color: #fff;
+
+    &:hover {
+      background: #6d28d9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+    }
   }
 }
 
