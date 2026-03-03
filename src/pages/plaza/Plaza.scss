@@ -116,6 +116,16 @@
   filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.3));
 }
 
+// 内容区过渡（tab 切换时淡出旧内容，新内容到来后淡入）
+.plaza-content {
+  transition: opacity 0.2s ease;
+
+  &--loading {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+}
+
 // Grid — 一行 4~5 个
 .plaza-grid {
   position: relative;

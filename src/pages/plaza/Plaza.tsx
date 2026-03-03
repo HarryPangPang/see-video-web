@@ -26,6 +26,7 @@ export function Plaza() {
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
 
   const fetchPage = useCallback(async (params: WorksListParams, append: boolean) => {
     try {
@@ -41,11 +42,15 @@ export function Plaza() {
 
   // 切换 tab 时重置
   useEffect(() => {
-    setList([]);
     setPage(1);
     setHasMore(false);
-    setLoading(true);
-    fetchPage({ sort, page: 1, limit: PAGE_SIZE }, false).finally(() => setLoading(false));
+    if (list.length === 0) {
+      setLoading(true);
+      fetchPage({ sort, page: 1, limit: PAGE_SIZE }, false).finally(() => setLoading(false));
+    } else {
+      setTransitioning(true);
+      fetchPage({ sort, page: 1, limit: PAGE_SIZE }, false).finally(() => setTransitioning(false));
+    }
   }, [sort]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLoadMore = async () => {
@@ -95,7 +100,7 @@ export function Plaza() {
           <p>{p.empty}</p>
         </div>
       ) : (
-        <>
+        <div className={`plaza-content${transitioning ? ' plaza-content--loading' : ''}`}>
           <div className="plaza-grid">
             {list.map((work) => (
               <button
@@ -147,7 +152,7 @@ export function Plaza() {
               </button>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );
