@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { DotLoading, Toast, Button, TextArea } from 'antd-mobile';
+import { DotLoading, Toast, TextArea } from 'antd-mobile';
 import { getWorkDetail, likeWork, unlikeWork, addWorkComment, type WorkDetail as WorkDetailType } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useI18n } from '../../context/I18nContext';
 import { LoginDialog } from '../../components/LoginDialog';
 import './WorkDetail.scss';
 
@@ -10,6 +11,8 @@ export function WorkDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useI18n();
+  const w = t.seedance.works;
   const [work, setWork] = useState<WorkDetailType | null>(null);
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
@@ -43,10 +46,10 @@ export function WorkDetail() {
     try {
       if (work.liked) {
         const res = await unlikeWork(work.id);
-        if (res.data) setWork((w) => w ? { ...w, liked: false, like_count: res.data!.like_count } : null);
+        if (res.data) setWork((prev) => prev ? { ...prev, liked: false, like_count: res.data!.like_count } : null);
       } else {
         const res = await likeWork(work.id);
-        if (res.data) setWork((w) => w ? { ...w, liked: true, like_count: res.data!.like_count } : null);
+        if (res.data) setWork((prev) => prev ? { ...prev, liked: true, like_count: res.data!.like_count } : null);
       }
     } catch (e) {
       Toast.show({ content: (e as Error).message, icon: 'fail' });
@@ -63,9 +66,9 @@ export function WorkDetail() {
     try {
       const res = await addWorkComment(work.id, commentText.trim());
       if (res.data) {
-        setWork((w) => w ? { ...w, comments: [...w.comments, res.data!] } : null);
+        setWork((prev) => prev ? { ...prev, comments: [...prev.comments, res.data!] } : null);
         setCommentText('');
-        Toast.show({ content: 'Comment added', icon: 'success' });
+        Toast.show({ content: w.commentAdded, icon: 'success' });
       }
     } catch (e) {
       Toast.show({ content: (e as Error).message, icon: 'fail' });
@@ -78,15 +81,15 @@ export function WorkDetail() {
     return (
       <div className="work-detail-page work-detail-loading">
         <DotLoading color="primary" />
-        <p>Loading...</p>
+        <p>{w.loading}</p>
       </div>
     );
   }
   if (!work) {
     return (
       <div className="work-detail-page work-detail-empty">
-        <p>Work not found.</p>
-        <Button onClick={() => navigate('/plaza')}>Back to Plaza</Button>
+        <p>{w.notFound}</p>
+        <button type="button" className="wd-post-btn" onClick={() => navigate('/plaza')}>{w.backToPlaza}</button>
       </div>
     );
   }
@@ -96,7 +99,7 @@ export function WorkDetail() {
       <LoginDialog visible={loginVisible} onClose={() => setLoginVisible(false)} />
       <div className="work-detail-back">
         <button type="button" onClick={() => navigate('/plaza')}>
-          ← Back to Plaza
+          {w.backToPlaza}
         </button>
       </div>
       <div className="work-detail-main">
@@ -117,7 +120,7 @@ export function WorkDetail() {
           </div>
           {(work.prompt != null && work.prompt !== '') ? (
             <div className="work-detail-prompt">
-              <span className="label">Generated prompt</span>
+              <span className="label">{w.generatedPrompt}</span>
               <p>{work.prompt}</p>
             </div>
           ) : null}
@@ -131,28 +134,27 @@ export function WorkDetail() {
             </button>
           </div>
           <div className="work-detail-comments">
-            <h3>Comments ({work.comments.length})</h3>
+            <h3>{w.comments.replace('{count}', String(work.comments.length))}</h3>
             {user ? (
               <div className="work-detail-comment-form">
                 <TextArea
-                  placeholder="Write a comment..."
+                  placeholder={w.commentPlaceholder}
                   value={commentText}
                   onChange={setCommentText}
                   rows={2}
                   maxLength={500}
                 />
-                <Button
-                  color="primary"
-                  size="small"
-                  loading={submittingComment}
-                  disabled={!commentText.trim()}
+                <button
+                  type="button"
+                  className="wd-post-btn"
+                  disabled={submittingComment || !commentText.trim()}
                   onClick={handleSubmitComment}
                 >
-                  Post
-                </Button>
+                  {submittingComment ? w.posting : w.postComment}
+                </button>
               </div>
             ) : (
-              <p className="work-detail-login-hint">Log in to comment.</p>
+              <p className="work-detail-login-hint">{w.loginToComment}</p>
             )}
             <ul className="work-detail-comment-list">
               {work.comments.map((c) => (

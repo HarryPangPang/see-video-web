@@ -426,6 +426,28 @@ export const zhCN = {
             backToPage: '返回上一页',
             backToHome: '返回首页',
         },
+        plaza: {
+            title: '创作广场',
+            desc: '探索来自社区的 AI 创作，发现无限灵感',
+            tabForYou: 'For You',
+            tabNewest: '最新发布',
+            tabLikes: '点赞最多',
+            loading: '加载中...',
+            empty: '还没有作品，成为第一个发布的人！',
+            loadMore: '加载更多',
+        },
+        works: {
+            loading: '加载中...',
+            notFound: '作品不存在',
+            backToPlaza: '← 返回广场',
+            generatedPrompt: '生成提示词',
+            comments: '评论（{count}）',
+            commentPlaceholder: '写下你的评论...',
+            postComment: '✦ 发布',
+            posting: '发布中…',
+            loginToComment: '登录后才能评论',
+            commentAdded: '评论已发布',
+        },
     }
 };
 
@@ -856,6 +878,28 @@ export const enUS = {
             refreshPage: 'Refresh page',
             backToPage: 'Return to previous page',
             backToHome: 'Back to Home',
+        },
+        plaza: {
+            title: 'Creative Plaza',
+            desc: 'Explore AI creations from the community and discover endless inspiration',
+            tabForYou: 'For You',
+            tabNewest: 'Latest',
+            tabLikes: 'Most Liked',
+            loading: 'Loading...',
+            empty: 'No works yet. Be the first to publish!',
+            loadMore: 'Load more',
+        },
+        works: {
+            loading: 'Loading...',
+            notFound: 'Work not found.',
+            backToPlaza: '← Back to Plaza',
+            generatedPrompt: 'Generated prompt',
+            comments: 'Comments ({count})',
+            commentPlaceholder: 'Write a comment...',
+            postComment: '✦ Post',
+            posting: 'Posting…',
+            loginToComment: 'Log in to comment.',
+            commentAdded: 'Comment added',
         },
     }
 };

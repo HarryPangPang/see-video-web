@@ -200,10 +200,27 @@ export interface WorkDetail extends WorkItem {
   comments: { id: number; content: string; created_at: number; author: string }[];
 }
 
-export async function getWorksList(): Promise<ApiResponse<{ list: WorkItem[] }>> {
-  const response = await fetch(`${API_BASE_URL}/works`);
+export interface WorksListParams {
+  sort?: 'newest' | 'likes' | 'foryou';
+  page?: number;
+  limit?: number;
+}
+
+export interface WorksListData {
+  list: WorkItem[];
+  total: number;
+  hasMore: boolean;
+}
+
+export async function getWorksList(params?: WorksListParams): Promise<ApiResponse<WorksListData>> {
+  const qs = new URLSearchParams();
+  if (params?.sort) qs.set('sort', params.sort);
+  if (params?.page) qs.set('page', String(params.page));
+  if (params?.limit) qs.set('limit', String(params.limit));
+  const query = qs.toString() ? `?${qs}` : '';
+  const response = await fetch(`${API_BASE_URL}/works${query}`);
   if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-  const result: ApiResponse<{ list: WorkItem[] }> = await response.json();
+  const result: ApiResponse<WorksListData> = await response.json();
   if (!result.success) throw new Error(result.message || 'Failed to fetch works');
   return result;
 }
