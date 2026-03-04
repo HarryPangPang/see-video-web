@@ -19,28 +19,28 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
   padding: 20px 16px;
   min-height: 72px;
+  border: none;
   border-bottom: 1px solid rgba(124, 58, 237, 0.08);
   background: #fff;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: background 0.2s, opacity 0.2s;
+
+  &:hover {
+    opacity: 0.92;
+  }
 }
 
 .sidebar-logo {
   width: 40px;
   height: 40px;
-  border: none;
   border-radius: 50%;
-  padding: 0;
-  cursor: pointer;
   flex-shrink: 0;
   overflow: hidden;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
-  background: transparent;
-
-  &:hover {
-    transform: scale(1.06);
-    opacity: 0.9;
-  }
 }
 
 .sidebar-logo-icon {
@@ -423,6 +423,164 @@
   overflow: auto;
   position: relative;
   min-width: 0;
+}
+
+// 编辑资料弹窗 — 与整体紫色风格一致
+.profile-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.profile-dialog {
+  background: #faf8ff;
+  border-radius: 16px;
+  padding: 22px 24px;
+  width: 100%;
+  max-width: 340px;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.12);
+}
+
+.profile-dialog-title {
+  margin: 0 0 18px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #5b21b6;
+  letter-spacing: -0.02em;
+}
+
+.profile-dialog-field {
+  margin-bottom: 18px;
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b21a8;
+    margin-bottom: 6px;
+  }
+  .adm-input-element{
+    padding: 6px !important;
+  }
+}
+
+.profile-dialog-email {
+  width: 100%;
+  padding: 14px 16px;
+  min-height: 52px;
+  font-size: 17px;
+  line-height: 1.4;
+  color: #374151;
+  background: rgba(124, 58, 237, 0.06);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.profile-dialog-input {
+  --font-size: 17px;
+  --color: #374151;
+  --placeholder-color: #a78bfa;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  background: #fff;
+  margin-bottom: 10px;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+
+  :global(.adm-input) {
+    --font-size: 17px;
+    padding: 14px 16px !important;
+    min-height: 52px !important;
+  }
+  :global(.adm-input-element) {
+    font-size: 17px !important;
+    min-height: 24px !important;
+  }
+}
+
+.profile-dialog-password-hint {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #6b7280;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 10px;
+}
+
+.profile-dialog-password-btn {
+  margin-top: 10px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 10px;
+  background: rgba(124, 58, 237, 0.12);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  color: #6b21a8;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover:not(:disabled) {
+    background: rgba(124, 58, 237, 0.18);
+  }
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+.profile-dialog-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.profile-dialog-cancel {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 10px;
+  min-height: 32px;
+  background: transparent;
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  color: #6b21a8;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover {
+    background: rgba(124, 58, 237, 0.08);
+  }
+}
+
+.profile-dialog-save {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 10px;
+  min-height: 32px;
+  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+  transition: opacity 0.2s;
+  &:hover:not(:disabled) {
+    opacity: 0.95;
+  }
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
 }
 
 @media (max-width: 768px) {

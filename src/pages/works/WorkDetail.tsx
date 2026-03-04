@@ -36,6 +36,11 @@ export function WorkDetail() {
   }, [id]);
 
   const fullUrl = (url: string) => (url?.startsWith('http') ? url : `${window.location.origin}${url || ''}`);
+  // 只展示昵称，不展示邮箱；若含 @ 则只显示 @ 前部分
+  const displayAuthor = (author: string | undefined) => {
+    if (!author) return '?';
+    return author.includes('@') ? author.split('@')[0] : author;
+  };
 
   const handleLike = async () => {
     if (!user) {
@@ -115,8 +120,8 @@ export function WorkDetail() {
         <div className="work-detail-info">
           <h1 className="work-detail-title">{work.title}</h1>
           <div className="work-detail-author">
-            <span className="wd-avatar">{work.author?.[0]?.toUpperCase() ?? '?'}</span>
-            <span className="wd-author-name">{work.author}</span>
+            <span className="wd-avatar">{displayAuthor(work.author)?.[0]?.toUpperCase() ?? '?'}</span>
+            <span className="wd-author-name">{displayAuthor(work.author)}</span>
           </div>
           {(work.prompt != null && work.prompt !== '') ? (
             <div className="work-detail-prompt">
@@ -159,7 +164,7 @@ export function WorkDetail() {
             <ul className="work-detail-comment-list">
               {work.comments.map((c) => (
                 <li key={c.id}>
-                  <strong>{c.author}</strong>
+                  <strong>{displayAuthor(c.author)}</strong>
                   <span className="work-detail-comment-time">
                     {new Date(c.created_at).toLocaleString()}
                   </span>

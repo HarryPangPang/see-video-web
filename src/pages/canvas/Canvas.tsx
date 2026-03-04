@@ -149,6 +149,13 @@ export function Canvas() {
     }
   }, [isOmniMode, model]);
 
+  // 视频 3.0 仅支持首尾帧，且仅支持 5s、10s（时长已在 durations 中限制）
+  useEffect(() => {
+    if (model === '30' && frameMode !== 'startEnd') {
+      setFrameMode('startEnd');
+    }
+  }, [model]);
+
   // 处理表单提交
   const handleSubmit = async () => {
     if (!user) {
@@ -466,7 +473,7 @@ export function Canvas() {
               triggerRef={frameModeRef}
               title={g.dropdownTitleFrameMode}
             >
-              <OptionItem icon="✦" label={g.frameModeOmni} badge={g.badgeNew} active={frameMode === 'omni'} onClick={() => { setFrameMode('omni'); setOpenDropdown(null); }} />
+              <OptionItem icon="✦" label={g.frameModeOmni} badge={g.badgeNew} active={frameMode === 'omni'} disabled={model === '30'} onClick={() => { setFrameMode('omni'); setOpenDropdown(null); }} />
               <OptionItem icon="▤" label={g.frameModeStartEnd} active={frameMode === 'startEnd'} onClick={() => { setFrameMode('startEnd'); setOpenDropdown(null); }} />
               {/* <OptionItem icon="▦" label={g.frameModeMulti} active={frameMode === 'multi'} onClick={() => { setFrameMode('multi'); setOpenDropdown(null); }} />
               <OptionItem icon="👤" label={g.frameModeSubject} active={frameMode === 'subject'} onClick={() => { setFrameMode('subject'); setOpenDropdown(null); }} /> */}
