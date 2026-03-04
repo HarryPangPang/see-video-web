@@ -213,8 +213,8 @@ export const zhCN = {
     },
     seedance: {
         auth: {
-            loginTitle: '登录 SeeLit',
-            registerTitle: '注册 SeeLit',
+            loginTitle: '登录 DazeIt',
+            registerTitle: '注册 DazeIt',
             email: '邮箱',
             password: '密码',
             confirmPassword: '确认密码',
@@ -690,8 +690,8 @@ export const enUS = {
     },
     seedance: {
         auth: {
-            loginTitle: 'Log in to SeeLit',
-            registerTitle: 'Sign up for SeeLit',
+            loginTitle: 'Log in to DazeIt',
+            registerTitle: 'Sign up for DazeIt',
             email: 'Email',
             password: 'Password',
             confirmPassword: 'Confirm password',
