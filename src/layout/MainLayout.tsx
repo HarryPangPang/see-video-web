@@ -44,9 +44,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   };
 
   const menuItems = [
-    { id: 'generate', label: layout.navGenerate, icon: IconGenerate, path: '/' },
+    { id: 'generate', label: layout.navGenerate, icon: IconGenerate, path: '/canvas' },
+    { id: 'plaza', label: layout.navPlaza, icon: IconGrid, path: '/' },
     { id: 'assets', label: layout.navAssets, icon: IconFolder, path: '/assets' },
-    { id: 'plaza', label: layout.navPlaza, icon: IconGrid, path: '/plaza' },
     { id: 'upload', label: layout.navUpload, icon: IconArrowUp, path: '/upload' },
   ];
 
@@ -60,12 +60,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         onClose={() => setLoginDialogVisible(false)}
       />
       <aside className="sidebar">
-        <div className="sidebar-brand">
-          <button type="button" className="sidebar-logo" onClick={() => navigate('/')} aria-label="DazeIt">
-            <img src={dazeitLogo} alt="DazeIt" className="sidebar-logo-icon" />
-          </button>
+        <button
+          type="button"
+          className="sidebar-brand"
+          onClick={() => navigate('/')}
+          aria-label="DazeIt - 返回首页"
+        >
+          <span className="sidebar-logo">
+            <img src={dazeitLogo} alt="" className="sidebar-logo-icon" />
+          </span>
           <span className="sidebar-brand-name">DazeIt</span>
-        </div>
+        </button>
 
         <nav className="sidebar-nav" aria-label="Main">
           <ul className="sidebar-menu">

@@ -69,8 +69,9 @@ export default function App() {
             </MainLayout>
           }
         />
+        <Route path="/" element={<MainLayout><Plaza /></MainLayout>} />
         <Route
-          path="/"
+          path="/canvas"
           element={
             <MainLayout>
               <Canvas />
@@ -82,14 +83,6 @@ export default function App() {
           element={
             <MainLayout>
               <Assets />
-            </MainLayout>
-          }
-        />
-        <Route
-          path="/canvas"
-          element={
-            <MainLayout>
-              <Inspire />
             </MainLayout>
           }
         />
