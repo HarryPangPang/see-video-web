@@ -8,24 +8,47 @@
   }
 }
 
-// Header
-.my-header {
-  margin-bottom: 28px;
-  text-align: center;
+// Search
+.my-top-actions {
+  margin-bottom: 16px;
 }
 
-.my-header-title {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 800;
-  color: #7c3aed;
-  letter-spacing: -0.01em;
+.my-search-wrap {
+  background: #faf8ff;
+  border: 1.5px solid rgba(124, 58, 237, 0.18);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(124, 58, 237, 0.07);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+
+  &:focus-within {
+    // border-color: transparent;
+    box-shadow: none;
+  }
+}
+
+.my-search {
+  --background: transparent;
+  --border-radius: 0;
+  --height: 40px;
+  --placeholder-color: #9167e0;
+  --adm-color-primary: #7c3aed;
+
+  .adm-search-bar-input-box {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  input {
+    outline: none !important;
+    box-shadow: none !important;
+  }
 }
 
 // Tabs
 .my-tabs {
   display: flex;
-  justify-content: center;
   gap: 8px;
   margin-bottom: 28px;
 }

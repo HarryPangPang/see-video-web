@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DotLoading, Toast } from 'antd-mobile';
+import { DotLoading, Toast, SearchBar } from 'antd-mobile';
 import { getWorksList, deleteWork, updateWorkPrivacy, type WorkItem, type WorksListParams } from '../../services/api';
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
@@ -77,6 +77,7 @@ export function My() {
   const plaza = t.seedance.plaza;
 
   const [tab, setTab] = useState<MyTab>('published');
+  const [searchKeyword, setSearchKeyword] = useState('');
   const [tabData, setTabData] = useState<Record<MyTab, TabData>>({
     published: { ...EMPTY_TAB },
     uploads: { ...EMPTY_TAB },
@@ -213,6 +214,8 @@ export function My() {
   };
 
   const currentData = tabData[tab];
+  const kw = searchKeyword.trim().toLowerCase();
+  const displayList = kw ? currentData.list.filter(w => (w.title || '').toLowerCase().includes(kw)) : currentData.list;
   const emptyText = tab === 'published' ? p.emptyPublished : tab === 'uploads' ? p.emptyUploads : p.emptyPrivate;
 
   const tabs: { key: MyTab; label: string }[] = [
@@ -225,8 +228,10 @@ export function My() {
     <div className="my-page">
       <LoginDialog visible={loginVisible} onClose={() => setLoginVisible(false)} />
 
-      <div className="my-header">
-        <h1 className="my-header-title">{p.title}</h1>
+      <div className="my-top-actions">
+        <div className="my-search-wrap">
+          <SearchBar placeholder={t.common.searchPlaceholder} value={searchKeyword} onChange={setSearchKeyword} className="my-search" />
+        </div>
       </div>
 
       <div className="my-tabs">
@@ -247,7 +252,7 @@ export function My() {
           <DotLoading color="primary" />
           <p>{p.loading}</p>
         </div>
-      ) : currentData.list.length === 0 ? (
+      ) : displayList.length === 0 ? (
         <div className="my-empty">
           <div className="my-empty-icon">✦</div>
           <p>{emptyText}</p>
@@ -255,7 +260,7 @@ export function My() {
       ) : (
         <>
           <div className="my-grid">
-            {currentData.list.map((work) => (
+            {displayList.map((work) => (
               <button
                 key={work.id}
                 type="button"
