@@ -313,7 +313,7 @@ export function Assets() {
         </div>
 
         <div className="assets-video-prompt" title={video.prompt || $l('seedance.video.noTitle')}>
-          {video.prompt?.slice(0, 20) || $l('seedance.video.noTitle')}
+          {String(video.prompt ?? '').slice(0, 20) || $l('seedance.video.noTitle')}
         </div>
         {video.error_message && (
           <div className="assets-video-error" title={video.error_message}>{video.error_message}</div>
@@ -376,7 +376,7 @@ export function Assets() {
         </div>
 
         <div className="assets-video-prompt" title={work.title}>
-          {work.title?.slice(0, 20) || $l('seedance.video.noTitle')}
+          {String(work.title ?? '').slice(0, 20) || $l('seedance.video.noTitle')}
         </div>
       </div>
     );
