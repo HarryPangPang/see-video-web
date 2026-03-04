@@ -104,7 +104,12 @@ export function Plaza() {
     const isPrivate = !work.is_private;
     try {
       await updateWorkPrivacy(work.id, isPrivate);
-      setList(prev => prev.map(w => w.id === work.id ? { ...w, is_private: isPrivate ? 1 : 0 } : w));
+      // 设为私密时立即从广场移除；设为公开不会出现在此（该操作在 Assets 里完成）
+      if (isPrivate) {
+        setList(prev => prev.filter(w => w.id !== work.id));
+      } else {
+        setList(prev => prev.map(w => w.id === work.id ? { ...w, is_private: 0 } : w));
+      }
       Toast.show({ content: isPrivate ? p.setPrivate : p.setPublic, icon: 'success' });
     } catch (e) {
       Toast.show({ content: (e as Error).message, icon: 'fail' });
@@ -136,7 +141,6 @@ export function Plaza() {
       setLoginVisible(true);
       return;
     }
-    // 乐观更新
     const liked = !work.liked;
     setList(prev => prev.map(w => w.id === work.id ? { ...w, liked, like_count: (w.like_count ?? 0) + (liked ? 1 : -1) } : w));
     try {
@@ -145,14 +149,12 @@ export function Plaza() {
         setList(prev => prev.map(w => w.id === work.id ? { ...w, liked, like_count: res.data!.like_count } : w));
       }
     } catch (e) {
-      // 回滚
       setList(prev => prev.map(w => w.id === work.id ? { ...w, liked: !liked, like_count: (w.like_count ?? 0) + (liked ? -1 : 1) } : w));
       Toast.show({ content: (e as Error).message, icon: 'fail' });
     }
   };
 
   const fullUrl = (url: string) => (url?.startsWith('http') ? url : `${window.location.origin}${url || ''}`);
-  // 广场只展示昵称，不展示邮箱；若后端返回邮箱则只显示 @ 前部分
   const displayAuthor = (author: string | undefined) => {
     if (!author) return '?';
     return author.includes('@') ? author.split('@')[0] : author;
@@ -198,7 +200,7 @@ export function Plaza() {
               <button
                 key={work.id}
                 type="button"
-                className={`plaza-card${work.is_private ? ' plaza-card--private' : ''}`}
+                className="plaza-card"
                 onClick={() => navigate(`/works/${work.id}`)}
               >
                 <div className="plaza-card-cover">
@@ -219,17 +221,13 @@ export function Plaza() {
                     </div>
                   )}
                   <div className="plaza-card-overlay" />
-                  {work.is_private ? (
-                    <span className="plaza-card-private-badge">{p.privateLabel}</span>
-                  ) : (
-                    <button
-                      type="button"
-                      className={`plaza-card-likes${work.liked ? ' plaza-card-likes--liked' : ''}`}
-                      onClick={(e) => handleCardLike(e, work)}
-                    >
-                      ♥ {work.like_count ?? 0}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className={`plaza-card-likes${work.liked ? ' plaza-card-likes--liked' : ''}`}
+                    onClick={(e) => handleCardLike(e, work)}
+                  >
+                    ♥ {work.like_count ?? 0}
+                  </button>
 
                   {user && work.user_id === user.id && (
                     <div
@@ -250,7 +248,7 @@ export function Plaza() {
                             className="plaza-card-menu-item"
                             onClick={(e) => handleSetPrivacy(e, work)}
                           >
-                            {work.is_private ? p.setPublic : p.setPrivate}
+                            {p.setPrivate}
                           </button>
                           <button
                             type="button"
@@ -317,7 +315,6 @@ export function Plaza() {
         </div>
       )}
 
-      {/* 自定义删除确认弹窗 */}
       {deleteTarget && (
         <div className="plaza-confirm-overlay" onClick={() => setDeleteTarget(null)}>
           <div className="plaza-confirm-dialog" onClick={e => e.stopPropagation()}>

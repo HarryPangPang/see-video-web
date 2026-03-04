@@ -254,6 +254,7 @@ export interface WorksListParams {
   limit?: number;
   mine?: boolean;
   source?: 'jimeng' | 'upload';
+  isPrivate?: boolean;
 }
 
 export interface WorksListData {
@@ -269,6 +270,7 @@ export async function getWorksList(params?: WorksListParams): Promise<ApiRespons
   if (params?.limit) qs.set('limit', String(params.limit));
   if (params?.mine) qs.set('mine', 'true');
   if (params?.source) qs.set('source', params.source);
+  if (params?.isPrivate !== undefined) qs.set('isPrivate', String(params.isPrivate));
   const query = qs.toString() ? `?${qs}` : '';
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
   const headers: Record<string, string> = {};

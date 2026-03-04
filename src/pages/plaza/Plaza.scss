@@ -94,6 +94,26 @@
       background: #6d28d9;
     }
   }
+
+  &--private {
+    color: #64748b;
+    background: rgba(100, 116, 139, 0.1);
+
+    &:hover {
+      background: rgba(100, 116, 139, 0.2);
+      color: #475569;
+    }
+
+    &.plaza-tab--active {
+      background: rgba(51, 65, 85, 0.82);
+      color: #e2e8f0;
+      box-shadow: 0 4px 14px rgba(51, 65, 85, 0.3);
+
+      &:hover {
+        background: rgba(30, 41, 59, 0.9);
+      }
+    }
+  }
 }
 
 // Loading / Empty
@@ -254,6 +274,29 @@
     &:hover {
       background: rgba(190, 24, 93, 0.95);
     }
+  }
+}
+
+// 私密 tab 卡片上的「重新上架」按钮
+.plaza-card-set-public {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #e2e8f0;
+  background: rgba(51, 65, 85, 0.82);
+  backdrop-filter: blur(6px);
+  padding: 5px 13px;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+
+  &:hover {
+    background: rgba(124, 58, 237, 0.9);
+    color: #fff;
+    transform: scale(1.08);
   }
 }
 
