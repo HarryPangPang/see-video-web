@@ -21,7 +21,7 @@ interface QueueInfo {
   pos?: number; total?: number; wait?: number;
 }
 
-interface VideoAsset {
+export interface VideoAsset {
   id: string;
   generate_id?: string;
   duration: string;
@@ -38,6 +38,9 @@ interface VideoAsset {
   queue_info?: QueueInfo;
   work_id?: string | null;
   work_is_private?: number | null;
+  start_frame?: string;
+  end_frame?: string;
+  omni_frames?: string[];
 }
 
 // 删除确认目标
@@ -124,7 +127,6 @@ export function Assets() {
   }, [batchMode]);
 
   const fullUrl = (url: string) => (url?.startsWith('http') ? url : `${window.location.origin}${url || ''}`);
-  const getVideoUrl = (video: VideoAsset) => video.video_local_path ? `${window.location.origin}${video.video_local_path}` : video.video_url;
   const getCoverUrl = (video: VideoAsset) => video.cover_local_path ? `${window.location.origin}${video.cover_local_path}` : (video.cover_url || null);
   const hasCover = (video: VideoAsset) => !!(video.cover_local_path || video.cover_url);
 
@@ -214,8 +216,6 @@ export function Assets() {
 
   // ── 生成视频卡片 ──
   const renderGenCard = (video: VideoAsset) => {
-    const videoUrl = getVideoUrl(video);
-    const hasVideo = hasCover(video) && videoUrl;
     const isSelected = selectedItems.has(video.id);
     const menuId = `g:${video.id}`;
     const isPrivate = !!(video.work_is_private);
@@ -235,7 +235,7 @@ export function Assets() {
         return;
       }
       if (target.closest('.assets-card-menu-wrap')) return;
-      if (hasVideo && videoUrl) window.open(videoUrl, '_blank', 'noopener,noreferrer');
+      navigate(`/assets/${video.id}`, { state: { video } });
     };
 
     return (
@@ -313,7 +313,7 @@ export function Assets() {
         </div>
 
         <div className="assets-video-prompt" title={video.prompt || $l('seedance.video.noTitle')}>
-          {video.prompt?.slice(0, 20) || $l('seedance.video.noTitle')}
+          {String(video.prompt ?? '').slice(0, 20) || $l('seedance.video.noTitle')}
         </div>
         {video.error_message && (
           <div className="assets-video-error" title={video.error_message}>{video.error_message}</div>
@@ -376,7 +376,7 @@ export function Assets() {
         </div>
 
         <div className="assets-video-prompt" title={work.title}>
-          {work.title?.slice(0, 20) || $l('seedance.video.noTitle')}
+          {String(work.title ?? '').slice(0, 20) || $l('seedance.video.noTitle')}
         </div>
       </div>
     );

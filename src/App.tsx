@@ -10,6 +10,7 @@ import { Register } from './pages/auth/Register';
 import { Generate } from './pages/generate/Generate';
 import { Inspire } from './pages/inspire/Inspire';
 import { Assets } from './pages/assets/Assets';
+import { AssetDetail } from './pages/assets/AssetDetail';
 import { Canvas } from './pages/canvas/Canvas';
 import { PaymentSuccess } from './pages/payment/PaymentSuccess';
 import { PaymentCancel } from './pages/payment/PaymentCancel';
@@ -88,6 +89,7 @@ export default function App() {
           }
         />
         <Route path="/plaza" element={<MainLayout><Plaza /></MainLayout>} />
+        <Route path="/assets/:id" element={<MainLayout><AssetDetail /></MainLayout>} />
         <Route path="/works/:id" element={<MainLayout><WorkDetail /></MainLayout>} />
         <Route path="/upload" element={<MainLayout><UploadVideo /></MainLayout>} />
         <Route path="/my" element={<MainLayout><My /></MainLayout>} />

@@ -508,6 +508,23 @@ export const zhCN = {
             loginToComment: '登录后才能评论',
             commentAdded: '评论已发布',
         },
+        assetDetail: {
+            back: '← 返回资产',
+            prompt: '生成提示词',
+            model: '模型',
+            duration: '时长',
+            ratio: '画面比例',
+            createdAt: '创建时间',
+            startFrame: '首帧',
+            endFrame: '尾帧',
+            referenceFrame: '参考图 {index}',
+            noImages: '暂无参考图片',
+            generating: '生成中',
+            failed: '生成失败',
+            watchVideo: '播放视频',
+            noPrompt: '无提示词',
+            seconds: '秒',
+        },
     }
 };
 
@@ -1020,6 +1037,23 @@ export const enUS = {
             posting: 'Posting…',
             loginToComment: 'Log in to comment.',
             commentAdded: 'Comment added',
+        },
+        assetDetail: {
+            back: '← Back to Assets',
+            prompt: 'Prompt',
+            model: 'Model',
+            duration: 'Duration',
+            ratio: 'Ratio',
+            createdAt: 'Created',
+            startFrame: 'Start Frame',
+            endFrame: 'End Frame',
+            referenceFrame: 'Ref {index}',
+            noImages: 'No reference images',
+            generating: 'Generating',
+            failed: 'Failed',
+            watchVideo: 'Watch Video',
+            noPrompt: 'No prompt',
+            seconds: 's',
         },
     }
 };

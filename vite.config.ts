@@ -9,6 +9,10 @@ const proxy = (target: string) => {
       target,
       changeOrigin: true,
     },
+    '/assets': {
+      target,
+      changeOrigin: true,
+    },
   }
   return ProxyList
 }
