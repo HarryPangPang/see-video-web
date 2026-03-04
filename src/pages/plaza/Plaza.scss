@@ -231,14 +231,30 @@
   position: absolute;
   bottom: 10px;
   right: 10px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: #fff;
   background: rgba(124, 58, 237, 0.75);
   backdrop-filter: blur(6px);
-  padding: 3px 10px;
+  padding: 5px 13px;
   border-radius: 20px;
   border: 1px solid rgba(167, 139, 250, 0.3);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+
+  &:hover {
+    background: rgba(124, 58, 237, 0.95);
+    transform: scale(1.08);
+  }
+
+  &--liked {
+    background: rgba(219, 39, 119, 0.85);
+    border-color: rgba(249, 168, 212, 0.4);
+
+    &:hover {
+      background: rgba(190, 24, 93, 0.95);
+    }
+  }
 }
 
 // 私密标签
@@ -248,12 +264,12 @@
   right: 10px;
   font-size: 11px;
   font-weight: 600;
-  color: #fff;
-  background: rgba(219, 39, 119, 0.8);
+  color: #e2e8f0;
+  background: rgba(51, 65, 85, 0.82);
   backdrop-filter: blur(6px);
   padding: 3px 10px;
   border-radius: 20px;
-  border: 1px solid rgba(251, 113, 133, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.25);
 }
 
 // 管理菜单按钮 & 下拉

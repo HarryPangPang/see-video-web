@@ -249,7 +249,17 @@ export function Assets() {
       if (batchMode) { toggleSelect(video.id, 'generation'); return; }
       const target = e.target as HTMLElement;
       if (target.closest('.assets-video-download')) { e.stopPropagation(); downloadVideo(video); return; }
-      if (target.closest('.assets-video-publish')) { e.stopPropagation(); user ? setPublishVideo(video) : setLoginDialogVisible(true); return; }
+      if (target.closest('.assets-video-publish')) {
+        e.stopPropagation();
+        if (!user) { setLoginDialogVisible(true); return; }
+        if (isPrivate && video.work_id) {
+          // 重新发布：直接设为公开，无需弹窗
+          handleTogglePrivacy(video.work_id, true, video.id);
+        } else {
+          setPublishVideo(video);
+        }
+        return;
+      }
       if (target.closest('.assets-card-menu-wrap')) return;
       if (hasVideo && videoUrl) window.open(videoUrl, '_blank', 'noopener,noreferrer');
     };
@@ -295,8 +305,10 @@ export function Assets() {
           {/* Publish + Download 悬浮操作 */}
           {hasCover(video) && !batchMode && (
             <div className="assets-video-actions">
-              {!video.work_id && (
-                <div className="assets-video-publish" title="Publish to Plaza">Publish</div>
+              {(!video.work_id || isPrivate) && (
+                <div className="assets-video-publish" title={isPrivate ? 'Re-publish to Plaza' : 'Publish to Plaza'}>
+                  {isPrivate ? 'Re-publish' : 'Publish'}
+                </div>
               )}
               <div className="assets-video-download">{$l('seedance.video.download')}</div>
             </div>

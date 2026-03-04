@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DotLoading, Toast } from 'antd-mobile';
-import { getWorksList, deleteWork, updateWorkPrivacy, type WorkItem, type WorksListParams } from '../../services/api';
+import { getWorksList, deleteWork, updateWorkPrivacy, likeWork, unlikeWork, type WorkItem, type WorksListParams } from '../../services/api';
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
+import { LoginDialog } from '../../components/LoginDialog';
 import './Plaza.scss';
 
 type SortType = 'foryou' | 'newest' | 'likes';
@@ -30,6 +31,7 @@ export function Plaza() {
   const [transitioning, setTransitioning] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [loginVisible, setLoginVisible] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const totalPages = total > 0 ? Math.ceil(total / PAGE_SIZE) : 1;
@@ -128,6 +130,27 @@ export function Plaza() {
     }
   };
 
+  const handleCardLike = async (e: React.MouseEvent, work: WorkItem) => {
+    e.stopPropagation();
+    if (!user) {
+      setLoginVisible(true);
+      return;
+    }
+    // 乐观更新
+    const liked = !work.liked;
+    setList(prev => prev.map(w => w.id === work.id ? { ...w, liked, like_count: (w.like_count ?? 0) + (liked ? 1 : -1) } : w));
+    try {
+      const res = liked ? await likeWork(work.id) : await unlikeWork(work.id);
+      if (res.data) {
+        setList(prev => prev.map(w => w.id === work.id ? { ...w, liked, like_count: res.data!.like_count } : w));
+      }
+    } catch (e) {
+      // 回滚
+      setList(prev => prev.map(w => w.id === work.id ? { ...w, liked: !liked, like_count: (w.like_count ?? 0) + (liked ? -1 : 1) } : w));
+      Toast.show({ content: (e as Error).message, icon: 'fail' });
+    }
+  };
+
   const fullUrl = (url: string) => (url?.startsWith('http') ? url : `${window.location.origin}${url || ''}`);
   // 广场只展示昵称，不展示邮箱；若后端返回邮箱则只显示 @ 前部分
   const displayAuthor = (author: string | undefined) => {
@@ -137,6 +160,7 @@ export function Plaza() {
 
   return (
     <div className="plaza-page">
+      <LoginDialog visible={loginVisible} onClose={() => setLoginVisible(false)} />
       <div className="plaza-bg" />
 
       <div className="plaza-header">
@@ -198,7 +222,13 @@ export function Plaza() {
                   {work.is_private ? (
                     <span className="plaza-card-private-badge">{p.privateLabel}</span>
                   ) : (
-                    <span className="plaza-card-likes">♥ {work.like_count ?? 0}</span>
+                    <button
+                      type="button"
+                      className={`plaza-card-likes${work.liked ? ' plaza-card-likes--liked' : ''}`}
+                      onClick={(e) => handleCardLike(e, work)}
+                    >
+                      ♥ {work.like_count ?? 0}
+                    </button>
                   )}
 
                   {user && work.user_id === user.id && (

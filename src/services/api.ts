@@ -239,6 +239,7 @@ export interface WorkItem {
   source: string;
   created_at: number;
   like_count?: number;
+  liked?: boolean;
   is_private?: number;
 }
 
