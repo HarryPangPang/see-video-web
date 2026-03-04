@@ -40,6 +40,7 @@ export function UploadVideo() {
   const { t } = useI18n();
   const p = t.seedance.pages;
   const [title, setTitle] = useState('');
+  const [prompt, setPrompt] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [coverBlob, setCoverBlob] = useState<Blob | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -96,7 +97,7 @@ export function UploadVideo() {
     }
     setLoading(true);
     try {
-      const res = await publishWorkUpload(file, title.trim(), coverBlob ?? undefined);
+      const res = await publishWorkUpload(file, title.trim(), coverBlob ?? undefined, prompt.trim() || undefined);
       Toast.show({ content: p.uploadSuccess, icon: 'success' });
       navigate(res.data?.id ? `/works/${res.data.id}` : '/plaza');
     } catch (e) {
@@ -130,6 +131,19 @@ export function UploadVideo() {
             value={title}
             onChange={e => setTitle(e.target.value)}
             maxLength={100}
+          />
+        </div>
+
+        {/* 提示词 */}
+        <div className="upload-field">
+          <label className="upload-label">{p.uploadLabelPrompt}</label>
+          <textarea
+            className="upload-input upload-textarea"
+            placeholder={p.uploadPromptPlaceholder}
+            value={prompt}
+            onChange={e => setPrompt(e.target.value)}
+            maxLength={2000}
+            rows={3}
           />
         </div>
 

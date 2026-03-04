@@ -62,29 +62,19 @@
 // 播放器区域
 .work-detail-media {
   flex: 0 0 55%;
-  position: relative;
   border-radius: 20px;
   overflow: hidden;
-  background: #f0ebff;
+  background: #000;
   box-shadow:
     0 0 0 1px rgba(124, 58, 237, 0.1),
     0 4px 16px rgba(124, 58, 237, 0.12);
 
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 20px;
-    background: rgba(124, 58, 237, 0.04);
-    pointer-events: none;
-    z-index: 1;
-  }
-
   .work-detail-video {
+    display: block;
     width: 100%;
     height: auto;
-    display: block;
-    border-radius: 20px;
+    max-height: calc(100vh - 140px);
+    object-fit: contain;
   }
 
   @media (max-width: 768px) {
