@@ -9,6 +9,61 @@ import './Plaza.scss';
 
 type SortType = 'foryou' | 'newest' | 'likes';
 
+function PlazaCardMedia({ videoUrl, coverUrl, fullUrl }: {
+  videoUrl: string;
+  coverUrl?: string;
+  fullUrl: (url: string) => string;
+}) {
+  const [playing, setPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wantPlayRef = useRef(false);
+
+  const handleMouseEnter = () => {
+    timerRef.current = setTimeout(() => {
+      wantPlayRef.current = true;
+      const video = videoRef.current;
+      if (!video) return;
+      if (!video.src) video.src = fullUrl(videoUrl);
+      video.play().catch(() => {});
+    }, 200);
+  };
+
+  const handleMouseLeave = () => {
+    wantPlayRef.current = false;
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    setPlaying(false);
+    const video = videoRef.current;
+    if (video) { video.pause(); video.currentTime = 0; }
+  };
+
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
+
+  return (
+    <div className="plaza-card-media" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <div
+        className="plaza-card-img"
+        style={{
+          backgroundImage: coverUrl ? `url(${fullUrl(coverUrl)})` : undefined,
+          opacity: playing ? 0 : 1,
+        }}
+      />
+      <video
+        ref={videoRef}
+        muted
+        playsInline
+        loop
+        preload="none"
+        className="plaza-card-video-preview"
+        style={{ opacity: playing ? 1 : 0 }}
+        onPlaying={() => { if (wantPlayRef.current) setPlaying(true); }}
+      />
+    </div>
+  );
+}
+
 const PAGE_SIZE = 20;
 
 export function Plaza() {
@@ -199,22 +254,11 @@ export function Plaza() {
                 onClick={() => navigate(`/works/${work.id}`)}
               >
                 <div className="plaza-card-cover">
-                  {work.cover_url ? (
-                    <div
-                      className="plaza-card-img"
-                      style={{ backgroundImage: `url(${fullUrl(work.cover_url)})` }}
-                    />
-                  ) : (
-                    <div className="plaza-card-video-wrap">
-                      <video
-                        src={fullUrl(work.video_url)}
-                        muted
-                        playsInline
-                        preload="metadata"
-                        className="plaza-card-video"
-                      />
-                    </div>
-                  )}
+                  <PlazaCardMedia
+                    videoUrl={work.video_url}
+                    coverUrl={work.cover_url ?? undefined}
+                    fullUrl={fullUrl}
+                  />
                   <div className="plaza-card-overlay" />
                   <button
                     type="button"
