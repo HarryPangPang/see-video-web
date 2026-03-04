@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SearchBar, Toast, DotLoading } from 'antd-mobile';
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
@@ -45,6 +46,7 @@ interface DeleteTarget {
 }
 
 export function Assets() {
+  const navigate = useNavigate();
   const { t, $l } = useI18n();
   const { user, loading: authLoading } = useAuth();
   const p = t.seedance.pages;
@@ -331,8 +333,7 @@ export function Assets() {
       const target = e.target as HTMLElement;
       if (target.closest('.assets-video-publish')) { e.stopPropagation(); user ? setPublishWork(work) : setLoginDialogVisible(true); return; }
       if (target.closest('.assets-card-menu-wrap')) return;
-      const videoUrl = fullUrl(work.video_url);
-      if (videoUrl) window.open(videoUrl, '_blank', 'noopener,noreferrer');
+      navigate(`/works/${work.id}`);
     };
 
     return (
