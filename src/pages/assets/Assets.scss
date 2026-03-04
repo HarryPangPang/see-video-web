@@ -19,11 +19,25 @@
     min-width: 120px;
     flex: 1;
   }
-  .assets-batch {
-    font-size: 14px;
+  .assets-batch-btn {
+    padding: 7px 16px;
+    border: none;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    background: #ede9fe;
     color: #7c3aed;
     cursor: pointer;
     white-space: nowrap;
+    transition: background 0.15s;
+
+    &:hover { background: #ddd6fe; }
+
+    &--active {
+      background: #7c3aed;
+      color: #fff;
+      &:hover { background: #6d28d9; }
+    }
   }
 }
 
@@ -63,19 +77,21 @@
   }
 }
 .assets-video-item {
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
-  background: #f5f5f5;
+  background: #faf8ff;
+  border: 1.5px solid rgba(124, 58, 237, 0.1);
+  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.07);
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
 
   &:hover {
     transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.18);
 
-    .assets-video-download,
-    .assets-video-publish {
+    .assets-video-actions {
       opacity: 1;
-      z-index: 100;
+      transform: translateY(0);
       pointer-events: auto;
     }
   }
@@ -112,7 +128,7 @@
 
   .assets-video-status {
     position: absolute;
-    right: 8px;
+    left: 8px;
     top: 8px;
     font-size: 12px;
     padding: 4px 8px;
@@ -186,43 +202,72 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   }
 
-  .assets-video-download,
-  .assets-video-publish {
+  .assets-video-actions {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 12px;
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 16px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 28px 10px 10px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, transparent 100%);
+    display: flex;
+    gap: 8px;
     opacity: 0;
-    transition: opacity 0.2s;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
     pointer-events: none;
   }
-  .assets-video-publish {
-    left: 50%;
-    margin-left: -70px;
-    background: rgba(82, 196, 26, 0.9);
-  }
+
+  .assets-video-publish,
   .assets-video-download {
-    left: 50%;
-    margin-left: 20px;
-    background: rgba(22, 119, 255, 0.9);
-    font-size: 14px;
-    padding: 8px 16px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 100px;
+    padding: 6px 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, transform 0.15s;
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+  }
+
+  .assets-video-publish {
+    color: #fff;
+    background: #7c3aed;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.45);
+
+    &:hover {
+      background: #6d28d9;
+    }
+  }
+
+  .assets-video-download {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(4px);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.32);
+    }
   }
 
   .assets-video-prompt {
     padding: 8px 12px;
     font-size: 13px;
-    color: #333;
+    color: #111827;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     cursor: help;
 
     &:hover {
-      background: rgba(0, 0, 0, 0.02);
+      background: rgba(124, 58, 237, 0.04);
     }
   }
 
@@ -265,6 +310,208 @@
   font-size: 14px;
 }
 
+
+// ── 选中态 ──
+.assets-video-item--selected {
+  outline: 2px solid #7c3aed;
+  outline-offset: -2px;
+}
+
+// ── 批量 checkbox ──
+.assets-card-checkbox {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+
+  &--checked {
+    background: #7c3aed;
+    border-color: #7c3aed;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 2px;
+      width: 6px;
+      height: 10px;
+      border: 2px solid #fff;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+  }
+}
+
+// ── 三点菜单 ──
+.assets-card-menu-wrap {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 20;
+}
+
+.assets-card-menu-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.2s, background 0.15s;
+
+  &:hover { background: rgba(0, 0, 0, 0.65); }
+}
+
+.assets-video-item:hover .assets-card-menu-btn {
+  opacity: 1;
+}
+
+.assets-card-menu {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  min-width: 120px;
+  z-index: 50;
+}
+
+.assets-card-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 13px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #111827;
+  white-space: nowrap;
+
+  &:hover { background: #f5f3ff; color: #7c3aed; }
+
+  &--danger {
+    color: #ef4444;
+    &:hover { background: #fff1f0; color: #dc2626; }
+  }
+}
+
+// ── 批量操作底部栏 ──
+.assets-batch-bar {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border-radius: 100px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(124, 58, 237, 0.1);
+  padding: 10px 10px 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 200;
+}
+
+.assets-batch-count {
+  font-size: 14px;
+  color: #5b21b6;
+  font-weight: 500;
+}
+
+.assets-batch-delete-btn {
+  padding: 7px 20px;
+  border: none;
+  border-radius: 100px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  &:hover { background: #dc2626; }
+}
+
+// ── 删除确认弹窗 ──
+.assets-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+
+.assets-confirm-dialog {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 28px 24px;
+  width: 320px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+.assets-confirm-icon { font-size: 32px; margin-bottom: 12px; }
+
+.assets-confirm-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px;
+}
+
+.assets-confirm-desc {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.assets-confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.assets-confirm-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &--cancel {
+    background: #f3f4f6;
+    color: #111827;
+    &:hover { background: #e5e7eb; }
+  }
+
+  &--danger {
+    background: #ef4444;
+    color: #fff;
+    &:hover { background: #dc2626; }
+  }
+}
 
 @media (max-width: 768px) {
   .assets-page {

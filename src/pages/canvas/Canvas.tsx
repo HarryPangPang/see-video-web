@@ -305,23 +305,12 @@ export function Canvas() {
 
       <h1 className="canvas-question">{p.canvasQuestion}</h1>
 
-      <div style={{ textAlign: 'center', margin: '16px 0' }}>
+      <div className="canvas-discord-wrap">
         <a
           href="https://discord.com/invite/94YKekdH"
           target="_blank"
           rel="noopener noreferrer"
-          style={{
-            display: 'inline-block',
-            padding: '10px 24px',
-            backgroundColor: '#faad14',
-            color: '#ffffff',
-            borderRadius: '8px',
-            textDecoration: 'none',
-            fontWeight: '600',
-            fontSize: '16px',
-            boxShadow: '0 2px 8px rgba(114, 137, 218, 0.4)',
-            transition: 'all 0.2s ease'
-          }}
+          className="canvas-discord-btn"
         >
           {p.discordInvite}
         </a>
@@ -355,7 +344,7 @@ export function Canvas() {
                   </ImageUploader>
                 </div>
                 {omniFrames.length > 0 && (
-                  <div style={{ fontSize: '12px', color: '#666', textAlign: 'center' }}>
+                  <div className="canvas-omni-count">
                     {g.uploadedCount.replace('{count}', omniFrames.length.toString())}
                   </div>
                 )}

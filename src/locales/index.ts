@@ -333,6 +333,7 @@ export const zhCN = {
             allVideos: '所有视频',
             myCollections: '我的收藏',
             batchOps: '批量操作',
+            batchCancel: '取消选择',
             uploadVideoTitle: '上传视频',
             uploadVideoDesc: '填写标题，上传本地视频，发布到创作广场',
             uploadLabelTitle: '作品标题',
@@ -457,6 +458,7 @@ export const zhCN = {
             privateLabel: '私密',
             prevPage: '上一页',
             nextPage: '下一页',
+            refreshFeed: '换一批',
         },
         works: {
             loading: '加载中...',
@@ -808,6 +810,7 @@ export const enUS = {
             allVideos: 'All videos',
             myCollections: 'My collections',
             batchOps: 'Batch',
+            batchCancel: 'Cancel',
             uploadVideoTitle: 'Upload Video',
             uploadVideoDesc: 'Add a title, choose a video file and publish it to the Plaza',
             uploadLabelTitle: 'Title',
@@ -932,6 +935,7 @@ export const enUS = {
             privateLabel: 'Private',
             prevPage: 'Prev',
             nextPage: 'Next',
+            refreshFeed: 'Refresh',
         },
         works: {
             loading: 'Loading...',

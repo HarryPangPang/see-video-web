@@ -240,7 +240,25 @@ export function Plaza() {
             ))}
           </div>
 
-          {totalPages > 1 && (
+          {sort === 'foryou' && list.length >= PAGE_SIZE && (
+            <div className="plaza-refresh-bar">
+              <button
+                type="button"
+                className={`plaza-refresh-btn${transitioning ? ' plaza-refresh-btn--spinning' : ''}`}
+                onClick={async () => {
+                  if (transitioning) return;
+                  setTransitioning(true);
+                  await fetchPage({ sort: 'foryou', page: 1, limit: PAGE_SIZE });
+                  setTransitioning(false);
+                }}
+                disabled={transitioning}
+              >
+                <span className="plaza-refresh-icon">↻</span>
+                {p.refreshFeed}
+              </button>
+            </div>
+          )}
+          {sort !== 'foryou' && totalPages > 1 && (
             <div className="plaza-pagination">
               <button
                 type="button"
