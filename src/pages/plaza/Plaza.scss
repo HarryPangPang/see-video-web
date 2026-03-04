@@ -3,6 +3,10 @@
   padding: 32px 28px 48px;
   min-height: 100%;
   overflow: hidden;
+
+  @media (max-width: 480px) {
+    padding: 24px 16px 48px;
+  }
 }
 
 // 背景装饰
@@ -126,23 +130,29 @@
   }
 }
 
-// Grid — 一行 4~5 个
+// Grid
 .plaza-grid {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: 16px;
 
+  @media (max-width: 1600px) {
+    grid-template-columns: repeat(6, 1fr);
+  }
   @media (max-width: 1280px) {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
   @media (max-width: 900px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  @media (max-width: 700px) {
     grid-template-columns: repeat(3, 1fr);
   }
-  @media (max-width: 600px) {
+  @media (max-width: 480px) {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 10px;
   }
 }
 

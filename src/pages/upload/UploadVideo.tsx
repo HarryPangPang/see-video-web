@@ -7,6 +7,26 @@ import { useI18n } from '../../context/I18nContext';
 import { LoginDialog } from '../../components/LoginDialog';
 import './UploadVideo.scss';
 
+function resizeImage(file: File, maxW = 1280, maxH = 720): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
 function extractFirstFrame(videoFile: File): Promise<Blob | null> {
   return new Promise((resolve) => {
     const video = document.createElement('video');
@@ -43,11 +63,13 @@ export function UploadVideo() {
   const [prompt, setPrompt] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [coverBlob, setCoverBlob] = useState<Blob | null>(null);
+  const [originalCoverBlob, setOriginalCoverBlob] = useState<Blob | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loginVisible, setLoginVisible] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     return () => { if (coverPreview) URL.revokeObjectURL(coverPreview); };
@@ -60,12 +82,31 @@ export function UploadVideo() {
     }
     setFile(f);
     setCoverBlob(null);
+    setOriginalCoverBlob(null);
     setCoverPreview(null);
     const blob = await extractFirstFrame(f);
     if (blob) {
       setCoverBlob(blob);
+      setOriginalCoverBlob(blob);
       setCoverPreview(URL.createObjectURL(blob));
     }
+  };
+
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const blob = await resizeImage(f);
+    if (blob) {
+      setCoverBlob(blob);
+      setCoverPreview(URL.createObjectURL(blob));
+    }
+    if (coverInputRef.current) coverInputRef.current.value = '';
+  };
+
+  const handleResetCover = () => {
+    if (!originalCoverBlob) return;
+    setCoverBlob(originalCoverBlob);
+    setCoverPreview(URL.createObjectURL(originalCoverBlob));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,6 +223,7 @@ export function UploadVideo() {
                     e.stopPropagation();
                     setFile(null);
                     setCoverBlob(null);
+                    setOriginalCoverBlob(null);
                     if (coverPreview) { URL.revokeObjectURL(coverPreview); setCoverPreview(null); }
                     if (fileInputRef.current) fileInputRef.current.value = '';
                   }}
@@ -198,6 +240,44 @@ export function UploadVideo() {
             )}
           </div>
         </div>
+
+        {/* 封面 */}
+        {file && (
+          <div className="upload-field">
+            <label className="upload-label">{p.uploadLabelCover}</label>
+            <div className="upload-cover-slot" onClick={() => coverInputRef.current?.click()}>
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleCoverChange}
+                style={{ display: 'none' }}
+              />
+              {coverPreview ? (
+                <>
+                  <img className="upload-cover-img" src={coverPreview} alt="cover" />
+                  <div className="upload-cover-overlay">
+                    <span className="upload-cover-change-text">{p.uploadCoverChange}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="upload-cover-empty">
+                  <span className="upload-cover-empty-icon">🖼</span>
+                  <span>{p.uploadCoverChange}</span>
+                </div>
+              )}
+            </div>
+            {coverBlob !== originalCoverBlob && originalCoverBlob && (
+              <button
+                type="button"
+                className="upload-cover-reset"
+                onClick={e => { e.stopPropagation(); handleResetCover(); }}
+              >
+                {p.uploadCoverReset}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* 提交按钮 */}
         <button
