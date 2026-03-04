@@ -129,6 +129,11 @@ export function Plaza() {
   };
 
   const fullUrl = (url: string) => (url?.startsWith('http') ? url : `${window.location.origin}${url || ''}`);
+  // 广场只展示昵称，不展示邮箱；若后端返回邮箱则只显示 @ 前部分
+  const displayAuthor = (author: string | undefined) => {
+    if (!author) return '?';
+    return author.includes('@') ? author.split('@')[0] : author;
+  };
 
   return (
     <div className="plaza-page">
@@ -232,8 +237,8 @@ export function Plaza() {
                 <div className="plaza-card-body">
                   <div className="plaza-card-title">{work.title}</div>
                   <div className="plaza-card-author">
-                    <span className="plaza-card-avatar">{work.author?.[0]?.toUpperCase() ?? '?'}</span>
-                    {work.author}
+                    <span className="plaza-card-avatar">{displayAuthor(work.author)?.[0]?.toUpperCase() ?? '?'}</span>
+                    {displayAuthor(work.author)}
                   </div>
                 </div>
               </button>
