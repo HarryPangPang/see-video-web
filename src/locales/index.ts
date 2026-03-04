@@ -492,6 +492,8 @@ export const zhCN = {
             emptyPublished: '还没有发布任何作品',
             emptyUploads: '还没有上传任何视频',
             emptyPrivate: '暂无私密作品',
+            loadMore: '加载更多',
+            noMore: '已加载全部',
         },
         works: {
             loading: '加载中...',
@@ -1003,6 +1005,8 @@ export const enUS = {
             emptyPublished: 'No published works yet',
             emptyUploads: 'No uploaded videos yet',
             emptyPrivate: 'No private works',
+            loadMore: 'Load more',
+            noMore: 'All loaded',
         },
         works: {
             loading: 'Loading...',

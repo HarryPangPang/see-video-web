@@ -1,13 +1,18 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DotLoading, Toast } from 'antd-mobile';
-import { getWorksList, deleteWork, updateWorkPrivacy, type WorkItem } from '../../services/api';
+import { getWorksList, deleteWork, updateWorkPrivacy, type WorkItem, type WorksListParams } from '../../services/api';
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { LoginDialog } from '../../components/LoginDialog';
 import './My.scss';
 
 type MyTab = 'published' | 'uploads' | 'private';
+
+const PAGE_SIZE = 20;
+
+type TabData = { list: WorkItem[]; page: number; hasMore: boolean };
+const EMPTY_TAB: TabData = { list: [], page: 0, hasMore: true };
 
 function MyCardMedia({ videoUrl, coverUrl, fullUrl }: {
   videoUrl: string;
@@ -67,20 +72,26 @@ function MyCardMedia({ videoUrl, coverUrl, fullUrl }: {
 export function My() {
   const navigate = useNavigate();
   const { t } = useI18n();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const p = t.seedance.my;
   const plaza = t.seedance.plaza;
 
   const [tab, setTab] = useState<MyTab>('published');
-  const [published, setPublished] = useState<WorkItem[]>([]);
-  const [uploads, setUploads] = useState<WorkItem[]>([]);
-  const [privateList, setPrivateList] = useState<WorkItem[]>([]);
+  const [tabData, setTabData] = useState<Record<MyTab, TabData>>({
+    published: { ...EMPTY_TAB },
+    uploads: { ...EMPTY_TAB },
+    private: { ...EMPTY_TAB },
+  });
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [loginVisible, setLoginVisible] = useState(false);
+
   const menuRef = useRef<HTMLDivElement>(null);
-  const loadedTabs = useRef<Set<MyTab>>(new Set());
+  const fetchingRef = useRef(false);
+  const initializedRef = useRef<Set<MyTab>>(new Set());
+  const prevUserIdRef = useRef<number | null>(null);
 
   const fullUrl = (url: string) => (url?.startsWith('http') ? url : `${window.location.origin}${url || ''}`);
   const displayAuthor = (author: string | undefined) => {
@@ -88,33 +99,58 @@ export function My() {
     return author.includes('@') ? author.split('@')[0] : author;
   };
 
-  const fetchTab = useCallback(async (t: MyTab) => {
-    if (loadedTabs.current.has(t)) return;
-    setLoading(true);
+  // Reset all tab caches on user change (logout / switch account)
+  useEffect(() => {
+    const uid = user?.id ?? null;
+    if (prevUserIdRef.current !== null && prevUserIdRef.current !== uid) {
+      initializedRef.current.clear();
+      setTabData({
+        published: { ...EMPTY_TAB },
+        uploads: { ...EMPTY_TAB },
+        private: { ...EMPTY_TAB },
+      });
+    }
+    prevUserIdRef.current = uid;
+  }, [user]);
+
+  const fetchPage = useCallback(async (t: MyTab, page: number) => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
+    const isFirst = page === 1;
+    if (isFirst) setLoading(true); else setLoadingMore(true);
     try {
-      let res;
-      if (t === 'published') {
-        res = await getWorksList({ mine: true, isPrivate: false, limit: 100 });
-        if (res.data) setPublished(res.data.list);
-      } else if (t === 'uploads') {
-        res = await getWorksList({ mine: true, source: 'upload', limit: 100 });
-        if (res.data) setUploads(res.data.list);
-      } else {
-        res = await getWorksList({ mine: true, isPrivate: true, limit: 100 });
-        if (res.data) setPrivateList(res.data.list);
+      const params: WorksListParams = { mine: true, page, limit: PAGE_SIZE };
+      if (t === 'published') params.isPrivate = false;
+      else if (t === 'private') params.isPrivate = true;
+      else params.source = 'upload';
+
+      const res = await getWorksList(params);
+      if (res.data) {
+        if (isFirst) initializedRef.current.add(t);
+        setTabData(prev => ({
+          ...prev,
+          [t]: {
+            list: isFirst ? res.data!.list : [...prev[t].list, ...res.data!.list],
+            page,
+            hasMore: res.data!.hasMore,
+          },
+        }));
       }
-      loadedTabs.current.add(t);
     } catch (e) {
       Toast.show({ content: (e as Error).message, icon: 'fail' });
     } finally {
-      setLoading(false);
+      if (isFirst) setLoading(false); else setLoadingMore(false);
+      fetchingRef.current = false;
     }
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) { setLoginVisible(true); return; }
-    fetchTab(tab);
-  }, [tab, user, fetchTab]);
+    if (!initializedRef.current.has(tab)) {
+      fetchPage(tab, 1);
+    }
+  }, [tab, user, authLoading, fetchPage]);
 
   useEffect(() => {
     if (!openMenuId) return;
@@ -125,20 +161,26 @@ export function My() {
     return () => document.removeEventListener('mousedown', handle);
   }, [openMenuId]);
 
+  const resetTab = (t: MyTab) => {
+    initializedRef.current.delete(t);
+    setTabData(prev => ({ ...prev, [t]: { ...EMPTY_TAB } }));
+  };
+
   const handleTogglePrivacy = async (work: WorkItem) => {
     setOpenMenuId(null);
     const newPrivate = !work.is_private;
     try {
       await updateWorkPrivacy(work.id, !!newPrivate);
       if (tab === 'published') {
-        setPublished(prev => prev.filter(w => w.id !== work.id));
-        loadedTabs.current.delete('private');
+        setTabData(prev => ({ ...prev, published: { ...prev.published, list: prev.published.list.filter(w => w.id !== work.id) } }));
+        resetTab('private');
       } else if (tab === 'private') {
-        setPrivateList(prev => prev.filter(w => w.id !== work.id));
-        loadedTabs.current.delete('published');
+        setTabData(prev => ({ ...prev, private: { ...prev.private, list: prev.private.list.filter(w => w.id !== work.id) } }));
+        resetTab('published');
       } else {
-        setUploads(prev => prev.map(w => w.id === work.id ? { ...w, is_private: newPrivate ? 1 : 0 } : w));
-        loadedTabs.current.delete(newPrivate ? 'published' : 'private');
+        setTabData(prev => ({ ...prev, uploads: { ...prev.uploads, list: prev.uploads.list.map(w => w.id === work.id ? { ...w, is_private: newPrivate ? 1 : 0 } : w) } }));
+        // making private → published is stale; making public → private is stale
+        resetTab(newPrivate ? 'published' : 'private');
       }
       Toast.show({ content: newPrivate ? plaza.setPrivate : plaza.setPublic, icon: 'success' });
     } catch (e) {
@@ -152,16 +194,25 @@ export function My() {
     setDeleteTarget(null);
     try {
       await deleteWork(id);
-      setPublished(prev => prev.filter(w => w.id !== id));
-      setUploads(prev => prev.filter(w => w.id !== id));
-      setPrivateList(prev => prev.filter(w => w.id !== id));
+      // Filter from all tab lists without resetting pagination
+      setTabData(prev => ({
+        published: { ...prev.published, list: prev.published.list.filter(w => w.id !== id) },
+        uploads: { ...prev.uploads, list: prev.uploads.list.filter(w => w.id !== id) },
+        private: { ...prev.private, list: prev.private.list.filter(w => w.id !== id) },
+      }));
       Toast.show({ content: plaza.deleteWork, icon: 'success' });
     } catch (e) {
       Toast.show({ content: (e as Error).message, icon: 'fail' });
     }
   };
 
-  const currentList = tab === 'published' ? published : tab === 'uploads' ? uploads : privateList;
+  const handleLoadMore = () => {
+    const data = tabData[tab];
+    if (!data.hasMore || loadingMore || fetchingRef.current) return;
+    fetchPage(tab, data.page + 1);
+  };
+
+  const currentData = tabData[tab];
   const emptyText = tab === 'published' ? p.emptyPublished : tab === 'uploads' ? p.emptyUploads : p.emptyPrivate;
 
   const tabs: { key: MyTab; label: string }[] = [
@@ -196,71 +247,88 @@ export function My() {
           <DotLoading color="primary" />
           <p>{p.loading}</p>
         </div>
-      ) : currentList.length === 0 ? (
+      ) : currentData.list.length === 0 ? (
         <div className="my-empty">
           <div className="my-empty-icon">✦</div>
           <p>{emptyText}</p>
         </div>
       ) : (
-        <div className="my-grid">
-          {currentList.map((work) => (
-            <button
-              key={work.id}
-              type="button"
-              className="my-card"
-              onClick={() => navigate(`/works/${work.id}`)}
-            >
-              <div className="my-card-cover">
-                <MyCardMedia
-                  videoUrl={work.video_url}
-                  coverUrl={work.cover_url ?? undefined}
-                  fullUrl={fullUrl}
-                />
-                <div className="my-card-overlay" />
+        <>
+          <div className="my-grid">
+            {currentData.list.map((work) => (
+              <button
+                key={work.id}
+                type="button"
+                className="my-card"
+                onClick={() => navigate(`/works/${work.id}`)}
+              >
+                <div className="my-card-cover">
+                  <MyCardMedia
+                    videoUrl={work.video_url}
+                    coverUrl={work.cover_url ?? undefined}
+                    fullUrl={fullUrl}
+                  />
+                  <div className="my-card-overlay" />
 
-                {!!work.is_private && (
-                  <span className="my-card-private-badge">{plaza.privateLabel}</span>
-                )}
-
-                <div
-                  className="my-card-menu-wrap"
-                  ref={openMenuId === work.id ? menuRef : null}
-                >
-                  <button
-                    type="button"
-                    className="my-card-menu-btn"
-                    onClick={e => { e.stopPropagation(); setOpenMenuId(prev => prev === work.id ? null : work.id); }}
-                  >⋯</button>
-                  {openMenuId === work.id && (
-                    <div className="my-card-menu">
-                      <button
-                        type="button"
-                        className="my-card-menu-item"
-                        onClick={e => { e.stopPropagation(); handleTogglePrivacy(work); }}
-                      >
-                        {work.is_private ? plaza.setPublic : plaza.setPrivate}
-                      </button>
-                      <button
-                        type="button"
-                        className="my-card-menu-item my-card-menu-item--danger"
-                        onClick={e => { e.stopPropagation(); setOpenMenuId(null); setDeleteTarget(work.id); }}
-                      >
-                        {plaza.deleteWork}
-                      </button>
-                    </div>
+                  {!!work.is_private && (
+                    <span className="my-card-private-badge">{plaza.privateLabel}</span>
                   )}
+
+                  <div
+                    className="my-card-menu-wrap"
+                    ref={openMenuId === work.id ? menuRef : null}
+                  >
+                    <button
+                      type="button"
+                      className="my-card-menu-btn"
+                      onClick={e => { e.stopPropagation(); setOpenMenuId(prev => prev === work.id ? null : work.id); }}
+                    >⋯</button>
+                    {openMenuId === work.id && (
+                      <div className="my-card-menu">
+                        <button
+                          type="button"
+                          className="my-card-menu-item"
+                          onClick={e => { e.stopPropagation(); handleTogglePrivacy(work); }}
+                        >
+                          {work.is_private ? plaza.setPublic : plaza.setPrivate}
+                        </button>
+                        <button
+                          type="button"
+                          className="my-card-menu-item my-card-menu-item--danger"
+                          onClick={e => { e.stopPropagation(); setOpenMenuId(null); setDeleteTarget(work.id); }}
+                        >
+                          {plaza.deleteWork}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="my-card-body">
-                <div className="my-card-title">{work.title || '—'}</div>
-                <div className="my-card-author">
-                  <span className="my-card-avatar">{displayAuthor(work.author)?.[0]?.toUpperCase() ?? '?'}</span>
-                  {displayAuthor(work.author)}
+                <div className="my-card-body">
+                  <div className="my-card-title">{work.title || '—'}</div>
+                  <div className="my-card-author">
+                    <span className="my-card-avatar">{displayAuthor(work.author)?.[0]?.toUpperCase() ?? '?'}</span>
+                    {displayAuthor(work.author)}
+                  </div>
                 </div>
-              </div>
-            </button>
-          ))}
-        </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="my-load-more">
+            {currentData.hasMore ? (
+              <button
+                type="button"
+                className="my-load-more-btn"
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+              >
+                {loadingMore ? <DotLoading color="primary" /> : p.loadMore}
+              </button>
+            ) : (
+              <span className="my-no-more">{p.noMore}</span>
+            )}
+          </div>
+        </>
       )}
 
       {deleteTarget && (

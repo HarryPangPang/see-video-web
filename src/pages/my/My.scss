@@ -302,6 +302,45 @@
   flex-shrink: 0;
 }
 
+// Load more
+.my-load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.my-load-more-btn {
+  padding: 10px 36px;
+  border-radius: 100px;
+  border: none;
+  background: #ede9fe;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 120px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:hover:not(:disabled) {
+    background: #ddd6fe;
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.my-no-more {
+  font-size: 13px;
+  color: #c4b5fd;
+}
+
 // Delete confirm dialog
 .my-confirm-overlay {
   position: fixed;
