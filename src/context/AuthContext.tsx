@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
+import { updateUserProfile as apiUpdateUserProfile, changePassword as apiChangePassword } from '../services/api';
 
 interface User {
   id: number;
   email: string;
   username: string | null;
+  isGoogleUser?: boolean;
 }
 
 interface AuthContextType {
@@ -17,6 +19,8 @@ interface AuthContextType {
   register: (email: string, password: string, code: string, username?: string) => Promise<void>;
   logout: () => void;
   sendVerificationCode: (email: string, type?: 'register' | 'login') => Promise<void>;
+  updateProfile: (username: string) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -179,6 +183,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('auth_user');
   };
 
+  // 更新资料（昵称）
+  const updateProfile = async (username: string) => {
+    const res = await apiUpdateUserProfile(username);
+    if (res.success && res.data) {
+      const next = {
+        id: res.data.id,
+        email: res.data.email,
+        username: res.data.username,
+        isGoogleUser: res.data.isGoogleUser,
+      };
+      setUser(next);
+      localStorage.setItem('auth_user', JSON.stringify(next));
+    }
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    await apiChangePassword(currentPassword, newPassword);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -191,6 +214,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         logout,
         sendVerificationCode,
+        updateProfile,
+        changePassword,
       }}
     >
       {children}

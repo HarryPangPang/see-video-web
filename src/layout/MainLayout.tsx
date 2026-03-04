@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { Input, Toast } from 'antd-mobile';
 import {
   IconGenerate,
   IconFolder,
@@ -20,12 +21,20 @@ interface MainLayoutProps {
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile, changePassword } = useAuth();
   const { t, language, setLanguage } = useI18n();
   const layout = t.seedance.layout;
+  const authT = t.seedance.auth;
   const c = t.common;
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
+  const [profileDialogVisible, setProfileDialogVisible] = useState(false);
+  const [profileNickname, setProfileNickname] = useState('');
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profilePasswordCurrent, setProfilePasswordCurrent] = useState('');
+  const [profilePasswordNew, setProfilePasswordNew] = useState('');
+  const [profilePasswordConfirm, setProfilePasswordConfirm] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,6 +50,56 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const openProfileDialog = () => {
+    setProfileNickname(user?.username || user?.email?.split('@')[0] || '');
+    setProfilePasswordCurrent('');
+    setProfilePasswordNew('');
+    setProfilePasswordConfirm('');
+    setProfileDialogVisible(true);
+    setIsUserMenuOpen(false);
+  };
+
+  const handlePasswordChange = async () => {
+    if (!profilePasswordNew || profilePasswordNew !== profilePasswordConfirm) {
+      Toast.show({ icon: 'fail', content: authT.errorPasswordMismatch });
+      return;
+    }
+    if (profilePasswordNew.length < 6) {
+      Toast.show({ icon: 'fail', content: authT.errorPasswordLength });
+      return;
+    }
+    setPasswordSaving(true);
+    try {
+      await changePassword(profilePasswordCurrent, profilePasswordNew);
+      Toast.show({ icon: 'success', content: layout.passwordChanged });
+      setProfilePasswordCurrent('');
+      setProfilePasswordNew('');
+      setProfilePasswordConfirm('');
+    } catch (e) {
+      Toast.show({ icon: 'fail', content: (e as Error).message });
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
+  const handleProfileSave = async () => {
+    const name = profileNickname.trim();
+    if (!name) {
+      Toast.show({ icon: 'fail', content: layout.nicknamePlaceholder });
+      return;
+    }
+    setProfileSaving(true);
+    try {
+      await updateProfile(name);
+      Toast.show({ icon: 'success', content: layout.profileUpdated });
+      setProfileDialogVisible(false);
+    } catch (e) {
+      Toast.show({ icon: 'fail', content: (e as Error).message });
+    } finally {
+      setProfileSaving(false);
+    }
   };
 
   const menuItems = [
@@ -59,6 +118,69 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         visible={loginDialogVisible}
         onClose={() => setLoginDialogVisible(false)}
       />
+      {profileDialogVisible && (
+        <div className="profile-dialog-overlay" onClick={() => setProfileDialogVisible(false)}>
+          <div className="profile-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3 className="profile-dialog-title">{layout.editProfile}</h3>
+            <div className="profile-dialog-field">
+              <label>{layout.emailLabel}</label>
+              <div className="profile-dialog-email" aria-readonly>{user?.email ?? ''}</div>
+            </div>
+            <div className="profile-dialog-field">
+              <label>{layout.nicknameLabel}</label>
+              <Input
+                value={profileNickname}
+                onChange={setProfileNickname}
+                placeholder={layout.nicknamePlaceholder}
+                maxLength={50}
+                className="profile-dialog-input"
+              />
+            </div>
+            <div className="profile-dialog-field">
+              <label>{layout.passwordSection}</label>
+              {user?.isGoogleUser ? (
+                <p className="profile-dialog-password-hint">{layout.googleNoPasswordHint}</p>
+              ) : (
+                <>
+                  <Input
+                    type="password"
+                    value={profilePasswordCurrent}
+                    onChange={setProfilePasswordCurrent}
+                    placeholder={layout.currentPassword}
+                    className="profile-dialog-input"
+                  />
+                  <Input
+                    type="password"
+                    value={profilePasswordNew}
+                    onChange={setProfilePasswordNew}
+                    placeholder={layout.newPassword}
+                    className="profile-dialog-input"
+                  />
+                  <Input
+                    type="password"
+                    value={profilePasswordConfirm}
+                    onChange={setProfilePasswordConfirm}
+                    placeholder={layout.confirmPassword}
+                    className="profile-dialog-input"
+                  />
+                  <button
+                    type="button"
+                    className="profile-dialog-password-btn"
+                    disabled={passwordSaving}
+                    onClick={handlePasswordChange}
+                  >
+                    {passwordSaving ? '...' : layout.changePassword}
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="profile-dialog-actions">
+              <button type="button" className="profile-dialog-cancel" onClick={() => setProfileDialogVisible(false)}>{c.cancel}</button>
+              <button type="button" className="profile-dialog-save" disabled={profileSaving} onClick={handleProfileSave}>{profileSaving ? '...' : layout.profileSave}</button>
+            </div>
+          </div>
+        </div>
+      )}
       <aside className="sidebar">
         <button
           type="button"
@@ -121,6 +243,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                       </div>
                     </div>
                     <div className="sidebar-user-dropdown-divider" />
+                    <button type="button" className="sidebar-user-dropdown-item" onClick={openProfileDialog}>
+                      {layout.editProfile}
+                    </button>
                     <button type="button" className="sidebar-user-dropdown-item sidebar-user-dropdown-item--danger" onClick={handleLogout}>
                       {layout.logout}
                     </button>

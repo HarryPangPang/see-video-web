@@ -117,6 +117,40 @@ export async function getCreditsBalance(): Promise<ApiResponse<{ credits: number
   return result;
 }
 
+// 更新用户资料（昵称）
+export interface UserProfile {
+  id: number;
+  email: string;
+  username: string | null;
+  isGoogleUser?: boolean;
+}
+export async function updateUserProfile(username: string): Promise<ApiResponse<UserProfile>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/user/profile`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ username: username.trim() }),
+  });
+  const result: ApiResponse<UserProfile> = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || '更新失败');
+  return result;
+}
+
+// 修改密码（仅邮箱注册用户）
+export async function changePassword(currentPassword: string, newPassword: string): Promise<ApiResponse<void>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/user/password`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  const result: ApiResponse<void> = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || '修改密码失败');
+  return result;
+}
+
 // 创建支付订单
 export async function createPayment(amount: number, credits: number): Promise<ApiResponse<{ orderId: string; checkoutUrl: string }>> {
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
