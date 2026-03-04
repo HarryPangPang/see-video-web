@@ -18,6 +18,7 @@ import { TermsOfService } from './pages/legal/TermsOfService';
 import { Plaza } from './pages/plaza/Plaza';
 import { WorkDetail } from './pages/works/WorkDetail';
 import { UploadVideo } from './pages/upload/UploadVideo';
+import { My } from './pages/my/My';
 import 'antd-mobile/es/global';
 import './index.scss';
 
@@ -89,6 +90,7 @@ export default function App() {
         <Route path="/plaza" element={<MainLayout><Plaza /></MainLayout>} />
         <Route path="/works/:id" element={<MainLayout><WorkDetail /></MainLayout>} />
         <Route path="/upload" element={<MainLayout><UploadVideo /></MainLayout>} />
+        <Route path="/my" element={<MainLayout><My /></MainLayout>} />
         <Route path="/payment/success" element={<PaymentSuccess />} />
         <Route path="/payment/cancel" element={<PaymentCancel />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />

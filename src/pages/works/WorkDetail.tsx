@@ -94,7 +94,7 @@ export function WorkDetail() {
     return (
       <div className="work-detail-page work-detail-empty">
         <p>{w.notFound}</p>
-        <button type="button" className="wd-post-btn" onClick={() => navigate('/plaza')}>{w.backToPlaza}</button>
+        <button type="button" className="wd-post-btn" onClick={() => navigate(-1)}>{w.back}</button>
       </div>
     );
   }
@@ -103,8 +103,8 @@ export function WorkDetail() {
     <div className="work-detail-page">
       <LoginDialog visible={loginVisible} onClose={() => setLoginVisible(false)} />
       <div className="work-detail-back">
-        <button type="button" onClick={() => navigate('/plaza')}>
-          {w.backToPlaza}
+        <button type="button" onClick={() => navigate(-1)}>
+          {w.back}
         </button>
       </div>
       <div className="work-detail-main">

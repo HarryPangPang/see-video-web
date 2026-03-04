@@ -60,9 +60,6 @@ export function Assets() {
   const [publishWork, setPublishWork] = useState<WorkItem | null>(null);
   const [uploadList, setUploadList] = useState<WorkItem[]>([]);
   const [uploadLoading, setUploadLoading] = useState(false);
-  const [privateList, setPrivateList] = useState<WorkItem[]>([]);
-  const [privateLoading, setPrivateLoading] = useState(false);
-
   // 批量选择
   const [batchMode, setBatchMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Map<string, 'generation' | 'work'>>(new Map());
@@ -108,16 +105,6 @@ export function Assets() {
       .finally(() => setUploadLoading(false));
   }, [user]);
 
-
-  // 切到私密 tab 时拉取私密列表
-  useEffect(() => {
-    if (filterTab !== 'private' || !user) return;
-    setPrivateLoading(true);
-    getWorksList({ mine: true, isPrivate: true, limit: 100 })
-      .then(res => { if (res.data) setPrivateList(res.data.list); })
-      .catch(err => Toast.show({ content: err.message, icon: 'fail' }))
-      .finally(() => setPrivateLoading(false));
-  }, [filterTab, user]);
 
   // 点击外部关闭菜单
   useEffect(() => {
@@ -189,22 +176,9 @@ export function Assets() {
       const genIds = new Set(targets.filter(t => !t.isWork).map(t => t.id));
       if (genIds.size) setVideoList(prev => prev.filter(v => !genIds.has(v.id)));
       if (workIds.size) setUploadList(prev => prev.filter(w => !workIds.has(w.id)));
-      if (workIds.size) setPrivateList(prev => prev.filter(w => !workIds.has(w.id)));
       setSelectedItems(new Map());
       setBatchMode(false);
       Toast.show({ content: plaza.deleteWork, icon: 'success' });
-    } catch (e) {
-      Toast.show({ content: (e as Error).message, icon: 'fail' });
-    }
-  };
-
-  // ── 私密 tab：设为公开（重新上架） ──
-  const handleSetPublic = async (workId: string) => {
-    setOpenMenuId(null);
-    try {
-      await updateWorkPrivacy(workId, false);
-      setPrivateList(prev => prev.filter(w => w.id !== workId));
-      Toast.show({ content: t.seedance.plaza.setPublic, icon: 'success' });
     } catch (e) {
       Toast.show({ content: (e as Error).message, icon: 'fail' });
     }
@@ -235,57 +209,6 @@ export function Assets() {
       </div>
     ) : null
   );
-
-  // ── 私密作品卡片 ──
-  const renderPrivateWorkCard = (work: WorkItem) => {
-    const menuId = `p:${work.id}`;
-    return (
-      <div key={work.id} className="assets-video-item">
-        <div className="assets-video-thumb" style={{ cursor: 'pointer' }}
-          onClick={(e) => {
-            const target = e.target as HTMLElement;
-            if (target.closest('.assets-video-publish')) {
-              e.stopPropagation();
-              handleSetPublic(work.id);
-              return;
-            }
-            if (target.closest('.assets-card-menu-wrap')) return;
-            const videoUrl = fullUrl(work.video_url);
-            if (videoUrl) window.open(videoUrl, '_blank', 'noopener,noreferrer');
-          }}
-        >
-          {work.cover_url ? (
-            <div className="assets-video-cover" style={{ backgroundImage: `url(${fullUrl(work.cover_url)})` }} />
-          ) : (
-            <video className="assets-video-cover" src={fullUrl(work.video_url)} muted playsInline preload="metadata" />
-          )}
-
-          <div className="assets-video-actions">
-            <div className="assets-video-publish">{t.seedance.plaza.setPublic}</div>
-          </div>
-
-          <div className="assets-card-menu-wrap" ref={openMenuId === menuId ? menuRef : null}>
-            <button
-              type="button"
-              className="assets-card-menu-btn"
-              onClick={e => { e.stopPropagation(); setOpenMenuId(prev => prev === menuId ? null : menuId); }}
-            >⋯</button>
-            {renderMenu(menuId, <>
-              <button type="button" className="assets-card-menu-item" onClick={() => handleSetPublic(work.id)}>
-                {t.seedance.plaza.setPublic}
-              </button>
-              <button type="button" className="assets-card-menu-item assets-card-menu-item--danger" onClick={() => requestDelete([{ id: work.id, isWork: true }])}>
-                {plaza.deleteWork}
-              </button>
-            </>)}
-          </div>
-        </div>
-        <div className="assets-video-prompt" title={work.title}>
-          {work.title?.slice(0, 20) || $l('seedance.video.noTitle')}
-        </div>
-      </div>
-    );
-  };
 
   // ── 生成视频卡片 ──
   const renderGenCard = (video: VideoAsset) => {
@@ -497,9 +420,9 @@ export function Assets() {
       </div>
 
       <div className="assets-filter-tabs">
-        {(['all', 'collections', 'uploads', 'private'] as const).map((key) => (
-          <button key={key} type="button" className={`filter-tab${filterTab === key ? ' active' : ''}${key === 'private' ? ' filter-tab--private' : ''}`} onClick={() => setFilterTab(key)}>
-            {key === 'all' ? p.allVideos : key === 'collections' ? p.myCollections : key === 'uploads' ? p.myUploads : p.myPrivate}
+        {(['all', 'collections'] as const).map((key) => (
+          <button key={key} type="button" className={`filter-tab${filterTab === key ? ' active' : ''}`} onClick={() => setFilterTab(key)}>
+            {key === 'all' ? p.allVideos : p.myCollections}
           </button>
         ))}
       </div>
@@ -537,31 +460,6 @@ export function Assets() {
         </div>
       )}
 
-      {/* 我的上传 */}
-      {filterTab === 'uploads' && (
-        <div className="assets-video-list">
-          {uploadLoading ? (
-            <div className="assets-loading"><DotLoading color="primary" /><p>{c.loading}</p></div>
-          ) : filteredUploadList.length === 0 ? (
-            <div className="assets-empty"><p>{p.myUploadsEmpty}</p></div>
-          ) : (
-            <div className="assets-video-grid">{filteredUploadList.map(renderUploadCard)}</div>
-          )}
-        </div>
-      )}
-
-      {/* 私密作品 */}
-      {filterTab === 'private' && (
-        <div className="assets-video-list">
-          {privateLoading ? (
-            <div className="assets-loading"><DotLoading color="primary" /><p>{c.loading}</p></div>
-          ) : privateList.length === 0 ? (
-            <div className="assets-empty"><p>{p.myPrivateEmpty}</p></div>
-          ) : (
-            <div className="assets-video-grid">{privateList.map(renderPrivateWorkCard)}</div>
-          )}
-        </div>
-      )}
 
       {/* 批量操作栏 */}
       {batchMode && selectedCount > 0 && (
