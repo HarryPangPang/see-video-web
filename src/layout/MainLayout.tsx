@@ -6,6 +6,7 @@ import {
   IconFolder,
   IconGrid,
   IconArrowUp,
+  IconUser,
 } from '../components/Icons';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
@@ -107,6 +108,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     { id: 'plaza', label: layout.navPlaza, icon: IconGrid, path: '/' },
     { id: 'assets', label: layout.navAssets, icon: IconFolder, path: '/assets' },
     { id: 'upload', label: layout.navUpload, icon: IconArrowUp, path: '/upload' },
+    { id: 'my', label: layout.navMy, icon: IconUser, path: '/my' },
   ];
 
   const isPathActive = (path: string) =>

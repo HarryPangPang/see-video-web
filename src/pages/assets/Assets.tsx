@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SearchBar, Toast, DotLoading } from 'antd-mobile';
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
@@ -45,6 +46,7 @@ interface DeleteTarget {
 }
 
 export function Assets() {
+  const navigate = useNavigate();
   const { t, $l } = useI18n();
   const { user, loading: authLoading } = useAuth();
   const p = t.seedance.pages;
@@ -60,7 +62,6 @@ export function Assets() {
   const [publishWork, setPublishWork] = useState<WorkItem | null>(null);
   const [uploadList, setUploadList] = useState<WorkItem[]>([]);
   const [uploadLoading, setUploadLoading] = useState(false);
-
   // 批量选择
   const [batchMode, setBatchMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Map<string, 'generation' | 'work'>>(new Map());
@@ -106,6 +107,7 @@ export function Assets() {
       .finally(() => setUploadLoading(false));
   }, [user]);
 
+
   // 点击外部关闭菜单
   useEffect(() => {
     if (!openMenuId) return;
@@ -126,33 +128,6 @@ export function Assets() {
   const getCoverUrl = (video: VideoAsset) => video.cover_local_path ? `${window.location.origin}${video.cover_local_path}` : (video.cover_url || null);
   const hasCover = (video: VideoAsset) => !!(video.cover_local_path || video.cover_url);
 
-  const downloadVideo = async (video: VideoAsset) => {
-    const videoUrl = getVideoUrl(video);
-    if (!videoUrl) { Toast.show({ content: $l('seedance.toast.videoNotAvailable'), icon: 'fail' }); return; }
-    try {
-      Toast.show({ content: $l('seedance.toast.downloadStarting'), icon: 'loading', duration: 0 });
-      const blob = await fetch(videoUrl).then(r => r.blob());
-      const url = URL.createObjectURL(blob);
-      const a = Object.assign(document.createElement('a'), { href: url, download: `video_${video.id}.mp4` });
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      Toast.clear(); Toast.show({ content: $l('seedance.toast.downloadSuccess'), icon: 'success' });
-    } catch { Toast.clear(); Toast.show({ content: $l('seedance.toast.downloadFailed'), icon: 'fail' }); }
-  };
-
-  const downloadUpload = async (work: WorkItem) => {
-    const videoUrl = fullUrl(work.video_url);
-    if (!videoUrl) { Toast.show({ content: $l('seedance.toast.videoNotAvailable'), icon: 'fail' }); return; }
-    try {
-      Toast.show({ content: $l('seedance.toast.downloadStarting'), icon: 'loading', duration: 0 });
-      const blob = await fetch(videoUrl).then(r => r.blob());
-      const url = URL.createObjectURL(blob);
-      const a = Object.assign(document.createElement('a'), { href: url, download: `upload_${work.id}.mp4` });
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      Toast.clear(); Toast.show({ content: $l('seedance.toast.downloadSuccess'), icon: 'success' });
-    } catch { Toast.clear(); Toast.show({ content: $l('seedance.toast.downloadFailed'), icon: 'fail' }); }
-  };
 
   const formatDuration = (video: VideoAsset) => {
     if (!video.duration) return '00:00';
@@ -248,8 +223,17 @@ export function Assets() {
     const handleThumbClick = (e: React.MouseEvent) => {
       if (batchMode) { toggleSelect(video.id, 'generation'); return; }
       const target = e.target as HTMLElement;
-      if (target.closest('.assets-video-download')) { e.stopPropagation(); downloadVideo(video); return; }
-      if (target.closest('.assets-video-publish')) { e.stopPropagation(); user ? setPublishVideo(video) : setLoginDialogVisible(true); return; }
+      if (target.closest('.assets-video-publish')) {
+        e.stopPropagation();
+        if (!user) { setLoginDialogVisible(true); return; }
+        if (isPrivate && video.work_id) {
+          // 重新发布：直接设为公开，无需弹窗
+          handleTogglePrivacy(video.work_id, true, video.id);
+        } else {
+          setPublishVideo(video);
+        }
+        return;
+      }
       if (target.closest('.assets-card-menu-wrap')) return;
       if (hasVideo && videoUrl) window.open(videoUrl, '_blank', 'noopener,noreferrer');
     };
@@ -287,18 +271,17 @@ export function Assets() {
 
           {/* 私密徽章 */}
           {isPrivate && (
-            <span className="assets-video-status" style={{ background: 'rgba(219,39,119,0.85)', color: '#fff' }}>
+            <span className="assets-video-status" style={{ background: 'rgba(51,65,85,0.82)', color: '#e2e8f0' }}>
               {t.seedance.plaza.privateLabel}
             </span>
           )}
 
-          {/* Publish + Download 悬浮操作 */}
-          {hasCover(video) && !batchMode && (
+          {/* Publish 悬浮操作 */}
+          {hasCover(video) && !batchMode && (!video.work_id || isPrivate) && (
             <div className="assets-video-actions">
-              {!video.work_id && (
-                <div className="assets-video-publish" title="Publish to Plaza">Publish</div>
-              )}
-              <div className="assets-video-download">{$l('seedance.video.download')}</div>
+              <div className="assets-video-publish" title={isPrivate ? 'Re-publish to Plaza' : 'Publish to Plaza'}>
+                {isPrivate ? 'Re-publish' : 'Publish'}
+              </div>
             </div>
           )}
 
@@ -348,11 +331,9 @@ export function Assets() {
     const handleThumbClick = (e: React.MouseEvent) => {
       if (batchMode) { toggleSelect(work.id, 'work'); return; }
       const target = e.target as HTMLElement;
-      if (target.closest('.assets-video-download')) { e.stopPropagation(); downloadUpload(work); return; }
       if (target.closest('.assets-video-publish')) { e.stopPropagation(); user ? setPublishWork(work) : setLoginDialogVisible(true); return; }
       if (target.closest('.assets-card-menu-wrap')) return;
-      const videoUrl = fullUrl(work.video_url);
-      if (videoUrl) window.open(videoUrl, '_blank', 'noopener,noreferrer');
+      navigate(`/works/${work.id}`);
     };
 
     return (
@@ -365,16 +346,11 @@ export function Assets() {
           )}
 
           {isPrivate && (
-            <span className="assets-video-status" style={{ background: 'rgba(219,39,119,0.85)', color: '#fff' }}>
+            <span className="assets-video-status" style={{ background: 'rgba(51,65,85,0.82)', color: '#e2e8f0' }}>
               {t.seedance.plaza.privateLabel}
             </span>
           )}
 
-          {!batchMode && (
-            <div className="assets-video-actions">
-              <div className="assets-video-download">{$l('seedance.video.download')}</div>
-            </div>
-          )}
 
           {batchMode && (
             <div className={`assets-card-checkbox${isSelected ? ' assets-card-checkbox--checked' : ''}`} />
@@ -424,6 +400,7 @@ export function Assets() {
         onClose={() => setPublishVideo(null)}
         videoId={publishVideo?.id ?? ''}
         defaultTitle={publishVideo?.prompt ?? ''}
+        defaultCoverUrl={publishVideo ? (getCoverUrl(publishVideo) ?? undefined) : undefined}
       />
       <PublishDialog
         visible={!!publishWork}
@@ -444,9 +421,9 @@ export function Assets() {
       </div>
 
       <div className="assets-filter-tabs">
-        {(['all', 'collections', 'uploads'] as const).map((key) => (
+        {(['all', 'collections'] as const).map((key) => (
           <button key={key} type="button" className={`filter-tab${filterTab === key ? ' active' : ''}`} onClick={() => setFilterTab(key)}>
-            {key === 'all' ? p.allVideos : key === 'collections' ? p.myCollections : p.myUploads}
+            {key === 'all' ? p.allVideos : p.myCollections}
           </button>
         ))}
       </div>
@@ -484,18 +461,6 @@ export function Assets() {
         </div>
       )}
 
-      {/* 我的上传 */}
-      {filterTab === 'uploads' && (
-        <div className="assets-video-list">
-          {uploadLoading ? (
-            <div className="assets-loading"><DotLoading color="primary" /><p>{c.loading}</p></div>
-          ) : filteredUploadList.length === 0 ? (
-            <div className="assets-empty"><p>{p.myUploadsEmpty}</p></div>
-          ) : (
-            <div className="assets-video-grid">{filteredUploadList.map(renderUploadCard)}</div>
-          )}
-        </div>
-      )}
 
       {/* 批量操作栏 */}
       {batchMode && selectedCount > 0 && (

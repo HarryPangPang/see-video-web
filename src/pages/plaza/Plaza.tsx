@@ -1,12 +1,68 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DotLoading, Toast } from 'antd-mobile';
-import { getWorksList, deleteWork, updateWorkPrivacy, type WorkItem, type WorksListParams } from '../../services/api';
+import { getWorksList, deleteWork, updateWorkPrivacy, likeWork, unlikeWork, type WorkItem, type WorksListParams } from '../../services/api';
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
+import { LoginDialog } from '../../components/LoginDialog';
 import './Plaza.scss';
 
 type SortType = 'foryou' | 'newest' | 'likes';
+
+function PlazaCardMedia({ videoUrl, coverUrl, fullUrl }: {
+  videoUrl: string;
+  coverUrl?: string;
+  fullUrl: (url: string) => string;
+}) {
+  const [playing, setPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wantPlayRef = useRef(false);
+
+  const handleMouseEnter = () => {
+    timerRef.current = setTimeout(() => {
+      wantPlayRef.current = true;
+      const video = videoRef.current;
+      if (!video) return;
+      if (!video.src) video.src = fullUrl(videoUrl);
+      video.play().catch(() => {});
+    }, 200);
+  };
+
+  const handleMouseLeave = () => {
+    wantPlayRef.current = false;
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    setPlaying(false);
+    const video = videoRef.current;
+    if (video) { video.pause(); video.currentTime = 0; }
+  };
+
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
+
+  return (
+    <div className="plaza-card-media" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <div
+        className="plaza-card-img"
+        style={{
+          backgroundImage: coverUrl ? `url(${fullUrl(coverUrl)})` : undefined,
+          opacity: playing ? 0 : 1,
+        }}
+      />
+      <video
+        ref={videoRef}
+        muted
+        playsInline
+        loop
+        preload="none"
+        className="plaza-card-video-preview"
+        style={{ opacity: playing ? 1 : 0 }}
+        onPlaying={() => { if (wantPlayRef.current) setPlaying(true); }}
+      />
+    </div>
+  );
+}
 
 const PAGE_SIZE = 20;
 
@@ -30,6 +86,7 @@ export function Plaza() {
   const [transitioning, setTransitioning] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [loginVisible, setLoginVisible] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const totalPages = total > 0 ? Math.ceil(total / PAGE_SIZE) : 1;
@@ -128,8 +185,26 @@ export function Plaza() {
     }
   };
 
+  const handleCardLike = async (e: React.MouseEvent, work: WorkItem) => {
+    e.stopPropagation();
+    if (!user) {
+      setLoginVisible(true);
+      return;
+    }
+    const liked = !work.liked;
+    setList(prev => prev.map(w => w.id === work.id ? { ...w, liked, like_count: (w.like_count ?? 0) + (liked ? 1 : -1) } : w));
+    try {
+      const res = liked ? await likeWork(work.id) : await unlikeWork(work.id);
+      if (res.data) {
+        setList(prev => prev.map(w => w.id === work.id ? { ...w, liked, like_count: res.data!.like_count } : w));
+      }
+    } catch (e) {
+      setList(prev => prev.map(w => w.id === work.id ? { ...w, liked: !liked, like_count: (w.like_count ?? 0) + (liked ? -1 : 1) } : w));
+      Toast.show({ content: (e as Error).message, icon: 'fail' });
+    }
+  };
+
   const fullUrl = (url: string) => (url?.startsWith('http') ? url : `${window.location.origin}${url || ''}`);
-  // 广场只展示昵称，不展示邮箱；若后端返回邮箱则只显示 @ 前部分
   const displayAuthor = (author: string | undefined) => {
     if (!author) return '?';
     return author.includes('@') ? author.split('@')[0] : author;
@@ -137,6 +212,7 @@ export function Plaza() {
 
   return (
     <div className="plaza-page">
+      <LoginDialog visible={loginVisible} onClose={() => setLoginVisible(false)} />
       <div className="plaza-bg" />
 
       <div className="plaza-header">
@@ -174,31 +250,26 @@ export function Plaza() {
               <button
                 key={work.id}
                 type="button"
-                className={`plaza-card${work.is_private ? ' plaza-card--private' : ''}`}
+                className="plaza-card"
                 onClick={() => navigate(`/works/${work.id}`)}
               >
                 <div className="plaza-card-cover">
-                  {work.cover_url ? (
-                    <div
-                      className="plaza-card-img"
-                      style={{ backgroundImage: `url(${fullUrl(work.cover_url)})` }}
-                    />
-                  ) : (
-                    <div className="plaza-card-video-wrap">
-                      <video
-                        src={fullUrl(work.video_url)}
-                        muted
-                        playsInline
-                        preload="metadata"
-                        className="plaza-card-video"
-                      />
-                    </div>
-                  )}
+                  <PlazaCardMedia
+                    videoUrl={work.video_url}
+                    coverUrl={work.cover_url ?? undefined}
+                    fullUrl={fullUrl}
+                  />
                   <div className="plaza-card-overlay" />
-                  {work.is_private ? (
+                  <button
+                    type="button"
+                    className={`plaza-card-likes${work.liked ? ' plaza-card-likes--liked' : ''}`}
+                    onClick={(e) => handleCardLike(e, work)}
+                  >
+                    ♥ {work.like_count ?? 0}
+                  </button>
+
+                  {!!work.is_private && (
                     <span className="plaza-card-private-badge">{p.privateLabel}</span>
-                  ) : (
-                    <span className="plaza-card-likes">♥ {work.like_count ?? 0}</span>
                   )}
 
                   {user && work.user_id === user.id && (
@@ -287,7 +358,6 @@ export function Plaza() {
         </div>
       )}
 
-      {/* 自定义删除确认弹窗 */}
       {deleteTarget && (
         <div className="plaza-confirm-overlay" onClick={() => setDeleteTarget(null)}>
           <div className="plaza-confirm-dialog" onClick={e => e.stopPropagation()}>

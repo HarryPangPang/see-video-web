@@ -239,6 +239,7 @@ export interface WorkItem {
   source: string;
   created_at: number;
   like_count?: number;
+  liked?: boolean;
   is_private?: number;
 }
 
@@ -253,6 +254,7 @@ export interface WorksListParams {
   limit?: number;
   mine?: boolean;
   source?: 'jimeng' | 'upload';
+  isPrivate?: boolean;
 }
 
 export interface WorksListData {
@@ -268,6 +270,7 @@ export async function getWorksList(params?: WorksListParams): Promise<ApiRespons
   if (params?.limit) qs.set('limit', String(params.limit));
   if (params?.mine) qs.set('mine', 'true');
   if (params?.source) qs.set('source', params.source);
+  if (params?.isPrivate !== undefined) qs.set('isPrivate', String(params.isPrivate));
   const query = qs.toString() ? `?${qs}` : '';
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
   const headers: Record<string, string> = {};
@@ -315,24 +318,33 @@ export async function getWorkDetail(id: string): Promise<ApiResponse<WorkDetail>
   return result;
 }
 
-export async function publishWork(videoGenerationId: string, title: string): Promise<ApiResponse<{ id: string }>> {
+export async function publishWork(videoGenerationId: string, title: string, coverBlob?: Blob): Promise<ApiResponse<{ id: string }>> {
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
   if (!token) throw new Error('Unauthorized');
-  const response = await fetch(`${API_BASE_URL}/works`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ videoGenerationId, title }),
-  });
+  let body: BodyInit;
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+  if (coverBlob) {
+    const form = new FormData();
+    form.append('videoGenerationId', videoGenerationId);
+    form.append('title', title);
+    form.append('cover', coverBlob, 'cover.jpg');
+    body = form;
+  } else {
+    headers['Content-Type'] = 'application/json';
+    body = JSON.stringify({ videoGenerationId, title });
+  }
+  const response = await fetch(`${API_BASE_URL}/works`, { method: 'POST', headers, body });
   const result: ApiResponse<{ id: string }> = await response.json();
   if (!response.ok || !result.success) throw new Error(result.message || 'Publish failed');
   return result;
 }
 
-export async function publishWorkUpload(videoFile: File, title: string, coverBlob?: Blob): Promise<ApiResponse<{ id: string }>> {
+export async function publishWorkUpload(videoFile: File, title: string, coverBlob?: Blob, prompt?: string): Promise<ApiResponse<{ id: string }>> {
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
   if (!token) throw new Error('Unauthorized');
   const form = new FormData();
   form.append('title', title);
+  if (prompt) form.append('prompt', prompt);
   form.append('video', videoFile);
   if (coverBlob) form.append('cover', coverBlob, 'cover.jpg');
   const response = await fetch(`${API_BASE_URL}/works/upload`, {
