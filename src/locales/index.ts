@@ -458,6 +458,7 @@ export const zhCN = {
             privateLabel: '私密',
             prevPage: '上一页',
             nextPage: '下一页',
+            refreshFeed: '换一批',
         },
         works: {
             loading: '加载中...',
@@ -934,6 +935,7 @@ export const enUS = {
             privateLabel: 'Private',
             prevPage: 'Prev',
             nextPage: 'Next',
+            refreshFeed: 'Refresh',
         },
         works: {
             loading: 'Loading...',
