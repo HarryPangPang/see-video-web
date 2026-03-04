@@ -158,6 +158,18 @@ export async function getList(taskId: string): Promise<ApiResponse> {
   return result;
 }
 
+export async function deleteVideoGeneration(id: string): Promise<ApiResponse<void>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/video-generations/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Delete failed');
+  return result;
+}
+
 // 获取即梦视频列表（支持 AbortSignal 避免重复请求）
 export async function getVideoList(signal?: AbortSignal): Promise<ApiResponse> {
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;

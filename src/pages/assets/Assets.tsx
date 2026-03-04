@@ -1,20 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SearchBar, Toast, DotLoading } from 'antd-mobile';
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
-import { getVideoList, getWorksList, type WorkItem } from '../../services/api';
+import {
+  getVideoList,
+  getWorksList,
+  deleteWork,
+  deleteVideoGeneration,
+  updateWorkPrivacy,
+  type WorkItem,
+} from '../../services/api';
 import { LoginDialog } from '../../components/LoginDialog';
 import { PublishDialog } from '../../components/PublishDialog';
 import recordLoadingVideo from '../../assets/record-loading.mp4';
 import './Assets.scss';
 
 interface QueueInfo {
-  位置?: number;
-  总人数?: number;
-  等待分钟?: number;
-  pos?: number;
-  total?: number;
-  wait?: number;
+  位置?: number; 总人数?: number; 等待分钟?: number;
+  pos?: number; total?: number; wait?: number;
 }
 
 interface VideoAsset {
@@ -32,13 +35,22 @@ interface VideoAsset {
   cover_url?: string;
   error_message?: string;
   queue_info?: QueueInfo;
+  work_id?: string | null;
+  work_is_private?: number | null;
+}
+
+// 删除确认目标
+interface DeleteTarget {
+  items: Array<{ id: string; isWork: boolean }>;
 }
 
 export function Assets() {
   const { t, $l } = useI18n();
   const { user, loading: authLoading } = useAuth();
   const p = t.seedance.pages;
+  const plaza = t.seedance.plaza;
   const c = t.common;
+
   const [filterTab, setFilterTab] = useState('all');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [videoList, setVideoList] = useState<VideoAsset[]>([]);
@@ -49,40 +61,42 @@ export function Assets() {
   const [uploadList, setUploadList] = useState<WorkItem[]>([]);
   const [uploadLoading, setUploadLoading] = useState(false);
 
+  // 批量选择
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Map<string, 'generation' | 'work'>>(new Map());
+
+  // 三点菜单
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // 删除确认
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+
   useEffect(() => {
-    if (!authLoading && !user) {
-      setLoginDialogVisible(true);
-    }
+    if (!authLoading && !user) setLoginDialogVisible(true);
   }, [authLoading, user]);
 
-  // 登录后加载生成视频列表
   useEffect(() => {
     if (!user) return;
     const controller = new AbortController();
-    const load = async () => {
-      setLoading(true);
-      try {
-        const result = await getVideoList(controller.signal);
+    setLoading(true);
+    getVideoList(controller.signal)
+      .then(result => {
         if (result.success && result.data?.asset_list) {
-          const videos = result.data.asset_list;
-          setVideoList(videos);
-          Toast.show({ content: $l('seedance.toast.videoLoadSuccess').replace('{count}', videos.length.toString()) });
+          setVideoList(result.data.asset_list);
+          Toast.show({ content: $l('seedance.toast.videoLoadSuccess').replace('{count}', result.data.asset_list.length.toString()) });
         } else {
           Toast.show({ content: $l('seedance.toast.videoLoadFailed'), icon: 'fail' });
         }
-      } catch (err: any) {
+      })
+      .catch(err => {
         if ((err as Error).name === 'AbortError') return;
-        console.error('[Assets] 获取视频列表错误:', err);
         Toast.show({ content: err.message || $l('seedance.toast.networkError'), icon: 'fail' });
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+      })
+      .finally(() => setLoading(false));
     return () => controller.abort();
   }, [user]);
 
-  // 登录后加载上传列表（所有视频和我的上传 tab 都需要）
   useEffect(() => {
     if (!user) return;
     setUploadLoading(true);
@@ -92,158 +106,299 @@ export function Assets() {
       .finally(() => setUploadLoading(false));
   }, [user]);
 
+  // 点击外部关闭菜单
+  useEffect(() => {
+    if (!openMenuId) return;
+    const handle = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenuId(null);
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [openMenuId]);
+
+  // 退出批量模式时清空选中
+  useEffect(() => {
+    if (!batchMode) setSelectedItems(new Map());
+  }, [batchMode]);
+
   const fullUrl = (url: string) => (url?.startsWith('http') ? url : `${window.location.origin}${url || ''}`);
-
-  const getVideoUrl = (video: VideoAsset): string | undefined => {
-    if (video.video_local_path) return `${window.location.origin}${video.video_local_path}`;
-    return video.video_url;
-  };
-
-  const getCoverUrl = (video: VideoAsset): string | null => {
-    if (video.cover_local_path) return `${window.location.origin}${video.cover_local_path}`;
-    return video.cover_url || null;
-  };
-
-  const hasCover = (video: VideoAsset): boolean => {
-    return !!(video.cover_local_path || video.cover_url);
-  };
+  const getVideoUrl = (video: VideoAsset) => video.video_local_path ? `${window.location.origin}${video.video_local_path}` : video.video_url;
+  const getCoverUrl = (video: VideoAsset) => video.cover_local_path ? `${window.location.origin}${video.cover_local_path}` : (video.cover_url || null);
+  const hasCover = (video: VideoAsset) => !!(video.cover_local_path || video.cover_url);
 
   const downloadVideo = async (video: VideoAsset) => {
     const videoUrl = getVideoUrl(video);
-    if (!videoUrl) {
-      Toast.show({ content: $l('seedance.toast.videoNotAvailable'), icon: 'fail' });
-      return;
-    }
+    if (!videoUrl) { Toast.show({ content: $l('seedance.toast.videoNotAvailable'), icon: 'fail' }); return; }
     try {
       Toast.show({ content: $l('seedance.toast.downloadStarting'), icon: 'loading', duration: 0 });
-      const response = await fetch(videoUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `video_${video.id}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      Toast.clear();
-      Toast.show({ content: $l('seedance.toast.downloadSuccess'), icon: 'success' });
-    } catch (err: any) {
-      console.error('[Assets] 下载视频错误:', err);
-      Toast.clear();
-      Toast.show({ content: $l('seedance.toast.downloadFailed'), icon: 'fail' });
-    }
+      const blob = await fetch(videoUrl).then(r => r.blob());
+      const url = URL.createObjectURL(blob);
+      const a = Object.assign(document.createElement('a'), { href: url, download: `video_${video.id}.mp4` });
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      Toast.clear(); Toast.show({ content: $l('seedance.toast.downloadSuccess'), icon: 'success' });
+    } catch { Toast.clear(); Toast.show({ content: $l('seedance.toast.downloadFailed'), icon: 'fail' }); }
   };
 
   const downloadUpload = async (work: WorkItem) => {
     const videoUrl = fullUrl(work.video_url);
-    if (!videoUrl) {
-      Toast.show({ content: $l('seedance.toast.videoNotAvailable'), icon: 'fail' });
-      return;
-    }
+    if (!videoUrl) { Toast.show({ content: $l('seedance.toast.videoNotAvailable'), icon: 'fail' }); return; }
     try {
       Toast.show({ content: $l('seedance.toast.downloadStarting'), icon: 'loading', duration: 0 });
-      const response = await fetch(videoUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `upload_${work.id}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      Toast.clear();
-      Toast.show({ content: $l('seedance.toast.downloadSuccess'), icon: 'success' });
-    } catch (err: any) {
-      console.error('[Assets] 下载上传视频错误:', err);
-      Toast.clear();
-      Toast.show({ content: $l('seedance.toast.downloadFailed'), icon: 'fail' });
-    }
+      const blob = await fetch(videoUrl).then(r => r.blob());
+      const url = URL.createObjectURL(blob);
+      const a = Object.assign(document.createElement('a'), { href: url, download: `upload_${work.id}.mp4` });
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      Toast.clear(); Toast.show({ content: $l('seedance.toast.downloadSuccess'), icon: 'success' });
+    } catch { Toast.clear(); Toast.show({ content: $l('seedance.toast.downloadFailed'), icon: 'fail' }); }
   };
 
   const formatDuration = (video: VideoAsset) => {
     if (!video.duration) return '00:00';
     try {
-      const seconds = parseInt(video.duration, 10);
-      if (isNaN(seconds)) return '00:00';
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-    } catch {
-      return '00:00';
-    }
+      const s = parseInt(video.duration, 10);
+      if (isNaN(s)) return '00:00';
+      return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    } catch { return '00:00'; }
   };
 
   const formatDate = (timestamp?: number) => {
     if (!timestamp) return $l('seedance.date.unknownDate');
     const date = new Date(timestamp);
     const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
     if (date.toDateString() === today.toDateString()) return $l('seedance.date.today');
     if (date.toDateString() === yesterday.toDateString()) return $l('seedance.date.yesterday');
-    return $l('seedance.date.monthDay').replace('{month}', (date.getMonth() + 1).toString()).replace('{day}', date.getDate().toString());
+    return $l('seedance.date.monthDay').replace('{month}', String(date.getMonth() + 1)).replace('{day}', String(date.getDate()));
   };
 
-  const groupedVideos = videoList.reduce((acc, video) => {
-    const date = formatDate(video.created_at);
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(video);
-    return acc;
-  }, {} as Record<string, VideoAsset[]>);
+  // ── 搜索过滤 ──
+  const kw = searchKeyword.trim().toLowerCase();
+  const filteredVideoList = kw ? videoList.filter(v => (v.prompt || '').toLowerCase().includes(kw)) : videoList;
+  const filteredUploadList = kw ? uploadList.filter(w => (w.title || '').toLowerCase().includes(kw)) : uploadList;
 
-  // 上传卡片（下载/发布操作）
-  const renderUploadCard = (work: WorkItem) => {
+  // ── 批量选择 ──
+  const toggleSelect = (id: string, type: 'generation' | 'work') => {
+    setSelectedItems(prev => {
+      const next = new Map(prev);
+      next.has(id) ? next.delete(id) : next.set(id, type);
+      return next;
+    });
+  };
+
+  // ── 删除 ──
+  const requestDelete = (items: Array<{ id: string; isWork: boolean }>) => {
+    setOpenMenuId(null);
+    setDeleteTarget({ items });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const targets = deleteTarget.items;
+    setDeleteTarget(null);
+    try {
+      await Promise.all(targets.map(({ id, isWork }) => isWork ? deleteWork(id) : deleteVideoGeneration(id)));
+      const workIds = new Set(targets.filter(t => t.isWork).map(t => t.id));
+      const genIds = new Set(targets.filter(t => !t.isWork).map(t => t.id));
+      if (genIds.size) setVideoList(prev => prev.filter(v => !genIds.has(v.id)));
+      if (workIds.size) setUploadList(prev => prev.filter(w => !workIds.has(w.id)));
+      setSelectedItems(new Map());
+      setBatchMode(false);
+      Toast.show({ content: plaza.deleteWork, icon: 'success' });
+    } catch (e) {
+      Toast.show({ content: (e as Error).message, icon: 'fail' });
+    }
+  };
+
+  // ── 隐私切换 ──
+  const handleTogglePrivacy = async (workId: string, isCurrentlyPrivate: boolean, genId?: string) => {
+    setOpenMenuId(null);
+    const newPrivate = !isCurrentlyPrivate;
+    try {
+      await updateWorkPrivacy(workId, newPrivate);
+      if (genId) {
+        setVideoList(prev => prev.map(v => v.id === genId ? { ...v, work_is_private: newPrivate ? 1 : 0 } : v));
+      } else {
+        setUploadList(prev => prev.map(w => w.id === workId ? { ...w, is_private: newPrivate ? 1 : 0 } : w));
+      }
+      Toast.show({ content: newPrivate ? t.seedance.plaza.setPrivate : t.seedance.plaza.setPublic, icon: 'success' });
+    } catch (e) {
+      Toast.show({ content: (e as Error).message, icon: 'fail' });
+    }
+  };
+
+  // ── 渲染三点菜单 ──
+  const renderMenu = (menuId: string, items: React.ReactNode) => (
+    openMenuId === menuId ? (
+      <div className="assets-card-menu" ref={menuRef}>
+        {items}
+      </div>
+    ) : null
+  );
+
+  // ── 生成视频卡片 ──
+  const renderGenCard = (video: VideoAsset) => {
+    const videoUrl = getVideoUrl(video);
+    const hasVideo = hasCover(video) && videoUrl;
+    const isSelected = selectedItems.has(video.id);
+    const menuId = `g:${video.id}`;
+    const isPrivate = !!(video.work_is_private);
+
     const handleThumbClick = (e: React.MouseEvent) => {
+      if (batchMode) { toggleSelect(video.id, 'generation'); return; }
       const target = e.target as HTMLElement;
-      if (target.closest('.assets-video-download')) {
-        e.preventDefault();
-        e.stopPropagation();
-        downloadUpload(work);
-        return;
-      }
-      if (target.closest('.assets-video-publish')) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (user) setPublishWork(work);
-        else setLoginDialogVisible(true);
-        return;
-      }
-      // 点击封面预览视频
+      if (target.closest('.assets-video-download')) { e.stopPropagation(); downloadVideo(video); return; }
+      if (target.closest('.assets-video-publish')) { e.stopPropagation(); user ? setPublishVideo(video) : setLoginDialogVisible(true); return; }
+      if (target.closest('.assets-card-menu-wrap')) return;
+      if (hasVideo && videoUrl) window.open(videoUrl, '_blank', 'noopener,noreferrer');
+    };
+
+    return (
+      <div key={video.id} className={`assets-video-item${isSelected ? ' assets-video-item--selected' : ''}`}>
+        <div className="assets-video-thumb" onClick={handleThumbClick} style={{ cursor: batchMode ? 'pointer' : (hasCover(video) ? 'pointer' : 'default') }}>
+          {hasCover(video) ? (
+            <div className="assets-video-cover" style={{ backgroundImage: `url(${getCoverUrl(video)})` }} />
+          ) : !video.error_message ? (
+            <video className="assets-video-cover" src={recordLoadingVideo} autoPlay loop muted playsInline />
+          ) : (
+            <div className="assets-video-cover" />
+          )}
+
+          <span className="assets-video-duration">{formatDuration(video)}</span>
+
+          {video.error_message ? (
+            <span className="assets-video-status assets-video-failure">{$l('seedance.video.failure')}</span>
+          ) : !hasCover(video) ? (
+            <>
+              {video.queue_info && (
+                <span className="assets-video-queue-text">
+                  {(video.queue_info.pos ?? video.queue_info.位置) === 0
+                    ? $l('seedance.video.creating')
+                    : $l('seedance.video.queueStatus')
+                        .replace('{pos}', String(video.queue_info.pos ?? video.queue_info.位置 ?? 0))
+                        .replace('{total}', String(video.queue_info.total ?? video.queue_info.总人数 ?? 0))
+                        .replace('{wait}', String(video.queue_info.wait ?? video.queue_info.等待分钟 ?? 0))}
+                </span>
+              )}
+              <span className="assets-video-generating-badge">{$l('seedance.video.generating')}</span>
+            </>
+          ) : null}
+
+          {/* 私密徽章 */}
+          {isPrivate && (
+            <span className="assets-video-status" style={{ background: 'rgba(219,39,119,0.85)', color: '#fff' }}>
+              {t.seedance.plaza.privateLabel}
+            </span>
+          )}
+
+          {/* Publish + Download 悬浮操作 */}
+          {hasCover(video) && !batchMode && (
+            <div className="assets-video-actions">
+              {!video.work_id && (
+                <div className="assets-video-publish" title="Publish to Plaza">Publish</div>
+              )}
+              <div className="assets-video-download">{$l('seedance.video.download')}</div>
+            </div>
+          )}
+
+          {/* 批量勾选框 */}
+          {batchMode && (
+            <div className={`assets-card-checkbox${isSelected ? ' assets-card-checkbox--checked' : ''}`} />
+          )}
+
+          {/* 三点菜单 */}
+          {!batchMode && hasCover(video) && (
+            <div className="assets-card-menu-wrap" ref={openMenuId === menuId ? menuRef : null}>
+              <button
+                type="button"
+                className="assets-card-menu-btn"
+                onClick={e => { e.stopPropagation(); setOpenMenuId(prev => prev === menuId ? null : menuId); }}
+              >⋯</button>
+              {renderMenu(menuId, <>
+                {video.work_id && (
+                  <button type="button" className="assets-card-menu-item" onClick={() => handleTogglePrivacy(video.work_id!, isPrivate, video.id)}>
+                    {isPrivate ? t.seedance.plaza.setPublic : t.seedance.plaza.setPrivate}
+                  </button>
+                )}
+                <button type="button" className="assets-card-menu-item assets-card-menu-item--danger" onClick={() => requestDelete([{ id: video.id, isWork: false }])}>
+                  {plaza.deleteWork}
+                </button>
+              </>)}
+            </div>
+          )}
+        </div>
+
+        <div className="assets-video-prompt" title={video.prompt || $l('seedance.video.noTitle')}>
+          {video.prompt?.slice(0, 20) || $l('seedance.video.noTitle')}
+        </div>
+        {video.error_message && (
+          <div className="assets-video-error" title={video.error_message}>{video.error_message}</div>
+        )}
+      </div>
+    );
+  };
+
+  // ── 上传卡片 ──
+  const renderUploadCard = (work: WorkItem) => {
+    const isSelected = selectedItems.has(work.id);
+    const menuId = `u:${work.id}`;
+    const isPrivate = !!(work.is_private);
+
+    const handleThumbClick = (e: React.MouseEvent) => {
+      if (batchMode) { toggleSelect(work.id, 'work'); return; }
+      const target = e.target as HTMLElement;
+      if (target.closest('.assets-video-download')) { e.stopPropagation(); downloadUpload(work); return; }
+      if (target.closest('.assets-video-publish')) { e.stopPropagation(); user ? setPublishWork(work) : setLoginDialogVisible(true); return; }
+      if (target.closest('.assets-card-menu-wrap')) return;
       const videoUrl = fullUrl(work.video_url);
       if (videoUrl) window.open(videoUrl, '_blank', 'noopener,noreferrer');
     };
 
     return (
-      <div key={work.id} className="assets-video-item">
+      <div key={work.id} className={`assets-video-item${isSelected ? ' assets-video-item--selected' : ''}`}>
         <div className="assets-video-thumb" onClick={handleThumbClick} style={{ cursor: 'pointer' }}>
           {work.cover_url ? (
-            <div
-              className="assets-video-cover"
-              style={{ backgroundImage: `url(${fullUrl(work.cover_url)})` }}
-            />
+            <div className="assets-video-cover" style={{ backgroundImage: `url(${fullUrl(work.cover_url)})` }} />
           ) : (
-            <video
-              className="assets-video-cover"
-              src={fullUrl(work.video_url)}
-              muted
-              playsInline
-              preload="metadata"
-            />
+            <video className="assets-video-cover" src={fullUrl(work.video_url)} muted playsInline preload="metadata" />
           )}
-          {work.is_private ? (
+
+          {isPrivate && (
             <span className="assets-video-status" style={{ background: 'rgba(219,39,119,0.85)', color: '#fff' }}>
               {t.seedance.plaza.privateLabel}
             </span>
-          ) : null}
-          <div className="assets-video-publish" title="Publish to Plaza">
-            Publish
-          </div>
-          <div className="assets-video-download">
-            {$l('seedance.video.download')}
-          </div>
+          )}
+
+          {!batchMode && (
+            <div className="assets-video-actions">
+              <div className="assets-video-download">{$l('seedance.video.download')}</div>
+            </div>
+          )}
+
+          {batchMode && (
+            <div className={`assets-card-checkbox${isSelected ? ' assets-card-checkbox--checked' : ''}`} />
+          )}
+
+          {!batchMode && (
+            <div className="assets-card-menu-wrap" ref={openMenuId === menuId ? menuRef : null}>
+              <button
+                type="button"
+                className="assets-card-menu-btn"
+                onClick={e => { e.stopPropagation(); setOpenMenuId(prev => prev === menuId ? null : menuId); }}
+              >⋯</button>
+              {renderMenu(menuId, <>
+                <button type="button" className="assets-card-menu-item" onClick={() => handleTogglePrivacy(work.id, isPrivate)}>
+                  {isPrivate ? t.seedance.plaza.setPublic : t.seedance.plaza.setPrivate}
+                </button>
+                <button type="button" className="assets-card-menu-item assets-card-menu-item--danger" onClick={() => requestDelete([{ id: work.id, isWork: true }])}>
+                  {plaza.deleteWork}
+                </button>
+              </>)}
+            </div>
+          )}
         </div>
+
         <div className="assets-video-prompt" title={work.title}>
           {work.title?.slice(0, 20) || $l('seedance.video.noTitle')}
         </div>
@@ -251,14 +406,19 @@ export function Assets() {
     );
   };
 
+  const groupedVideos = filteredVideoList.reduce((acc, video) => {
+    const date = formatDate(video.created_at);
+    if (!acc[date]) acc[date] = [];
+    acc[date].push(video);
+    return acc;
+  }, {} as Record<string, VideoAsset[]>);
+
   const isLoadingAll = loading || uploadLoading;
+  const selectedCount = selectedItems.size;
 
   return (
     <div className="assets-page">
-      <LoginDialog
-        visible={loginDialogVisible}
-        onClose={() => setLoginDialogVisible(false)}
-      />
+      <LoginDialog visible={loginDialogVisible} onClose={() => setLoginDialogVisible(false)} />
       <PublishDialog
         visible={!!publishVideo}
         onClose={() => setPublishVideo(null)}
@@ -274,152 +434,42 @@ export function Assets() {
 
       <div className="assets-top-actions">
         <SearchBar placeholder={c.searchPlaceholder} value={searchKeyword} onChange={setSearchKeyword} className="assets-search" />
-        <span className="assets-batch">{p.batchOps}</span>
+        <button
+          type="button"
+          className={`assets-batch-btn${batchMode ? ' assets-batch-btn--active' : ''}`}
+          onClick={() => setBatchMode(v => !v)}
+        >
+          {batchMode ? p.batchCancel : p.batchOps}
+        </button>
       </div>
 
       <div className="assets-filter-tabs">
-        <button
-          type="button"
-          className={`filter-tab ${filterTab === 'all' ? 'active' : ''}`}
-          onClick={() => setFilterTab('all')}
-        >
-          {p.allVideos}
-        </button>
-        <button
-          type="button"
-          className={`filter-tab ${filterTab === 'collections' ? 'active' : ''}`}
-          onClick={() => setFilterTab('collections')}
-        >
-          {p.myCollections}
-        </button>
-        <button
-          type="button"
-          className={`filter-tab ${filterTab === 'uploads' ? 'active' : ''}`}
-          onClick={() => setFilterTab('uploads')}
-        >
-          {p.myUploads}
-        </button>
+        {(['all', 'collections', 'uploads'] as const).map((key) => (
+          <button key={key} type="button" className={`filter-tab${filterTab === key ? ' active' : ''}`} onClick={() => setFilterTab(key)}>
+            {key === 'all' ? p.allVideos : key === 'collections' ? p.myCollections : p.myUploads}
+          </button>
+        ))}
       </div>
 
       {/* 所有视频 */}
       {filterTab === 'all' && (
         <div className="assets-video-list">
           {isLoadingAll ? (
-            <div className="assets-loading">
-              <DotLoading color="primary" />
-              <p>{c.loading}</p>
-            </div>
-          ) : videoList.length === 0 && uploadList.length === 0 ? (
-            <div className="assets-empty">
-              <p>{p.assetsDesc}</p>
-            </div>
+            <div className="assets-loading"><DotLoading color="primary" /><p>{c.loading}</p></div>
+          ) : filteredVideoList.length === 0 && filteredUploadList.length === 0 ? (
+            <div className="assets-empty"><p>{p.assetsDesc}</p></div>
           ) : (
             <>
               {Object.entries(groupedVideos).map(([date, videos]) => (
                 <div key={date} className="assets-date-group">
                   <div className="assets-date-label">{date}</div>
-                  <div className="assets-video-grid">
-                    {videos.map((video) => {
-                      const videoUrl = getVideoUrl(video);
-                      const hasVideo = hasCover(video) && videoUrl;
-
-                      const handleThumbClick = (e: React.MouseEvent) => {
-                        const target = e.target as HTMLElement;
-                        if (target.closest('.assets-video-download')) {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          downloadVideo(video);
-                          return;
-                        }
-                        if (target.closest('.assets-video-publish')) {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (user) setPublishVideo(video);
-                          else setLoginDialogVisible(true);
-                          return;
-                        }
-                        if (hasCover(video)) {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (hasVideo && videoUrl) {
-                            window.open(videoUrl, '_blank', 'noopener,noreferrer');
-                          }
-                        }
-                      };
-
-                      return (
-                        <div key={video.id} className="assets-video-item">
-                          <div
-                            className="assets-video-thumb"
-                            onClick={handleThumbClick}
-                            style={{ cursor: hasCover(video) ? 'pointer' : 'default' }}
-                          >
-                            {hasCover(video) ? (
-                              <div
-                                className="assets-video-cover"
-                                style={{ backgroundImage: `url(${getCoverUrl(video)})` }}
-                              />
-                            ) : !video.error_message ? (
-                              <video
-                                className="assets-video-cover"
-                                src={recordLoadingVideo}
-                                autoPlay
-                                loop
-                                muted
-                                playsInline
-                              />
-                            ) : (
-                              <div className="assets-video-cover" />
-                            )}
-                            <span className="assets-video-duration">{formatDuration(video)}</span>
-                            {video.error_message ? (
-                              <span className="assets-video-status assets-video-failure">{$l('seedance.video.failure')}</span>
-                            ) : !hasCover(video) ? (
-                              <>
-                                {video.queue_info ? (
-                                  <span className="assets-video-queue-text">
-                                    {(video.queue_info.位置 ?? video.queue_info.pos) === 0
-                                      ? $l('seedance.video.creating')
-                                      : $l('seedance.video.queueStatus')
-                                          .replace('{pos}', String(video.queue_info.位置 ?? video.queue_info.pos ?? 0))
-                                          .replace('{total}', String(video.queue_info.总人数 ?? video.queue_info.total ?? 0))
-                                          .replace('{wait}', String(video.queue_info.等待分钟 ?? video.queue_info.wait ?? 0))}
-                                  </span>
-                                ) : null}
-                                <span className="assets-video-generating-badge">{$l('seedance.video.generating')}</span>
-                              </>
-                            ) : null}
-                            {hasCover(video) && (
-                              <>
-                                <div className="assets-video-publish" title="Publish to Plaza">
-                                  Publish
-                                </div>
-                                <div className="assets-video-download">
-                                  {$l('seedance.video.download')}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                          <div className="assets-video-prompt" title={video.prompt || $l('seedance.video.noTitle')}>
-                            {video.prompt?.slice(0, 20) || $l('seedance.video.noTitle')}
-                          </div>
-                          {video.error_message && (
-                            <div className="assets-video-error" title={video.error_message}>
-                              {video.error_message}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <div className="assets-video-grid">{videos.map(renderGenCard)}</div>
                 </div>
               ))}
-              {uploadList.length > 0 && (
+              {filteredUploadList.length > 0 && (
                 <div className="assets-date-group">
                   <div className="assets-date-label">{p.myUploads}</div>
-                  <div className="assets-video-grid">
-                    {uploadList.map(work => renderUploadCard(work))}
-                  </div>
+                  <div className="assets-video-grid">{filteredUploadList.map(renderUploadCard)}</div>
                 </div>
               )}
             </>
@@ -430,9 +480,7 @@ export function Assets() {
       {/* 我的收藏 */}
       {filterTab === 'collections' && (
         <div className="assets-video-list">
-          <div className="assets-empty">
-            <p>{p.myCollections}</p>
-          </div>
+          <div className="assets-empty"><p>{p.myCollections}</p></div>
         </div>
       )}
 
@@ -440,19 +488,49 @@ export function Assets() {
       {filterTab === 'uploads' && (
         <div className="assets-video-list">
           {uploadLoading ? (
-            <div className="assets-loading">
-              <DotLoading color="primary" />
-              <p>{c.loading}</p>
-            </div>
-          ) : uploadList.length === 0 ? (
-            <div className="assets-empty">
-              <p>{p.myUploadsEmpty}</p>
-            </div>
+            <div className="assets-loading"><DotLoading color="primary" /><p>{c.loading}</p></div>
+          ) : filteredUploadList.length === 0 ? (
+            <div className="assets-empty"><p>{p.myUploadsEmpty}</p></div>
           ) : (
-            <div className="assets-video-grid">
-              {uploadList.map(work => renderUploadCard(work))}
-            </div>
+            <div className="assets-video-grid">{filteredUploadList.map(renderUploadCard)}</div>
           )}
+        </div>
+      )}
+
+      {/* 批量操作栏 */}
+      {batchMode && selectedCount > 0 && (
+        <div className="assets-batch-bar">
+          <span className="assets-batch-count">已选 {selectedCount} 项</span>
+          <button
+            type="button"
+            className="assets-batch-delete-btn"
+            onClick={() => requestDelete([...selectedItems.entries()].map(([id, type]) => ({ id, isWork: type === 'work' })))}
+          >
+            删除
+          </button>
+        </div>
+      )}
+
+      {/* 删除确认弹窗 */}
+      {deleteTarget && (
+        <div className="assets-confirm-overlay" onClick={() => setDeleteTarget(null)}>
+          <div className="assets-confirm-dialog" onClick={e => e.stopPropagation()}>
+            <div className="assets-confirm-icon">🗑</div>
+            <h3 className="assets-confirm-title">{plaza.deleteWork}</h3>
+            <p className="assets-confirm-desc">
+              {deleteTarget.items.length > 1
+                ? `确定删除选中的 ${deleteTarget.items.length} 项？此操作不可撤销。`
+                : plaza.deleteConfirm}
+            </p>
+            <div className="assets-confirm-actions">
+              <button type="button" className="assets-confirm-btn assets-confirm-btn--cancel" onClick={() => setDeleteTarget(null)}>
+                {plaza.deleteCancel}
+              </button>
+              <button type="button" className="assets-confirm-btn assets-confirm-btn--danger" onClick={confirmDelete}>
+                {plaza.deleteConfirmBtn}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

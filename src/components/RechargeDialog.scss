@@ -1,5 +1,16 @@
 .recharge-dialog-content {
-  padding: 8px 0;
+  padding: 0;
+}
+
+.recharge-dialog-header {
+  padding: 24px 24px 0;
+}
+
+.recharge-dialog-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 20px;
 }
 
 .recharge-balance {
@@ -7,15 +18,15 @@
   flex-direction: column;
   align-items: center;
   padding: 16px;
-  background: #1677ff;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  color: #fff;
+  background: #f5f0ff;
+  border-radius: 16px;
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  margin: 0 24px 20px;
 }
 
 .balance-label {
   font-size: 13px;
-  opacity: 0.9;
+  color: #9167e0;
   margin-bottom: 8px;
 }
 
@@ -24,7 +35,8 @@
   align-items: center;
   gap: 6px;
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
+  color: #111827;
 }
 
 .balance-icon {
@@ -35,7 +47,7 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  margin-bottom: 20px;
+  margin: 0 24px 20px;
 
   @media (max-width: 400px) {
     grid-template-columns: 1fr;
@@ -46,10 +58,10 @@
   position: relative;
   padding: 20px 12px;
   border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 16px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   background: #fff;
   min-height: 140px;
   display: flex;
@@ -57,38 +69,33 @@
   justify-content: center;
 
   &:hover {
-    border-color: #1677ff;
+    border-color: #7c3aed;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.2);
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.18);
   }
 
   &.selected {
-    border-color: #1677ff;
-    background: rgba(22, 119, 255, 0.06);
+    border-color: #7c3aed;
+    background: #faf8ff;
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.15);
   }
 
   &.popular {
-    border-color: #1677ff;
-
-    &:hover,
-    &.selected {
-      border-color: #1677ff;
-      box-shadow: 0 4px 12px rgba(22, 119, 255, 0.25);
-    }
+    border-color: rgba(124, 58, 237, 0.4);
   }
 }
 
 .plan-badge {
   position: absolute;
-  top: -8px;
-  right: 8px;
-  padding: 2px 8px;
-  background: #1677ff;
+  top: -10px;
+  right: 10px;
+  padding: 2px 10px;
+  background: #7c3aed;
   color: #fff;
   font-size: 11px;
   font-weight: 600;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(22, 119, 255, 0.3);
+  border-radius: 100px;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
 }
 
 .plan-credits {
@@ -101,117 +108,142 @@
 .plan-credits-amount {
   font-size: 32px;
   font-weight: 700;
-  color: #1677ff;
+  color: #7c3aed;
   line-height: 1.2;
 }
 
 .plan-credits-label {
   font-size: 12px;
-  color: #6b7280;
+  color: #9167e0;
   margin-top: 2px;
 }
 
 .plan-price {
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  color: #111827;
   margin-bottom: 4px;
 }
 
 .plan-label {
   font-size: 12px;
-  color: #6b7280;
+  color: #9167e0;
 }
 
 .recharge-tips {
-  padding: 12px 0 4px;
+  padding: 0 24px 4px;
   font-size: 13px;
-  color: #4b5563;
 
   .recharge-tip-short {
     margin: 0 0 6px 0;
     line-height: 1.5;
-    color: #6b7280;
+    color: #9167e0;
   }
 
   .recharge-stripe-brand {
     margin: 0 0 10px 0;
     font-size: 12px;
-    font-weight: 400;
-    color: #6b7280;
+    color: #9167e0;
   }
 
   .recharge-discord-link {
     display: inline-block;
     font-size: 13px;
-    color: #1677ff;
+    color: #7c3aed;
     text-decoration: none;
-    margin-top: 4px;
+    font-weight: 500;
 
     &:hover {
+      color: #6d28d9;
       text-decoration: underline;
     }
   }
 }
 
-// Dialog 样式覆盖
+.recharge-footer {
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px 24px;
+  border-top: 1px solid rgba(124, 58, 237, 0.1);
+  margin-top: 20px;
+}
+
+.recharge-btn {
+  flex: 1;
+  height: 48px;
+  border: none;
+  border-radius: 100px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &--cancel {
+    background: #ede9fe;
+    color: #111827;
+
+    &:hover {
+      background: #ddd6fe;
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  &--pay {
+    background: #7c3aed;
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background: #6d28d9;
+      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4);
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Dialog 容器样式覆盖
 :global {
   .adm-dialog-wrap {
     .adm-dialog {
       max-width: 90vw;
       width: 480px;
-      border-radius: 16px;
+      border-radius: 28px;
+      overflow: hidden;
     }
 
+    // 隐藏默认 title 区域（我们用自定义 header）
     .adm-dialog-title {
-      font-size: 18px;
-      font-weight: 600;
-      padding: 20px 20px 12px;
+      display: none;
     }
 
     .adm-dialog-content {
-      padding: 0 20px 20px;
-      max-height: 70vh;
+      padding: 0;
+      max-height: 80vh;
       overflow-y: auto;
     }
 
+    // 隐藏默认 footer（按钮已移入 content）
     .adm-dialog-footer {
-      display: flex;
-      flex-direction: row;
-      padding: 16px 20px;
-      border-top: 1px solid #e5e7eb;
-
-      .adm-dialog-action-row {
-        display: flex !important;
-        flex-direction: row !important;
-        flex: 1;
-        width: 100%;
-        gap: 12px;
-      }
-
-      .adm-dialog-button {
-        flex: 1;
-        height: 44px;
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 500;
-
-        &:first-child {
-          background: #f3f4f6;
-          color: #4b5563;
-        }
-
-        &.adm-dialog-button-primary {
-          background: #1677ff;
-          color: #fff;
-        }
-      }
+      display: none;
     }
   }
 }
-#root > div > aside > div.sidebar-footer > div.adm-center-popup.adm-dialog > div.adm-center-popup-wrap{
-  width: 500px
+
+#root > div > aside > div.sidebar-footer > div.adm-center-popup.adm-dialog > div.adm-center-popup-wrap {
+  width: 500px;
 }
-#root > div > main > div > div.adm-center-popup.adm-dialog > div.adm-center-popup-wrap{
-  width: 500px
+#root > div > main > div > div.adm-center-popup.adm-dialog > div.adm-center-popup-wrap {
+  width: 500px;
 }

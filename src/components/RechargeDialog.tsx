@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, Button, Toast } from 'antd-mobile';
+import { Dialog, Toast } from 'antd-mobile';
 import { createPayment } from '../services/api';
 import { useI18n } from '../context/I18nContext';
 import './RechargeDialog.scss';
@@ -71,9 +71,13 @@ export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose
     <Dialog
       visible={visible}
       onClose={onClose}
-      title={r.title}
+      closeOnMaskClick
       content={
         <div className="recharge-dialog-content">
+          <div className="recharge-dialog-header">
+            <div className="recharge-dialog-title">{r.title}</div>
+          </div>
+
           <div className="recharge-balance">
             <span className="balance-label">{r.currentBalance}</span>
             <span className="balance-amount">
@@ -114,20 +118,22 @@ export const RechargeDialog: React.FC<RechargeDialogProps> = ({ visible, onClose
               {r.needHelp ?? 'Need help? Join our Discord'}
             </a>
           </div>
+
+          <div className="recharge-footer">
+            <button type="button" className="recharge-btn recharge-btn--cancel" onClick={onClose}>
+              {c.cancel}
+            </button>
+            <button
+              type="button"
+              className="recharge-btn recharge-btn--pay"
+              onClick={handleRecharge}
+              disabled={loading}
+            >
+              {getPayButtonText(r, loading, selectedPlan.amount)}
+            </button>
+          </div>
         </div>
       }
-      actions={[
-        [
-          { key: 'cancel', text: c.cancel, onClick: onClose },
-          {
-            key: 'confirm',
-            text: getPayButtonText(r, loading, selectedPlan.amount),
-            primary: true,
-            disabled: loading,
-            onClick: handleRecharge,
-          },
-        ],
-      ]}
     />
   );
 };

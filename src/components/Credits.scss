@@ -1,56 +1,59 @@
 .credits-display {
-  padding: 12px 16px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  margin: 12px 0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #f5f0ff;
+  border-radius: 16px;
+  border: 1px solid rgba(124, 58, 237, 0.12);
 }
 
 .credits-balance {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
+  min-width: 0;
   margin-right: 10px;
 }
 
 .credits-icon {
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .credits-amount {
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
   line-height: 1;
 }
 
 .credits-label {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  color: #9167e0;
   line-height: 1;
-  color: #333;
+  white-space: nowrap;
 }
 
 .credits-recharge-btn {
-  padding: 6px 16px;
-  background: #1677ff;
+  padding: 6px 14px;
+  background: #7c3aed;
   color: #fff;
   border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   white-space: nowrap;
+  flex-shrink: 0;
 
   &:hover:not(:disabled) {
+    background: #6d28d9;
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
   }
 
   &:active:not(:disabled) {
@@ -58,7 +61,7 @@
   }
 
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.4;
     cursor: not-allowed;
   }
 }
