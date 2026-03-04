@@ -104,12 +104,7 @@ export function Plaza() {
     const isPrivate = !work.is_private;
     try {
       await updateWorkPrivacy(work.id, isPrivate);
-      // 设为私密时立即从广场移除；设为公开不会出现在此（该操作在 Assets 里完成）
-      if (isPrivate) {
-        setList(prev => prev.filter(w => w.id !== work.id));
-      } else {
-        setList(prev => prev.map(w => w.id === work.id ? { ...w, is_private: 0 } : w));
-      }
+      setList(prev => prev.map(w => w.id === work.id ? { ...w, is_private: isPrivate ? 1 : 0 } : w));
       Toast.show({ content: isPrivate ? p.setPrivate : p.setPublic, icon: 'success' });
     } catch (e) {
       Toast.show({ content: (e as Error).message, icon: 'fail' });
@@ -229,6 +224,10 @@ export function Plaza() {
                     ♥ {work.like_count ?? 0}
                   </button>
 
+                  {!!work.is_private && (
+                    <span className="plaza-card-private-badge">{p.privateLabel}</span>
+                  )}
+
                   {user && work.user_id === user.id && (
                     <div
                       className="plaza-card-menu-wrap"
@@ -248,7 +247,7 @@ export function Plaza() {
                             className="plaza-card-menu-item"
                             onClick={(e) => handleSetPrivacy(e, work)}
                           >
-                            {p.setPrivate}
+                            {work.is_private ? p.setPublic : p.setPrivate}
                           </button>
                           <button
                             type="button"

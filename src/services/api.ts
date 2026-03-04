@@ -318,14 +318,22 @@ export async function getWorkDetail(id: string): Promise<ApiResponse<WorkDetail>
   return result;
 }
 
-export async function publishWork(videoGenerationId: string, title: string): Promise<ApiResponse<{ id: string }>> {
+export async function publishWork(videoGenerationId: string, title: string, coverBlob?: Blob): Promise<ApiResponse<{ id: string }>> {
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
   if (!token) throw new Error('Unauthorized');
-  const response = await fetch(`${API_BASE_URL}/works`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ videoGenerationId, title }),
-  });
+  let body: BodyInit;
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+  if (coverBlob) {
+    const form = new FormData();
+    form.append('videoGenerationId', videoGenerationId);
+    form.append('title', title);
+    form.append('cover', coverBlob, 'cover.jpg');
+    body = form;
+  } else {
+    headers['Content-Type'] = 'application/json';
+    body = JSON.stringify({ videoGenerationId, title });
+  }
+  const response = await fetch(`${API_BASE_URL}/works`, { method: 'POST', headers, body });
   const result: ApiResponse<{ id: string }> = await response.json();
   if (!response.ok || !result.success) throw new Error(result.message || 'Publish failed');
   return result;

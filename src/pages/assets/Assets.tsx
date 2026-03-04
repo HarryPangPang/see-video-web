@@ -62,7 +62,6 @@ export function Assets() {
   const [uploadLoading, setUploadLoading] = useState(false);
   const [privateList, setPrivateList] = useState<WorkItem[]>([]);
   const [privateLoading, setPrivateLoading] = useState(false);
-  const [hasPrivate, setHasPrivate] = useState(false);
 
   // 批量选择
   const [batchMode, setBatchMode] = useState(false);
@@ -109,13 +108,6 @@ export function Assets() {
       .finally(() => setUploadLoading(false));
   }, [user]);
 
-  // 检查是否有私密作品（决定是否显示私密 tab）
-  useEffect(() => {
-    if (!user) { setHasPrivate(false); return; }
-    getWorksList({ mine: true, isPrivate: true, limit: 1 })
-      .then(res => setHasPrivate((res.data?.total ?? 0) > 0))
-      .catch(() => {});
-  }, [user]);
 
   // 切到私密 tab 时拉取私密列表
   useEffect(() => {
@@ -147,33 +139,6 @@ export function Assets() {
   const getCoverUrl = (video: VideoAsset) => video.cover_local_path ? `${window.location.origin}${video.cover_local_path}` : (video.cover_url || null);
   const hasCover = (video: VideoAsset) => !!(video.cover_local_path || video.cover_url);
 
-  const downloadVideo = async (video: VideoAsset) => {
-    const videoUrl = getVideoUrl(video);
-    if (!videoUrl) { Toast.show({ content: $l('seedance.toast.videoNotAvailable'), icon: 'fail' }); return; }
-    try {
-      Toast.show({ content: $l('seedance.toast.downloadStarting'), icon: 'loading', duration: 0 });
-      const blob = await fetch(videoUrl).then(r => r.blob());
-      const url = URL.createObjectURL(blob);
-      const a = Object.assign(document.createElement('a'), { href: url, download: `video_${video.id}.mp4` });
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      Toast.clear(); Toast.show({ content: $l('seedance.toast.downloadSuccess'), icon: 'success' });
-    } catch { Toast.clear(); Toast.show({ content: $l('seedance.toast.downloadFailed'), icon: 'fail' }); }
-  };
-
-  const downloadUpload = async (work: WorkItem) => {
-    const videoUrl = fullUrl(work.video_url);
-    if (!videoUrl) { Toast.show({ content: $l('seedance.toast.videoNotAvailable'), icon: 'fail' }); return; }
-    try {
-      Toast.show({ content: $l('seedance.toast.downloadStarting'), icon: 'loading', duration: 0 });
-      const blob = await fetch(videoUrl).then(r => r.blob());
-      const url = URL.createObjectURL(blob);
-      const a = Object.assign(document.createElement('a'), { href: url, download: `upload_${work.id}.mp4` });
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      Toast.clear(); Toast.show({ content: $l('seedance.toast.downloadSuccess'), icon: 'success' });
-    } catch { Toast.clear(); Toast.show({ content: $l('seedance.toast.downloadFailed'), icon: 'fail' }); }
-  };
 
   const formatDuration = (video: VideoAsset) => {
     if (!video.duration) return '00:00';
@@ -224,11 +189,7 @@ export function Assets() {
       const genIds = new Set(targets.filter(t => !t.isWork).map(t => t.id));
       if (genIds.size) setVideoList(prev => prev.filter(v => !genIds.has(v.id)));
       if (workIds.size) setUploadList(prev => prev.filter(w => !workIds.has(w.id)));
-      if (workIds.size) setPrivateList(prev => {
-        const next = prev.filter(w => !workIds.has(w.id));
-        if (next.length === 0) setHasPrivate(false);
-        return next;
-      });
+      if (workIds.size) setPrivateList(prev => prev.filter(w => !workIds.has(w.id)));
       setSelectedItems(new Map());
       setBatchMode(false);
       Toast.show({ content: plaza.deleteWork, icon: 'success' });
@@ -242,11 +203,7 @@ export function Assets() {
     setOpenMenuId(null);
     try {
       await updateWorkPrivacy(workId, false);
-      setPrivateList(prev => {
-        const next = prev.filter(w => w.id !== workId);
-        if (next.length === 0) setHasPrivate(false);
-        return next;
-      });
+      setPrivateList(prev => prev.filter(w => w.id !== workId));
       Toast.show({ content: t.seedance.plaza.setPublic, icon: 'success' });
     } catch (e) {
       Toast.show({ content: (e as Error).message, icon: 'fail' });
@@ -341,7 +298,6 @@ export function Assets() {
     const handleThumbClick = (e: React.MouseEvent) => {
       if (batchMode) { toggleSelect(video.id, 'generation'); return; }
       const target = e.target as HTMLElement;
-      if (target.closest('.assets-video-download')) { e.stopPropagation(); downloadVideo(video); return; }
       if (target.closest('.assets-video-publish')) {
         e.stopPropagation();
         if (!user) { setLoginDialogVisible(true); return; }
@@ -395,15 +351,12 @@ export function Assets() {
             </span>
           )}
 
-          {/* Publish + Download 悬浮操作 */}
-          {hasCover(video) && !batchMode && (
+          {/* Publish 悬浮操作 */}
+          {hasCover(video) && !batchMode && (!video.work_id || isPrivate) && (
             <div className="assets-video-actions">
-              {(!video.work_id || isPrivate) && (
-                <div className="assets-video-publish" title={isPrivate ? 'Re-publish to Plaza' : 'Publish to Plaza'}>
-                  {isPrivate ? 'Re-publish' : 'Publish'}
-                </div>
-              )}
-              <div className="assets-video-download">{$l('seedance.video.download')}</div>
+              <div className="assets-video-publish" title={isPrivate ? 'Re-publish to Plaza' : 'Publish to Plaza'}>
+                {isPrivate ? 'Re-publish' : 'Publish'}
+              </div>
             </div>
           )}
 
@@ -453,7 +406,6 @@ export function Assets() {
     const handleThumbClick = (e: React.MouseEvent) => {
       if (batchMode) { toggleSelect(work.id, 'work'); return; }
       const target = e.target as HTMLElement;
-      if (target.closest('.assets-video-download')) { e.stopPropagation(); downloadUpload(work); return; }
       if (target.closest('.assets-video-publish')) { e.stopPropagation(); user ? setPublishWork(work) : setLoginDialogVisible(true); return; }
       if (target.closest('.assets-card-menu-wrap')) return;
       const videoUrl = fullUrl(work.video_url);
@@ -475,11 +427,6 @@ export function Assets() {
             </span>
           )}
 
-          {!batchMode && (
-            <div className="assets-video-actions">
-              <div className="assets-video-download">{$l('seedance.video.download')}</div>
-            </div>
-          )}
 
           {batchMode && (
             <div className={`assets-card-checkbox${isSelected ? ' assets-card-checkbox--checked' : ''}`} />
@@ -529,6 +476,7 @@ export function Assets() {
         onClose={() => setPublishVideo(null)}
         videoId={publishVideo?.id ?? ''}
         defaultTitle={publishVideo?.prompt ?? ''}
+        defaultCoverUrl={publishVideo ? (getCoverUrl(publishVideo) ?? undefined) : undefined}
       />
       <PublishDialog
         visible={!!publishWork}
@@ -549,7 +497,7 @@ export function Assets() {
       </div>
 
       <div className="assets-filter-tabs">
-        {(['all', 'collections', 'uploads', ...(hasPrivate ? ['private'] : [])] as const).map((key) => (
+        {(['all', 'collections', 'uploads', 'private'] as const).map((key) => (
           <button key={key} type="button" className={`filter-tab${filterTab === key ? ' active' : ''}${key === 'private' ? ' filter-tab--private' : ''}`} onClick={() => setFilterTab(key)}>
             {key === 'all' ? p.allVideos : key === 'collections' ? p.myCollections : key === 'uploads' ? p.myUploads : p.myPrivate}
           </button>
