@@ -136,6 +136,62 @@
   font-weight: 500;
 }
 
+// ─── Tabs ────────────────────────────────────────────
+.profile-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(124, 58, 237, 0.1);
+  padding-bottom: 0;
+}
+
+.profile-tab {
+  background: none;
+  border: none;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #9167e0;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.18s ease, border-color 0.18s ease;
+
+  &:hover { color: #5b21b6; }
+
+  &--active {
+    color: #7c3aed;
+    border-bottom-color: #7c3aed;
+  }
+}
+
+// ─── Load more ──────────────────────────────────────
+.profile-load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.profile-load-more-btn {
+  padding: 8px 28px;
+  border-radius: 100px;
+  border: none;
+  background: #ede9fe;
+  color: #5b21b6;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover:not(:disabled) { background: #ddd6fe; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.profile-no-more {
+  font-size: 12px;
+  color: #c4b5fd;
+}
+
 // ─── Works section ──────────────────────────────────
 .profile-works-title {
   font-size: 16px;

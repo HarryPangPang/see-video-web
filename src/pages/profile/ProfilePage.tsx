@@ -6,7 +6,7 @@ import { useI18n } from '../../context/I18nContext';
 import { Input } from 'antd-mobile';
 import {
   getUserProfile, getMyStats, getWorksList, getUserFollowers, getUserFollowing,
-  followUser, unfollowUser,
+  followUser, unfollowUser, getMyLikes,
   type UserProfile, type UserListItem, type WorkItem,
 } from '../../services/api';
 import './ProfilePage.scss';
@@ -206,6 +206,13 @@ export function ProfilePage() {
   const [works, setWorks] = useState<WorkItem[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
+  const [activeTab, setActiveTab] = useState<'works' | 'likes'>('works');
+  const [likes, setLikes] = useState<WorkItem[]>([]);
+  const [likesPage, setLikesPage] = useState(1);
+  const [likesHasMore, setLikesHasMore] = useState(false);
+  const [likesLoading, setLikesLoading] = useState(false);
+  const [likesLoaded, setLikesLoaded] = useState(false);
+
   const [modal, setModal] = useState<'followers' | 'following' | 'edit' | null>(null);
   const [modalUsers, setModalUsers] = useState<UserListItem[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
@@ -292,6 +299,29 @@ export function ProfilePage() {
   const handleUserClick = (id: number) => {
     setModal(null);
     navigate(`/profile/${id}`);
+  };
+
+  const loadLikes = useCallback(async (page: number) => {
+    setLikesLoading(true);
+    try {
+      const res = await getMyLikes(page, 20);
+      const incoming = res.data?.list ?? [];
+      setLikes(prev => page === 1 ? incoming : [...prev, ...incoming]);
+      setLikesHasMore(res.data?.hasMore ?? false);
+      setLikesPage(page);
+      setLikesLoaded(true);
+    } catch (e) {
+      Toast.show({ icon: 'fail', content: (e as Error).message });
+    } finally {
+      setLikesLoading(false);
+    }
+  }, []);
+
+  const handleTabChange = (tab: 'works' | 'likes') => {
+    setActiveTab(tab);
+    if (tab === 'likes' && !likesLoaded) {
+      loadLikes(1);
+    }
   };
 
   const handleWorkClick = (workId: string) => navigate(`/works/${workId}`);
@@ -397,31 +427,81 @@ export function ProfilePage() {
       </div>
 
       <div className="profile-works-section">
-        <h2 className="profile-works-title">{p.works}</h2>
-        {works.length === 0 ? (
-          <p className="profile-works-empty">{p.noWorks}</p>
-        ) : (
-          <div className="profile-works-grid">
-            {works.map((w) => (
-              <button
-                key={w.id}
-                type="button"
-                className="profile-work-card"
-                onClick={() => handleWorkClick(w.id)}
-              >
-                <div className="profile-card-cover">
-                  <ProfileCardMedia
-                    videoUrl={w.video_url}
-                    coverUrl={w.cover_url ?? undefined}
-                  />
-                  <div className="profile-card-overlay" />
-                </div>
-                <div className="profile-card-body">
-                  <div className="profile-work-title">{w.title || '—'}</div>
-                </div>
-              </button>
-            ))}
-          </div>
+        <div className="profile-tabs">
+          <button
+            type="button"
+            className={`profile-tab${activeTab === 'works' ? ' profile-tab--active' : ''}`}
+            onClick={() => handleTabChange('works')}
+          >
+            {p.tabWorks}
+          </button>
+          {isMe && (
+            <button
+              type="button"
+              className={`profile-tab${activeTab === 'likes' ? ' profile-tab--active' : ''}`}
+              onClick={() => handleTabChange('likes')}
+            >
+              {p.tabLikes}
+            </button>
+          )}
+        </div>
+
+        {activeTab === 'works' && (
+          works.length === 0 ? (
+            <p className="profile-works-empty">{p.noWorks}</p>
+          ) : (
+            <div className="profile-works-grid">
+              {works.map((w) => (
+                <button key={w.id} type="button" className="profile-work-card" onClick={() => handleWorkClick(w.id)}>
+                  <div className="profile-card-cover">
+                    <ProfileCardMedia videoUrl={w.video_url} coverUrl={w.cover_url ?? undefined} />
+                    <div className="profile-card-overlay" />
+                  </div>
+                  <div className="profile-card-body">
+                    <div className="profile-work-title">{w.title || '—'}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )
+        )}
+
+        {activeTab === 'likes' && (
+          likesLoading && likes.length === 0 ? (
+            <div className="profile-works-empty"><DotLoading color="primary" /></div>
+          ) : likes.length === 0 ? (
+            <p className="profile-works-empty">{p.noLikes}</p>
+          ) : (
+            <>
+              <div className="profile-works-grid">
+                {likes.map((w) => (
+                  <button key={w.id} type="button" className="profile-work-card" onClick={() => handleWorkClick(w.id)}>
+                    <div className="profile-card-cover">
+                      <ProfileCardMedia videoUrl={w.video_url} coverUrl={w.cover_url ?? undefined} />
+                      <div className="profile-card-overlay" />
+                    </div>
+                    <div className="profile-card-body">
+                      <div className="profile-work-title">{w.title || '—'}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <div className="profile-load-more">
+                {likesHasMore ? (
+                  <button
+                    type="button"
+                    className="profile-load-more-btn"
+                    disabled={likesLoading}
+                    onClick={() => loadLikes(likesPage + 1)}
+                  >
+                    {likesLoading ? '...' : p.loadMore}
+                  </button>
+                ) : (
+                  <span className="profile-no-more">{p.noMore}</span>
+                )}
+              </div>
+            </>
+          )
         )}
       </div>
     </div>

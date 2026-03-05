@@ -532,6 +532,11 @@ export const enUS = {
             loading: 'Loading...',
             notFound: 'User not found.',
             back: '← Back',
+            tabWorks: 'Works',
+            tabLikes: 'Likes',
+            noLikes: 'No liked videos yet.',
+            loadMore: 'Load more',
+            noMore: 'All loaded',
         },
         assetDetail: {
             back: '← Back to Assets',

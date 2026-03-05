@@ -469,6 +469,18 @@ export async function getMyStats(): Promise<ApiResponse<{ followers: number; fol
   return result;
 }
 
+export async function getMyLikes(page = 1, limit = 20): Promise<ApiResponse<{ list: WorkItem[]; total: number; hasMore: boolean }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  const response = await fetch(`${API_BASE_URL}/users/me/likes?${params}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Failed');
+  return result;
+}
+
 export async function getUserProfile(userId: number): Promise<ApiResponse<UserProfile>> {
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
   const headers: Record<string, string> = {};
