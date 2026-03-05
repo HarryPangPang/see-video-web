@@ -1,11 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
-import { updateUserProfile as apiUpdateUserProfile, changePassword as apiChangePassword } from '../services/api';
+import { updateUserProfile as apiUpdateUserProfile, changePassword as apiChangePassword, uploadAvatar as apiUploadAvatar, removeAvatar as apiRemoveAvatar } from '../services/api';
 
 interface User {
   id: number;
   email: string;
   username: string | null;
+  avatar?: string | null;
+  bio?: string | null;
+  location?: string | null;
+  website?: string | null;
   isGoogleUser?: boolean;
 }
 
@@ -19,7 +23,9 @@ interface AuthContextType {
   register: (email: string, password: string, code: string, username?: string) => Promise<void>;
   logout: () => void;
   sendVerificationCode: (email: string, type?: 'register' | 'login') => Promise<void>;
-  updateProfile: (username: string) => Promise<void>;
+  updateProfile: (params: { username: string; bio?: string; location?: string; website?: string }) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<void>;
+  removeAvatar: () => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
@@ -183,14 +189,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('auth_user');
   };
 
-  // 更新资料（昵称）
-  const updateProfile = async (username: string) => {
-    const res = await apiUpdateUserProfile(username);
+  // 更新资料（昵称、简介、所在地、个人主页）
+  const updateProfile = async (params: { username: string; bio?: string; location?: string; website?: string }) => {
+    const res = await apiUpdateUserProfile(params);
     if (res.success && res.data) {
       const next = {
         id: res.data.id,
         email: res.data.email,
         username: res.data.username,
+        avatar: res.data.avatar ?? undefined,
+        bio: res.data.bio ?? undefined,
+        location: res.data.location ?? undefined,
+        website: res.data.website ?? undefined,
+        isGoogleUser: res.data.isGoogleUser,
+      };
+      setUser(next);
+      localStorage.setItem('auth_user', JSON.stringify(next));
+    }
+  };
+
+  // 上传头像
+  const uploadAvatar = async (file: File) => {
+    const res = await apiUploadAvatar(file);
+    if (res.success && res.data) {
+      const next = {
+        id: res.data.id,
+        email: res.data.email,
+        username: res.data.username,
+        avatar: res.data.avatar ?? undefined,
+        bio: res.data.bio ?? undefined,
+        location: res.data.location ?? undefined,
+        website: res.data.website ?? undefined,
+        isGoogleUser: res.data.isGoogleUser,
+      };
+      setUser(next);
+      localStorage.setItem('auth_user', JSON.stringify(next));
+    }
+  };
+
+  // 恢复默认头像
+  const removeAvatar = async () => {
+    const res = await apiRemoveAvatar();
+    if (res.success && res.data) {
+      const next = {
+        id: res.data.id,
+        email: res.data.email,
+        username: res.data.username,
+        avatar: null,
+        bio: res.data.bio ?? undefined,
+        location: res.data.location ?? undefined,
+        website: res.data.website ?? undefined,
         isGoogleUser: res.data.isGoogleUser,
       };
       setUser(next);
@@ -215,6 +263,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         sendVerificationCode,
         updateProfile,
+        uploadAvatar,
+        removeAvatar,
         changePassword,
       }}
     >

@@ -120,7 +120,26 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
 
+.work-detail-author-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+
+  &:hover {
+    .wd-author-name { text-decoration: underline; }
+  }
+}
+
+.work-detail-author {
   .wd-avatar {
     width: 36px;
     height: 36px;

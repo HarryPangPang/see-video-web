@@ -136,13 +136,19 @@ export function WorkDetail() {
         <div className="work-detail-info">
           <h1 className="work-detail-title">{work.title}</h1>
           <div className="work-detail-author">
-            <span className="wd-avatar">{displayAuthor(work.author)?.[0]?.toUpperCase() ?? '?'}</span>
-            <span className="wd-author-name">{displayAuthor(work.author)}</span>
-            {work.follower_count > 0 && (
-              <span className="wd-follower-count">
-                {w.followers.replace('{count}', String(work.follower_count))}
-              </span>
-            )}
+            <button
+              type="button"
+              className="work-detail-author-link"
+              onClick={() => navigate(`/profile/${work.user_id}`)}
+            >
+              <span className="wd-avatar">{displayAuthor(work.author)?.[0]?.toUpperCase() ?? '?'}</span>
+              <span className="wd-author-name">{displayAuthor(work.author)}</span>
+              {work.follower_count > 0 && (
+                <span className="wd-follower-count">
+                  {w.followers.replace('{count}', String(work.follower_count))}
+                </span>
+              )}
+            </button>
             {user && user.id !== work.user_id && (
               <button
                 type="button"
