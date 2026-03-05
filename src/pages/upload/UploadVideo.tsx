@@ -138,6 +138,8 @@ export function UploadVideo() {
   const [frames, setFrames] = useState<Array<{ blob: Blob; url: string; time: number }>>([]);
   const [framesLoading, setFramesLoading] = useState(false);
   const [selectedFrameIdx, setSelectedFrameIdx] = useState<number | null>(null);
+  const [videoPickerVisible, setVideoPickerVisible] = useState(false);
+  const [dialogVideoUrl, setDialogVideoUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const frameExtractRef = useRef<{ cancelled: boolean }>({ cancelled: false });
@@ -145,6 +147,8 @@ export function UploadVideo() {
   // URLs we created ourselves (not borrowed from frame strip) — must be revoked manually
   const originalCoverUrlRef = useRef<string | null>(null);
   const coverOwnedUrlRef = useRef<string | null>(null);
+  const dialogVideoRef = useRef<HTMLVideoElement>(null);
+  const dialogVideoUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -152,6 +156,7 @@ export function UploadVideo() {
       frameUrlsRef.current.forEach(u => URL.revokeObjectURL(u));
       if (originalCoverUrlRef.current) URL.revokeObjectURL(originalCoverUrlRef.current);
       if (coverOwnedUrlRef.current) URL.revokeObjectURL(coverOwnedUrlRef.current);
+      if (dialogVideoUrlRef.current) URL.revokeObjectURL(dialogVideoUrlRef.current);
     };
   }, []);
 
@@ -244,6 +249,50 @@ export function UploadVideo() {
   const formatSize = (bytes: number) => {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  };
+
+  const openVideoPicker = () => {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    dialogVideoUrlRef.current = url;
+    setDialogVideoUrl(url);
+    setVideoPickerVisible(true);
+  };
+
+  const closeVideoPicker = () => {
+    if (dialogVideoRef.current) {
+      dialogVideoRef.current.pause();
+      dialogVideoRef.current.src = '';
+      dialogVideoRef.current.load();
+    }
+    if (dialogVideoUrlRef.current) {
+      URL.revokeObjectURL(dialogVideoUrlRef.current);
+      dialogVideoUrlRef.current = null;
+    }
+    setDialogVideoUrl(null);
+    setVideoPickerVisible(false);
+  };
+
+  const captureCurrentFrame = () => {
+    const video = dialogVideoRef.current;
+    if (!video) return;
+    video.pause();
+    const canvas = document.createElement('canvas');
+    const maxW = 1280, maxH = 720;
+    const scale = Math.min(maxW / (video.videoWidth || 640), maxH / (video.videoHeight || 360), 1);
+    canvas.width = Math.round((video.videoWidth || 640) * scale);
+    canvas.height = Math.round((video.videoHeight || 360) * scale);
+    canvas.getContext('2d')!.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      if (coverOwnedUrlRef.current) URL.revokeObjectURL(coverOwnedUrlRef.current);
+      const url = URL.createObjectURL(blob);
+      coverOwnedUrlRef.current = url;
+      setCoverBlob(blob);
+      setCoverPreview(url);
+      setSelectedFrameIdx(null);
+      closeVideoPicker();
+    }, 'image/jpeg', 0.85);
   };
 
   const handleSubmit = async () => {
@@ -395,7 +444,12 @@ export function UploadVideo() {
             {/* 内联帧缩略条 */}
             {(framesLoading || frames.length > 0) && (
               <div className="frame-strip">
-                <span className="frame-strip-label">{p.uploadPickFrame}</span>
+                <div className="frame-strip-header">
+                  <span className="frame-strip-label">{p.uploadPickFrame}</span>
+                  <button type="button" className="video-picker-btn" onClick={openVideoPicker}>
+                    🎬 {p.uploadPickFromVideo}
+                  </button>
+                </div>
                 {framesLoading ? (
                   <div className="frame-strip-loading">
                     <div className="frame-strip-spinner" />
@@ -440,6 +494,34 @@ export function UploadVideo() {
           {loading ? p.uploadSubmitting : p.uploadSubmitBtn}
         </button>
       </div>
+
+      {/* 视频拾帧弹窗 */}
+      {videoPickerVisible && (
+        <div className="video-picker-overlay" onClick={closeVideoPicker}>
+          <div className="video-picker-dialog" onClick={e => e.stopPropagation()}>
+            <div className="video-picker-header">
+              <span className="video-picker-title">{p.uploadFramePickerTitle}</span>
+              <button type="button" className="video-picker-close" onClick={closeVideoPicker}>✕</button>
+            </div>
+            <video
+              ref={dialogVideoRef}
+              className="video-picker-video"
+              src={dialogVideoUrl ?? undefined}
+              controls
+              playsInline
+              preload="metadata"
+            />
+            <div className="video-picker-actions">
+              <button type="button" className="video-picker-cancel-btn" onClick={closeVideoPicker}>
+                {t.common.cancel}
+              </button>
+              <button type="button" className="video-picker-capture-btn" onClick={captureCurrentFrame}>
+                {p.uploadCaptureFrame}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

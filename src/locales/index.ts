@@ -379,6 +379,8 @@ export const enUS = {
             uploadPickFrame: '🎞 Pick Frame',
             uploadFramePickerTitle: 'Select Frame as Cover',
             uploadFrameExtracting: 'Extracting frames...',
+            uploadPickFromVideo: 'Pick from video',
+            uploadCaptureFrame: 'Capture this frame',
             uploadLabelFile: 'Video File',
             uploadDropHint: 'Click or drag & drop a video here',
             uploadFileTypes: 'Supports MP4, MOV, AVI and more · Max 500MB',
