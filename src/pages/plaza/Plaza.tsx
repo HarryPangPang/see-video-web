@@ -237,6 +237,7 @@ export function Plaza() {
     try {
       await deleteWork(id);
       setList(prev => prev.filter(w => w.id !== id));
+      foryouCache.list = foryouCache.list.filter(w => w.id !== id);
       Toast.show({ content: p.deleteWork, icon: 'success' });
     } catch (e) {
       Toast.show({ content: (e as Error).message, icon: 'fail' });
@@ -250,6 +251,7 @@ export function Plaza() {
     setHiddenIds(prev => new Set(prev).add(workId));
     try {
       await hideWork(workId);
+      foryouCache.list = foryouCache.list.filter(w => w.id !== workId);
     } catch {
       setHiddenIds(prev => { const s = new Set(prev); s.delete(workId); return s; });
     }
@@ -261,6 +263,7 @@ export function Plaza() {
     setHiddenIds(prev => { const s = new Set(prev); s.delete(workId); return s; });
     try {
       await unhideWork(workId);
+      foryouCache.timestamp = 0; // 强制下次切回 For You 时重新拉取
     } catch {
       setHiddenIds(prev => new Set(prev).add(workId));
     }
