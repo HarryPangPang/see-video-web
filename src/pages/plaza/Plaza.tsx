@@ -9,6 +9,12 @@ import './Plaza.scss';
 
 type SortType = 'foryou' | 'newest' | 'likes' | 'following';
 
+// For You 列表模块级缓存（跨 tab 切换保持内容稳定，5 分钟 TTL）
+const FORYOU_CACHE_TTL = 5 * 60 * 1000;
+const foryouCache: { list: WorkItem[]; total: number; timestamp: number } = {
+  list: [], total: 0, timestamp: 0,
+};
+
 /** 胖胖的实心爱心 SVG，与卡片点赞数同用 currentColor */
 function PlumpHeartIcon() {
   return (
@@ -109,12 +115,25 @@ export function Plaza() {
 
   const totalPages = total > 0 ? Math.ceil(total / PAGE_SIZE) : 1;
 
-  const fetchPage = useCallback(async (params: WorksListParams) => {
+  const fetchPage = useCallback(async (params: WorksListParams, forceRefresh = false) => {
+    if (params.sort === 'foryou' && !forceRefresh) {
+      const age = Date.now() - foryouCache.timestamp;
+      if (age < FORYOU_CACHE_TTL && foryouCache.list.length > 0) {
+        setList([...foryouCache.list]);
+        setTotal(foryouCache.total);
+        return;
+      }
+    }
     try {
       const res = await getWorksList(params);
       if (res.data) {
         setList(res.data.list);
         setTotal(res.data.total);
+        if (params.sort === 'foryou') {
+          foryouCache.list = res.data.list;
+          foryouCache.total = res.data.total;
+          foryouCache.timestamp = Date.now();
+        }
       }
     } catch (e) {
       Toast.show({ content: (e as Error).message, icon: 'fail' });
@@ -511,7 +530,7 @@ export function Plaza() {
                 onClick={async () => {
                   if (transitioning) return;
                   setTransitioning(true);
-                  await fetchPage({ sort: 'foryou', page: 1, limit: PAGE_SIZE });
+                  await fetchPage({ sort: 'foryou', page: 1, limit: PAGE_SIZE }, true);
                   setTransitioning(false);
                 }}
                 disabled={transitioning}
