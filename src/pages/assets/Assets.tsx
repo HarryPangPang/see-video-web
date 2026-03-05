@@ -128,6 +128,7 @@ export function Assets() {
 
   const fullUrl = (url: string) => (url?.startsWith('http') ? url : `${window.location.origin}${url || ''}`);
   const getCoverUrl = (video: VideoAsset) => video.cover_local_path ? `${window.location.origin}${video.cover_local_path}` : (video.cover_url || null);
+  const getVideoUrl = (video: VideoAsset) => video.video_local_path ? `${window.location.origin}${video.video_local_path}` : (video.video_url || undefined);
   const hasCover = (video: VideoAsset) => !!(video.cover_local_path || video.cover_url);
 
 
@@ -401,12 +402,14 @@ export function Assets() {
         videoId={publishVideo?.id ?? ''}
         defaultTitle={publishVideo?.prompt ?? ''}
         defaultCoverUrl={publishVideo ? (getCoverUrl(publishVideo) ?? undefined) : undefined}
+        videoUrl={publishVideo ? getVideoUrl(publishVideo) : undefined}
       />
       <PublishDialog
         visible={!!publishWork}
         onClose={() => setPublishWork(null)}
         videoId={publishWork?.id ?? ''}
         defaultTitle={publishWork?.title ?? ''}
+        videoUrl={publishWork ? fullUrl(publishWork.video_url) : undefined}
       />
 
       <div className="assets-top-actions">

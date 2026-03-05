@@ -302,3 +302,138 @@
 
   &:hover { color: rgba(167, 139, 250, 0.9); }
 }
+
+.pd-cover-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.pd-capture-btn {
+  background: none;
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  border-radius: 100px;
+  color: rgba(167, 139, 250, 0.8);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover {
+    background: rgba(167, 139, 250, 0.12);
+    border-color: rgba(167, 139, 250, 0.6);
+    color: #a78bfa;
+  }
+}
+
+// 视频截取弹窗（叠加在 pd-overlay 之上）
+.pd-vp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1010;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.pd-vp-dialog {
+  background: #1a1530;
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 680px;
+  overflow: hidden;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  animation: pd-slide-up 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pd-vp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(167, 139, 250, 0.12);
+}
+
+.pd-vp-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #a78bfa;
+}
+
+.pd-vp-close {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+.pd-vp-video {
+  width: 100%;
+  display: block;
+  background: #000;
+  max-height: 58vh;
+}
+
+.pd-vp-actions {
+  display: flex;
+  gap: 10px;
+  padding: 12px 18px;
+  justify-content: flex-end;
+}
+
+.pd-vp-cancel-btn {
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  background: transparent;
+  color: rgba(167, 139, 250, 0.6);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(167, 139, 250, 0.9);
+  }
+}
+
+.pd-vp-capture-btn {
+  padding: 8px 20px;
+  border-radius: 100px;
+  border: none;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+
+  &:hover {
+    background: #6d28d9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+  }
+}
