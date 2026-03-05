@@ -385,6 +385,30 @@ export async function unlikeWork(id: string): Promise<ApiResponse<{ liked: boole
   return result;
 }
 
+export async function hideWork(id: string): Promise<ApiResponse<null>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/works/${id}/hide`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result: ApiResponse<null> = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Hide failed');
+  return result;
+}
+
+export async function unhideWork(id: string): Promise<ApiResponse<null>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/works/${id}/hide`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result: ApiResponse<null> = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Unhide failed');
+  return result;
+}
+
 export async function addWorkComment(id: string, content: string): Promise<ApiResponse<{ id: number; content: string; created_at: number; author: string }>> {
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
   if (!token) throw new Error('Unauthorized');

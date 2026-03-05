@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DotLoading, Toast } from 'antd-mobile';
-import { getWorksList, deleteWork, updateWorkPrivacy, likeWork, unlikeWork, type WorkItem, type WorksListParams } from '../../services/api';
+import { getWorksList, deleteWork, updateWorkPrivacy, likeWork, unlikeWork, hideWork, unhideWork, type WorkItem, type WorksListParams } from '../../services/api';
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { LoginDialog } from '../../components/LoginDialog';
@@ -88,6 +88,7 @@ export function Plaza() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [loginVisible, setLoginVisible] = useState(false);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Following feed state
@@ -211,6 +212,29 @@ export function Plaza() {
       Toast.show({ content: p.deleteWork, icon: 'success' });
     } catch (e) {
       Toast.show({ content: (e as Error).message, icon: 'fail' });
+    }
+  };
+
+  const handleHide = async (e: React.MouseEvent, workId: string) => {
+    e.stopPropagation();
+    if (!user) { setLoginVisible(true); return; }
+    setOpenMenuId(null);
+    setHiddenIds(prev => new Set(prev).add(workId));
+    try {
+      await hideWork(workId);
+    } catch {
+      setHiddenIds(prev => { const s = new Set(prev); s.delete(workId); return s; });
+    }
+  };
+
+  const handleUnhide = async (e: React.MouseEvent, workId: string) => {
+    e.stopPropagation();
+    setOpenMenuId(null);
+    setHiddenIds(prev => { const s = new Set(prev); s.delete(workId); return s; });
+    try {
+      await unhideWork(workId);
+    } catch {
+      setHiddenIds(prev => new Set(prev).add(workId));
     }
   };
 
@@ -351,12 +375,15 @@ export function Plaza() {
       ) : (
         <div className={`plaza-content${transitioning ? ' plaza-content--loading' : ''}`}>
           <div className="plaza-grid">
-            {list.map((work) => (
+            {list.map((work) => {
+              const isHidden = hiddenIds.has(work.id);
+              const isOwn = user && work.user_id === user.id;
+              return (
               <button
                 key={work.id}
                 type="button"
-                className="plaza-card"
-                onClick={() => navigate(`/works/${work.id}`)}
+                className={`plaza-card${isHidden ? ' plaza-card--hidden' : ''}`}
+                onClick={() => !isHidden && navigate(`/works/${work.id}`)}
               >
                 <div className="plaza-card-cover">
                   <PlazaCardMedia
@@ -377,7 +404,7 @@ export function Plaza() {
                     <span className="plaza-card-private-badge">{p.privateLabel}</span>
                   )}
 
-                  {user && work.user_id === user.id && (
+                  {user && (
                     <div
                       className="plaza-card-menu-wrap"
                       ref={openMenuId === work.id ? menuRef : null}
@@ -391,22 +418,55 @@ export function Plaza() {
                       </button>
                       {openMenuId === work.id && (
                         <div className="plaza-card-menu">
-                          <button
-                            type="button"
-                            className="plaza-card-menu-item"
-                            onClick={(e) => handleSetPrivacy(e, work)}
-                          >
-                            {work.is_private ? p.setPublic : p.setPrivate}
-                          </button>
-                          <button
-                            type="button"
-                            className="plaza-card-menu-item plaza-card-menu-item--danger"
-                            onClick={(e) => handleDeleteRequest(e, work.id)}
-                          >
-                            {p.deleteWork}
-                          </button>
+                          {isOwn ? (
+                            <>
+                              <button
+                                type="button"
+                                className="plaza-card-menu-item"
+                                onClick={(e) => handleSetPrivacy(e, work)}
+                              >
+                                {work.is_private ? p.setPublic : p.setPrivate}
+                              </button>
+                              <button
+                                type="button"
+                                className="plaza-card-menu-item plaza-card-menu-item--danger"
+                                onClick={(e) => handleDeleteRequest(e, work.id)}
+                              >
+                                {p.deleteWork}
+                              </button>
+                            </>
+                          ) : isHidden ? (
+                            <button
+                              type="button"
+                              className="plaza-card-menu-item"
+                              onClick={(e) => handleUnhide(e, work.id)}
+                            >
+                              {p.undoHide}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="plaza-card-menu-item"
+                              onClick={(e) => handleHide(e, work.id)}
+                            >
+                              {p.notInterested}
+                            </button>
+                          )}
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {isHidden && (
+                    <div className="plaza-card-hidden-overlay" onClick={(e) => e.stopPropagation()}>
+                      <span className="plaza-card-hidden-label">{p.hiddenLabel}</span>
+                      <button
+                        type="button"
+                        className="plaza-card-hidden-undo"
+                        onClick={(e) => handleUnhide(e, work.id)}
+                      >
+                        {p.undoHide}
+                      </button>
                     </div>
                   )}
                 </div>
@@ -418,7 +478,7 @@ export function Plaza() {
                   </div>
                 </div>
               </button>
-            ))}
+            ); })}
           </div>
 
           {sort === 'foryou' && list.length >= PAGE_SIZE && (

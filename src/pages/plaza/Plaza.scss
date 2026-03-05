@@ -453,6 +453,59 @@
   }
 }
 
+// 隐藏蒙层（不感兴趣）
+.plaza-card--hidden {
+  cursor: default;
+
+  .plaza-card-media,
+  .plaza-card-video-preview,
+  .plaza-card-img {
+    filter: blur(8px);
+  }
+
+  .plaza-card-body {
+    opacity: 0.3;
+  }
+}
+
+.plaza-card-hidden-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(10, 6, 30, 0.55);
+  backdrop-filter: blur(2px);
+  border-radius: inherit;
+  z-index: 20;
+}
+
+.plaza-card-hidden-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c4b5fd;
+  letter-spacing: 0.04em;
+}
+
+.plaza-card-hidden-undo {
+  padding: 6px 18px;
+  border-radius: 100px;
+  border: 1px solid rgba(167, 139, 250, 0.5);
+  background: rgba(124, 58, 237, 0.2);
+  color: #ede9fe;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    background: rgba(124, 58, 237, 0.45);
+    border-color: rgba(167, 139, 250, 0.8);
+  }
+}
+
 // 分页
 .plaza-pagination {
   position: relative;

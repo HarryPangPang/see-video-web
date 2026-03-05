@@ -485,6 +485,9 @@ export const enUS = {
             nextPage: 'Next',
             refreshFeed: 'Refresh',
             noMore: 'All loaded',
+            notInterested: 'Not Interested',
+            undoHide: 'Undo',
+            hiddenLabel: 'Hidden',
         },
         my: {
             title: 'My',
