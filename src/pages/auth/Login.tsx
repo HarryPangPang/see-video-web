@@ -11,7 +11,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 export function Login() {
   const navigate = useNavigate();
   const { login, loginWithGoogle } = useAuth();
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const a = t.seedance.auth;
   // const { login, loginWithCode, sendVerificationCode } = useAuth(); // 完整版本
 
@@ -138,7 +138,7 @@ export function Login() {
               theme="filled_black"
               size="large"
               text="continue_with"
-              locale={language === 'zh-CN' ? 'zh_CN' : 'en'}
+              locale="en"
               onSuccess={(res) => res.credential && handleGoogleSuccess(res.credential)}
               onError={() => setError(a.loginGoogleFailed)}
               useOneTap={false}

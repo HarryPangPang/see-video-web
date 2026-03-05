@@ -16,7 +16,7 @@ interface LoginDialogProps {
 
 export function LoginDialog({ visible, onClose, onLoginSuccess }: LoginDialogProps) {
   const { login, loginWithGoogle } = useAuth();
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const a = t.seedance.auth;
 
@@ -78,7 +78,7 @@ export function LoginDialog({ visible, onClose, onLoginSuccess }: LoginDialogPro
               theme="filled_black"
               size="large"
               text="continue_with"
-              locale={language === 'zh-CN' ? 'zh_CN' : 'en'}
+              locale="en"
               onSuccess={(res) => res.credential && handleGoogleSuccess(res.credential)}
               onError={() => setError(a.loginGoogleFailed)}
               useOneTap={false}

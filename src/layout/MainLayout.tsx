@@ -23,7 +23,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, updateProfile, changePassword } = useAuth();
-  const { t, language, setLanguage } = useI18n();
+  const { t } = useI18n();
   const layout = t.seedance.layout;
   const authT = t.seedance.auth;
   const c = t.common;
@@ -241,25 +241,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   <span className="sidebar-login-text">{layout.login}</span>
                 </button>
               )}
-            </div>
-
-            <div className="sidebar-lang sidebar-lang--mobile" role="group" aria-label="Language">
-              <button
-                type="button"
-                className={`sidebar-lang-btn ${language === 'en-US' ? 'is-active' : ''}`}
-                onClick={() => setLanguage('en-US')}
-                aria-pressed={language === 'en-US'}
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                className={`sidebar-lang-btn ${language === 'zh-CN' ? 'is-active' : ''}`}
-                onClick={() => setLanguage('zh-CN')}
-                aria-pressed={language === 'zh-CN'}
-              >
-                中文
-              </button>
             </div>
 
             <div className="sidebar-legal sidebar-legal--mobile">
