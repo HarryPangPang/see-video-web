@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
@@ -15,14 +15,19 @@ export function Register() {
   const a = t.seedance.auth;
   // const { register, sendVerificationCode } = useAuth(); // 完整版本
 
+  const [searchParams] = useSearchParams();
+  const inviteFromUrl = searchParams.get('invite') || '';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
-  // const [code, setCode] = useState(''); // 验证码已禁用
+  const [inviteCode, setInviteCode] = useState(inviteFromUrl);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  // const [countdown, setCountdown] = useState(0); // 验证码已禁用
+
+  useEffect(() => {
+    if (inviteFromUrl && !inviteCode) setInviteCode(inviteFromUrl);
+  }, [inviteFromUrl, inviteCode]);
 
   /* ===== 验证码发送功能 - 已暂时禁用 =====
   const handleSendCode = async () => {
@@ -59,7 +64,7 @@ export function Register() {
     try {
       setLoading(true);
       setError('');
-      await loginWithGoogle(credential);
+      await loginWithGoogle(credential, inviteCode || undefined);
       navigate('/');
     } catch (err: any) {
       setError(err.message);
@@ -91,8 +96,7 @@ export function Register() {
     try {
       setLoading(true);
       setError('');
-      // 不再需要验证码参数
-      await register(email, password, '', username || undefined);
+      await register(email, password, '', username || undefined, inviteCode || undefined);
       navigate('/');
     } catch (err: any) {
       setError(err.message);
@@ -135,7 +139,24 @@ export function Register() {
           </div>
         )}
 
+        {inviteFromUrl && (
+          <div className="auth-invite-hint">
+            {a.inviteHint}
+          </div>
+        )}
         <form onSubmit={handleRegister}>
+          {inviteFromUrl && (
+            <div className="form-group">
+              <label>{a.inviteCodeLabel}</label>
+              <input
+                type="text"
+                value={inviteCode}
+                readOnly
+                placeholder="邀请码"
+                className="form-input readonly"
+              />
+            </div>
+          )}
           <div className="form-group">
             <label>{a.email} *</label>
             <input

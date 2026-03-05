@@ -18,9 +18,9 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: (credential: string) => Promise<void>;
+  loginWithGoogle: (credential: string, inviteCode?: string) => Promise<void>;
   loginWithCode: (email: string, code: string) => Promise<void>;
-  register: (email: string, password: string, code: string, username?: string) => Promise<void>;
+  register: (email: string, password: string, code: string, username?: string, inviteCode?: string) => Promise<void>;
   logout: () => void;
   sendVerificationCode: (email: string, type?: 'register' | 'login') => Promise<void>;
   updateProfile: (params: { username: string; bio?: string; location?: string; website?: string }) => Promise<void>;
@@ -89,15 +89,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // 注册
-  const register = async (email: string, password: string, code: string, username?: string) => {
+  // 注册（inviteCode 为邀请码，用于绑定邀请人）
+  const register = async (email: string, password: string, code: string, username?: string, inviteCode?: string) => {
     try {
-      const response = await axios.post(`${API_BASE}/api/auth/register`, {
-        email,
-        password,
-        code,
-        username,
-      });
+      const body: Record<string, unknown> = { email, password, code, username };
+      if (inviteCode && inviteCode.trim()) body.invite_code = inviteCode.trim();
+      const response = await axios.post(`${API_BASE}/api/auth/register`, body);
 
       if (response.data.success) {
         const { token: newToken, user: newUser } = response.data.data;
@@ -137,12 +134,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Google 登录
-  const loginWithGoogle = async (credential: string) => {
+  // Google 登录（新用户注册时可传 inviteCode 绑定邀请人）
+  const loginWithGoogle = async (credential: string, inviteCode?: string) => {
     try {
-      const response = await axios.post(`${API_BASE}/api/auth/google`, {
-        credential,
-      });
+      const body: Record<string, string> = { credential };
+      if (inviteCode && inviteCode.trim()) body.invite_code = inviteCode.trim();
+      const response = await axios.post(`${API_BASE}/api/auth/google`, body);
       if (response.data.success) {
         const { token: newToken, user: newUser } = response.data.data;
         setToken(newToken);
