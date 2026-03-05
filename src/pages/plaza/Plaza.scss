@@ -251,7 +251,16 @@
   pointer-events: none;
 }
 
+.plaza-card-likes-heart {
+  font-size: 18px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
 .plaza-card-likes {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   position: absolute;
   bottom: 10px;
   right: 10px;

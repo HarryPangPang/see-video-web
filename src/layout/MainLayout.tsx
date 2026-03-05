@@ -222,6 +222,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                         </div>
                       </div>
                       <div className="sidebar-user-dropdown-divider" />
+                      <button type="button" className="sidebar-user-dropdown-item" onClick={() => { setIsUserMenuOpen(false); navigate('/profile'); }}>
+                        {t.seedance.profile.yourProfile}
+                      </button>
                       <button type="button" className="sidebar-user-dropdown-item" onClick={openProfileDialog}>
                         {layout.editProfile}
                       </button>

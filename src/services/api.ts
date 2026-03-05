@@ -245,6 +245,8 @@ export interface WorkItem {
 
 export interface WorkDetail extends WorkItem {
   liked: boolean;
+  is_following: boolean;
+  follower_count: number;
   comments: { id: number; content: string; created_at: number; author: string }[];
 }
 
@@ -255,6 +257,7 @@ export interface WorksListParams {
   mine?: boolean;
   source?: 'jimeng' | 'upload';
   isPrivate?: boolean;
+  userId?: number;
 }
 
 export interface WorksListData {
@@ -271,6 +274,7 @@ export async function getWorksList(params?: WorksListParams): Promise<ApiRespons
   if (params?.mine) qs.set('mine', 'true');
   if (params?.source) qs.set('source', params.source);
   if (params?.isPrivate !== undefined) qs.set('isPrivate', String(params.isPrivate));
+  if (params?.userId !== undefined) qs.set('userId', String(params.userId));
   const query = qs.toString() ? `?${qs}` : '';
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
   const headers: Record<string, string> = {};
@@ -391,5 +395,79 @@ export async function addWorkComment(id: string, content: string): Promise<ApiRe
   });
   const result = await response.json();
   if (!response.ok || !result.success) throw new Error(result.message || 'Comment failed');
+  return result;
+}
+
+export async function followUser(userId: number): Promise<ApiResponse<{ is_following: boolean; follower_count: number }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/follow`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Follow failed');
+  return result;
+}
+
+export async function unfollowUser(userId: number): Promise<ApiResponse<{ is_following: boolean; follower_count: number }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/follow`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Unfollow failed');
+  return result;
+}
+
+export interface UserProfile {
+  id: number;
+  name: string;
+  followers: number;
+  following: number;
+  likes_received: number;
+  is_following: boolean;
+}
+
+export interface UserListItem {
+  id: number;
+  name: string;
+}
+
+export async function getMyStats(): Promise<ApiResponse<{ followers: number; following: number; likes_received: number }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/users/me/stats`, { headers: { Authorization: `Bearer ${token}` } });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Failed');
+  return result;
+}
+
+export async function getUserProfile(userId: number): Promise<ApiResponse<UserProfile>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/profile`, { headers });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'User not found');
+  return result;
+}
+
+export async function getUserFollowers(userId: number): Promise<ApiResponse<UserListItem[]>> {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/followers`);
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Failed');
+  return result;
+}
+
+export async function getUserFollowing(userId: number): Promise<ApiResponse<UserListItem[]>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/following`, { headers });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Failed');
   return result;
 }

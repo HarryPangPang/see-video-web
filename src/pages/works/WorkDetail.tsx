@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DotLoading, Toast, TextArea } from 'antd-mobile';
-import { getWorkDetail, likeWork, unlikeWork, addWorkComment, type WorkDetail as WorkDetailType } from '../../services/api';
+import { getWorkDetail, likeWork, unlikeWork, addWorkComment, followUser, unfollowUser, type WorkDetail as WorkDetailType } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
 import { LoginDialog } from '../../components/LoginDialog';
@@ -40,6 +40,22 @@ export function WorkDetail() {
   const displayAuthor = (author: string | undefined) => {
     if (!author) return '?';
     return author.includes('@') ? author.split('@')[0] : author;
+  };
+
+  const handleFollow = async () => {
+    if (!user) { setLoginVisible(true); return; }
+    if (!work) return;
+    try {
+      if (work.is_following) {
+        const res = await unfollowUser(work.user_id);
+        if (res.data) setWork(prev => prev ? { ...prev, is_following: false, follower_count: res.data!.follower_count } : null);
+      } else {
+        const res = await followUser(work.user_id);
+        if (res.data) setWork(prev => prev ? { ...prev, is_following: true, follower_count: res.data!.follower_count } : null);
+      }
+    } catch (e) {
+      Toast.show({ content: (e as Error).message, icon: 'fail' });
+    }
   };
 
   const handleLike = async () => {
@@ -122,6 +138,20 @@ export function WorkDetail() {
           <div className="work-detail-author">
             <span className="wd-avatar">{displayAuthor(work.author)?.[0]?.toUpperCase() ?? '?'}</span>
             <span className="wd-author-name">{displayAuthor(work.author)}</span>
+            {work.follower_count > 0 && (
+              <span className="wd-follower-count">
+                {w.followers.replace('{count}', String(work.follower_count))}
+              </span>
+            )}
+            {user && user.id !== work.user_id && (
+              <button
+                type="button"
+                className={`wd-follow-btn${work.is_following ? ' wd-follow-btn--following' : ''}`}
+                onClick={handleFollow}
+              >
+                {work.is_following ? w.following : w.follow}
+              </button>
+            )}
           </div>
           {(work.prompt != null && work.prompt !== '') ? (
             <div className="work-detail-prompt">

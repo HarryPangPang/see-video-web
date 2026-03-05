@@ -265,7 +265,7 @@ export function Plaza() {
                     className={`plaza-card-likes${work.liked ? ' plaza-card-likes--liked' : ''}`}
                     onClick={(e) => handleCardLike(e, work)}
                   >
-                    ♥ {work.like_count ?? 0}
+                    <span className="plaza-card-likes-heart">♥</span> {work.like_count ?? 0}
                   </button>
 
                   {!!work.is_private && (

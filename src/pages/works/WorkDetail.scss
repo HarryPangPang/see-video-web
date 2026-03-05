@@ -141,6 +141,41 @@
     font-weight: 600;
     color: #5b21b6;
   }
+
+  .wd-follower-count {
+    font-size: 12px;
+    color: #9167e0;
+    white-space: nowrap;
+  }
+
+  .wd-follow-btn {
+    margin-left: auto;
+    padding: 6px 18px;
+    border-radius: 100px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: #7c3aed;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+
+    &:hover {
+      background: #6d28d9;
+      transform: translateY(-1px);
+    }
+
+    &--following {
+      background: #ede9fe;
+      color: #5b21b6;
+      box-shadow: none;
+
+      &:hover {
+        background: #ddd6fe;
+      }
+    }
+  }
 }
 
 // Prompt 展示块
