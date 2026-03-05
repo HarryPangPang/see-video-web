@@ -7,6 +7,73 @@ import { useI18n } from '../../context/I18nContext';
 import { LoginDialog } from '../../components/LoginDialog';
 import './UploadVideo.scss';
 
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  const ds = Math.floor((seconds % 1) * 10);
+  return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}.${ds}s`;
+}
+
+function extractFrames(videoFile: File, count = 12): Promise<Array<{ blob: Blob; time: number }>> {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    const url = URL.createObjectURL(videoFile);
+    video.src = url;
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = 'auto';
+
+    const results: Array<{ blob: Blob; time: number }> = [];
+    let index = 0;
+    let duration = 0;
+    let done = false;
+
+    const finish = () => {
+      if (done) return;
+      done = true;
+      URL.revokeObjectURL(url);
+      resolve(results);
+    };
+
+    const seekNext = () => {
+      if (index >= count) { finish(); return; }
+      const t = count === 1 ? 0.001 : 0.001 + (duration - 0.002) * index / (count - 1);
+      video.currentTime = Math.max(0.001, Math.min(t, duration - 0.001));
+    };
+
+    const captureAndNext = () => {
+      if (done) return;
+      const capturedTime = video.currentTime;
+      try {
+        const maxW = 640, maxH = 360;
+        const scale = Math.min(maxW / (video.videoWidth || 640), maxH / (video.videoHeight || 360), 1);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round((video.videoWidth || 640) * scale);
+        canvas.height = Math.round((video.videoHeight || 360) * scale);
+        canvas.getContext('2d')!.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (blob) results.push({ blob, time: capturedTime });
+          index++;
+          seekNext();
+        }, 'image/jpeg', 0.82);
+      } catch {
+        index++;
+        seekNext();
+      }
+    };
+
+    video.addEventListener('loadedmetadata', () => {
+      duration = video.duration;
+      if (!isFinite(duration) || duration <= 0) { finish(); return; }
+      seekNext();
+    }, { once: true });
+
+    video.addEventListener('seeked', captureAndNext);
+    video.addEventListener('error', finish, { once: true });
+    video.load();
+  });
+}
+
 function resizeImage(file: File, maxW = 1280, maxH = 720): Promise<Blob | null> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -68,12 +135,25 @@ export function UploadVideo() {
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loginVisible, setLoginVisible] = useState(false);
+  const [frames, setFrames] = useState<Array<{ blob: Blob; url: string; time: number }>>([]);
+  const [framesLoading, setFramesLoading] = useState(false);
+  const [selectedFrameIdx, setSelectedFrameIdx] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const frameExtractRef = useRef<{ cancelled: boolean }>({ cancelled: false });
+  const frameUrlsRef = useRef<string[]>([]);
+  // URLs we created ourselves (not borrowed from frame strip) — must be revoked manually
+  const originalCoverUrlRef = useRef<string | null>(null);
+  const coverOwnedUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
-    return () => { if (coverPreview) URL.revokeObjectURL(coverPreview); };
-  }, [coverPreview]);
+    return () => {
+      frameExtractRef.current.cancelled = true;
+      frameUrlsRef.current.forEach(u => URL.revokeObjectURL(u));
+      if (originalCoverUrlRef.current) URL.revokeObjectURL(originalCoverUrlRef.current);
+      if (coverOwnedUrlRef.current) URL.revokeObjectURL(coverOwnedUrlRef.current);
+    };
+  }, []);
 
   const acceptFile = async (f: File) => {
     if (!f.type.startsWith('video/')) {
@@ -84,12 +164,46 @@ export function UploadVideo() {
     setCoverBlob(null);
     setOriginalCoverBlob(null);
     setCoverPreview(null);
+
+    // cancel any in-progress frame extraction and revoke old URLs
+    frameExtractRef.current.cancelled = true;
+    const cancel = { cancelled: false };
+    frameExtractRef.current = cancel;
+    frameUrlsRef.current.forEach(u => URL.revokeObjectURL(u));
+    frameUrlsRef.current = [];
+    if (originalCoverUrlRef.current) { URL.revokeObjectURL(originalCoverUrlRef.current); originalCoverUrlRef.current = null; }
+    if (coverOwnedUrlRef.current) { URL.revokeObjectURL(coverOwnedUrlRef.current); coverOwnedUrlRef.current = null; }
+    setFrames([]);
+    setFramesLoading(true);
+    setSelectedFrameIdx(null);
+
     const blob = await extractFirstFrame(f);
     if (blob) {
+      const url = URL.createObjectURL(blob);
+      originalCoverUrlRef.current = url;
       setCoverBlob(blob);
       setOriginalCoverBlob(blob);
-      setCoverPreview(URL.createObjectURL(blob));
+      setCoverPreview(url);
     }
+
+    // extract all frames in background (no await)
+    extractFrames(f).then(extracted => {
+      if (cancel.cancelled) return;
+      const withUrls = extracted.map(fr => ({ ...fr, url: URL.createObjectURL(fr.blob) }));
+      frameUrlsRef.current = withUrls.map(x => x.url);
+      setFrames(withUrls);
+      setFramesLoading(false);
+    }).catch(() => {
+      if (!cancel.cancelled) setFramesLoading(false);
+    });
+  };
+
+  const handleSelectFrame = (frame: { blob: Blob; url: string }, idx: number) => {
+    // Revoke any owned URL — frame URLs are borrowed and must not be revoked here
+    if (coverOwnedUrlRef.current) { URL.revokeObjectURL(coverOwnedUrlRef.current); coverOwnedUrlRef.current = null; }
+    setCoverBlob(frame.blob);
+    setCoverPreview(frame.url);
+    setSelectedFrameIdx(idx);
   };
 
   const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,16 +211,22 @@ export function UploadVideo() {
     if (!f) return;
     const blob = await resizeImage(f);
     if (blob) {
+      if (coverOwnedUrlRef.current) URL.revokeObjectURL(coverOwnedUrlRef.current);
+      const url = URL.createObjectURL(blob);
+      coverOwnedUrlRef.current = url;
       setCoverBlob(blob);
-      setCoverPreview(URL.createObjectURL(blob));
+      setCoverPreview(url);
     }
+    setSelectedFrameIdx(null);
     if (coverInputRef.current) coverInputRef.current.value = '';
   };
 
   const handleResetCover = () => {
-    if (!originalCoverBlob) return;
+    if (!originalCoverBlob || !originalCoverUrlRef.current) return;
+    // Revoke custom upload URL if any, then reuse the original URL (no new createObjectURL)
+    if (coverOwnedUrlRef.current) { URL.revokeObjectURL(coverOwnedUrlRef.current); coverOwnedUrlRef.current = null; }
     setCoverBlob(originalCoverBlob);
-    setCoverPreview(URL.createObjectURL(originalCoverBlob));
+    setCoverPreview(originalCoverUrlRef.current);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -224,7 +344,12 @@ export function UploadVideo() {
                     setFile(null);
                     setCoverBlob(null);
                     setOriginalCoverBlob(null);
-                    if (coverPreview) { URL.revokeObjectURL(coverPreview); setCoverPreview(null); }
+                    setCoverPreview(null);
+                    if (originalCoverUrlRef.current) { URL.revokeObjectURL(originalCoverUrlRef.current); originalCoverUrlRef.current = null; }
+                    if (coverOwnedUrlRef.current) { URL.revokeObjectURL(coverOwnedUrlRef.current); coverOwnedUrlRef.current = null; }
+                    frameUrlsRef.current.forEach(u => URL.revokeObjectURL(u));
+                    frameUrlsRef.current = [];
+                    setFrames([]);
                     if (fileInputRef.current) fileInputRef.current.value = '';
                   }}
                 >
@@ -267,11 +392,37 @@ export function UploadVideo() {
                 </div>
               )}
             </div>
+            {/* 内联帧缩略条 */}
+            {(framesLoading || frames.length > 0) && (
+              <div className="frame-strip">
+                <span className="frame-strip-label">{p.uploadPickFrame}</span>
+                {framesLoading ? (
+                  <div className="frame-strip-loading">
+                    <div className="frame-strip-spinner" />
+                    <span>{p.uploadFrameExtracting}</span>
+                  </div>
+                ) : (
+                  <div className="frame-strip-scroll">
+                    {frames.map((fr, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`frame-strip-item${selectedFrameIdx === i ? ' frame-strip-item--active' : ''}`}
+                        onClick={() => handleSelectFrame(fr, i)}
+                      >
+                        <img className="frame-strip-img" src={fr.url} alt={formatTime(fr.time)} />
+                        <span className="frame-strip-time">{formatTime(fr.time)}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {coverBlob !== originalCoverBlob && originalCoverBlob && (
               <button
                 type="button"
                 className="upload-cover-reset"
-                onClick={e => { e.stopPropagation(); handleResetCover(); }}
+                onClick={handleResetCover}
               >
                 {p.uploadCoverReset}
               </button>
