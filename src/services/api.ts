@@ -222,6 +222,71 @@ export async function createPayment(amount: number, credits: number): Promise<Ap
   return result;
 }
 
+// ========== 邀请与分佣 ==========
+
+export interface ReferralMeData {
+  inviteCode: string;
+  inviteUrl: string | null;
+  level1Count: number;
+  level2Count: number;
+  level3Count: number;
+  totalCommissionEarned: number;
+}
+
+export async function getReferralMe(): Promise<ApiResponse<ReferralMeData>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/referral/me`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result: ApiResponse<ReferralMeData> = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || '获取邀请信息失败');
+  return result;
+}
+
+export interface ReferralTeamItem {
+  id: number;
+  username: string | null;
+  avatar: string | null;
+  created_at: number;
+}
+
+export async function getReferralTeam(level: 1 | 2 | 3, limit?: number, offset?: number): Promise<ApiResponse<{ list: ReferralTeamItem[]; total: number }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const params = new URLSearchParams({ level: String(level) });
+  if (limit != null) params.set('limit', String(limit));
+  if (offset != null) params.set('offset', String(offset));
+  const response = await fetch(`${API_BASE_URL}/referral/team?${params}`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || '获取团队列表失败');
+  return result;
+}
+
+export interface ReferralCommissionItem {
+  id: number;
+  amount: number;
+  related_id: string;
+  description: string;
+  created_at: number;
+}
+
+export async function getReferralCommissions(limit?: number, offset?: number): Promise<ApiResponse<{ list: ReferralCommissionItem[]; total: number }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const params = new URLSearchParams();
+  if (limit != null) params.set('limit', String(limit));
+  if (offset != null) params.set('offset', String(offset));
+  const response = await fetch(`${API_BASE_URL}/referral/commissions?${params}`, { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || '获取分佣记录失败');
+  return result;
+}
+
 // 获取所有视频列表
 
 export async function getList(taskId: string): Promise<ApiResponse> {

@@ -7,6 +7,7 @@ import {
   IconGrid,
   IconArrowUp,
   IconUser,
+  IconShare,
 } from '../components/Icons';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
@@ -167,6 +168,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     { id: 'assets', label: layout.navAssets, icon: IconFolder, path: '/assets' },
     { id: 'upload', label: layout.navUpload, icon: IconArrowUp, path: '/upload' },
     { id: 'my', label: layout.navMy, icon: IconUser, path: '/my' },
+    { id: 'referral', label: layout.navReferral, icon: IconShare, path: '/referral' },
   ];
 
   const isPathActive = (path: string) =>
