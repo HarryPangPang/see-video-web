@@ -10,6 +10,7 @@ import {
 } from '../components/Icons';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
+import { LayoutProvider } from '../context/LayoutContext';
 import { Credits } from '../components/Credits';
 import { LoginDialog } from '../components/LoginDialog';
 import dazeitLogo from '../assets/logo.png';
@@ -172,6 +173,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     location.pathname === path || (path === '/' && location.pathname === '/');
 
   return (
+    <LayoutProvider openProfileDialog={openProfileDialog}>
     <div className="main-layout seedance-layout">
       <LoginDialog
         visible={loginDialogVisible}
@@ -424,5 +426,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         {children}
       </main>
     </div>
+    </LayoutProvider>
   );
 }
