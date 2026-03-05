@@ -184,17 +184,91 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </div>
       )}
       <aside className="sidebar">
-        <button
-          type="button"
-          className="sidebar-brand"
-          onClick={() => navigate('/')}
-          aria-label="DazeIt - 返回首页"
-        >
-          <span className="sidebar-logo">
-            <img src={dazeitLogo} alt="" className="sidebar-logo-icon" />
-          </span>
-          <span className="sidebar-brand-name">DazeIt</span>
-        </button>
+        <div className="sidebar-top">
+          <button
+            type="button"
+            className="sidebar-brand"
+            onClick={() => navigate('/')}
+            aria-label="DazeIt - 返回首页"
+          >
+            <span className="sidebar-logo">
+              <img src={dazeitLogo} alt="" className="sidebar-logo-icon" />
+            </span>
+            <span className="sidebar-brand-name">DazeIt</span>
+          </button>
+
+          <div className="sidebar-footer">
+            <Credits />
+
+            <div className="sidebar-user" ref={userMenuRef}>
+              {user ? (
+                <>
+                  <button
+                    type="button"
+                    className="sidebar-user-trigger"
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    aria-expanded={isUserMenuOpen}
+                  >
+                    <span className="sidebar-user-avatar">{user.email?.[0]?.toUpperCase()}</span>
+                    <span className="sidebar-user-membership">{user.username || user.email?.split('@')[0]}</span>
+                  </button>
+                  {isUserMenuOpen && (
+                    <div className="sidebar-user-dropdown">
+                      <div className="sidebar-user-dropdown-head">
+                        <span className="sidebar-user-avatar sidebar-user-avatar--lg">{user.email?.[0]?.toUpperCase()}</span>
+                        <div className="sidebar-user-dropdown-info">
+                          <span className="sidebar-user-dropdown-name">{user.username || user.email?.split('@')[0]}</span>
+                          <span className="sidebar-user-dropdown-email">{user.email}</span>
+                        </div>
+                      </div>
+                      <div className="sidebar-user-dropdown-divider" />
+                      <button type="button" className="sidebar-user-dropdown-item" onClick={openProfileDialog}>
+                        {layout.editProfile}
+                      </button>
+                      <button type="button" className="sidebar-user-dropdown-item sidebar-user-dropdown-item--danger" onClick={handleLogout}>
+                        {layout.logout}
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="sidebar-login-btn"
+                  onClick={() => setLoginDialogVisible(true)}
+                >
+                  <span className="sidebar-login-icon">👤</span>
+                  <span className="sidebar-login-text">{layout.login}</span>
+                </button>
+              )}
+            </div>
+
+            <div className="sidebar-lang sidebar-lang--mobile" role="group" aria-label="Language">
+              <button
+                type="button"
+                className={`sidebar-lang-btn ${language === 'en-US' ? 'is-active' : ''}`}
+                onClick={() => setLanguage('en-US')}
+                aria-pressed={language === 'en-US'}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                className={`sidebar-lang-btn ${language === 'zh-CN' ? 'is-active' : ''}`}
+                onClick={() => setLanguage('zh-CN')}
+                aria-pressed={language === 'zh-CN'}
+              >
+                中文
+              </button>
+            </div>
+
+            <div className="sidebar-legal sidebar-legal--mobile">
+              <Link to="/privacy-policy">Privacy Policy</Link>
+              <span className="sidebar-legal-sep">·</span>
+              <Link to="/terms-of-service">Terms of Service</Link>
+            </div>
+          </div>
+        </div>
 
         <nav className="sidebar-nav" aria-label="Main">
           <ul className="sidebar-menu">
@@ -219,80 +293,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             })}
           </ul>
         </nav>
-
-        <div className="sidebar-footer">
-          <Credits />
-
-          <div className="sidebar-user" ref={userMenuRef}>
-            {user ? (
-              <>
-                <button
-                  type="button"
-                  className="sidebar-user-trigger"
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  aria-expanded={isUserMenuOpen}
-                >
-                  <span className="sidebar-user-avatar">{user.email?.[0]?.toUpperCase()}</span>
-                  <span className="sidebar-user-membership">{user.username || user.email?.split('@')[0]}</span>
-                </button>
-                {isUserMenuOpen && (
-                  <div className="sidebar-user-dropdown">
-                    <div className="sidebar-user-dropdown-head">
-                      <span className="sidebar-user-avatar sidebar-user-avatar--lg">{user.email?.[0]?.toUpperCase()}</span>
-                      <div className="sidebar-user-dropdown-info">
-                        <span className="sidebar-user-dropdown-name">{user.username || user.email?.split('@')[0]}</span>
-                        <span className="sidebar-user-dropdown-email">{user.email}</span>
-                      </div>
-                    </div>
-                    <div className="sidebar-user-dropdown-divider" />
-                    <button type="button" className="sidebar-user-dropdown-item" onClick={openProfileDialog}>
-                      {layout.editProfile}
-                    </button>
-                    <button type="button" className="sidebar-user-dropdown-item sidebar-user-dropdown-item--danger" onClick={handleLogout}>
-                      {layout.logout}
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <button
-                type="button"
-                className="sidebar-login-btn"
-                onClick={() => setLoginDialogVisible(true)}
-              >
-                <span className="sidebar-login-icon">👤</span>
-                <span className="sidebar-login-text">{layout.login}</span>
-              </button>
-            )}
-          </div>
-
-
-
-          <div className="sidebar-lang" role="group" aria-label="Language">
-            <button
-              type="button"
-              className={`sidebar-lang-btn ${language === 'en-US' ? 'is-active' : ''}`}
-              onClick={() => setLanguage('en-US')}
-              aria-pressed={language === 'en-US'}
-            >
-              EN
-            </button>
-            <button
-              type="button"
-              className={`sidebar-lang-btn ${language === 'zh-CN' ? 'is-active' : ''}`}
-              onClick={() => setLanguage('zh-CN')}
-              aria-pressed={language === 'zh-CN'}
-            >
-              中文
-            </button>
-          </div>
-
-          <div className="sidebar-legal">
-            <Link to="/privacy-policy">Privacy Policy</Link>
-            <span className="sidebar-legal-sep">·</span>
-            <Link to="/terms-of-service">Terms of Service</Link>
-          </div>
-        </div>
       </aside>
 
       <main className="main-content">
