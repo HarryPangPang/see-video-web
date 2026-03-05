@@ -288,9 +288,19 @@
 }
 
 .plaza-card-likes-heart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 18px;
   line-height: 1;
   vertical-align: middle;
+
+  svg {
+    width: 1em;
+    height: 1em;
+    /* 略横向拉宽，更圆润胖心 */
+    transform: scale(1.12, 1.05);
+  }
 }
 
 .plaza-card-likes {
