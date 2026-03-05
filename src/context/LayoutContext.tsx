@@ -1,27 +1,29 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 
 interface LayoutContextType {
-    sidebarCollapsed: boolean;
-    toggleSidebar: () => void;
+  openProfileDialog: () => void;
 }
 
-const LayoutContext = createContext<LayoutContextType>({
-    sidebarCollapsed: false,
-    toggleSidebar: () => {},
-});
+const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
 
-export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+export function LayoutProvider({
+  children,
+  openProfileDialog,
+}: {
+  children: React.ReactNode;
+  openProfileDialog: () => void;
+}) {
+  return (
+    <LayoutContext.Provider value={{ openProfileDialog }}>
+      {children}
+    </LayoutContext.Provider>
+  );
+}
 
-    const toggleSidebar = () => {
-        setSidebarCollapsed(prev => !prev);
-    };
-
-    return (
-        <LayoutContext.Provider value={{ sidebarCollapsed, toggleSidebar }}>
-            {children}
-        </LayoutContext.Provider>
-    );
-};
-
-export const useLayout = () => useContext(LayoutContext);
+export function useLayout() {
+  const ctx = useContext(LayoutContext);
+  if (ctx === undefined) {
+    throw new Error('useLayout must be used within LayoutProvider');
+  }
+  return ctx;
+}

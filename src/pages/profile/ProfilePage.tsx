@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { DotLoading, Toast } from 'antd-mobile';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
-import { Input, TextArea } from 'antd-mobile';
+import { useLayout } from '../../context/LayoutContext';
 import {
   getUserProfile, getMyStats, getWorksList, getUserFollowers, getUserFollowing,
   followUser, unfollowUser, getMyLikes,
@@ -108,125 +108,11 @@ function UserListModal({
   );
 }
 
-/** 编辑资料内联弹窗（仅自己主页使用） */
-function EditProfileModal({
-  initialName,
-  initialBio,
-  initialLocation,
-  initialWebsite,
-  isGoogleUser,
-  onSave,
-  onClose,
-  updateProfile,
-  changePassword,
-  formLabels,
-}: {
-  initialName: string;
-  initialBio?: string | null;
-  initialLocation?: string | null;
-  initialWebsite?: string | null;
-  isGoogleUser?: boolean;
-  onSave: (updates: { name: string; bio?: string | null; location?: string | null; website?: string | null }) => void;
-  onClose: () => void;
-  updateProfile: (params: { username: string; bio?: string; location?: string; website?: string }) => Promise<void>;
-  changePassword: (cur: string, next: string) => Promise<void>;
-  formLabels: { bioLabel: string; bioPlaceholder: string; locationLabel: string; locationPlaceholder: string; websiteLabel: string; websitePlaceholder: string };
-}) {
-  const [name, setName] = useState(initialName);
-  const [bio, setBio] = useState(initialBio ?? '');
-  const [location, setLocation] = useState(initialLocation ?? '');
-  const [website, setWebsite] = useState(initialWebsite ?? '');
-  const [saving, setSaving] = useState(false);
-  const [curPwd, setCurPwd] = useState('');
-  const [newPwd, setNewPwd] = useState('');
-  const [confirmPwd, setConfirmPwd] = useState('');
-  const [pwdSaving, setPwdSaving] = useState(false);
-
-  const handleSave = async () => {
-    if (!name.trim()) return;
-    setSaving(true);
-    try {
-      await updateProfile({
-        username: name.trim(),
-        bio: bio.trim() || undefined,
-        location: location.trim() || undefined,
-        website: website.trim() || undefined,
-      });
-      onSave({
-        name: name.trim(),
-        bio: bio.trim() || null,
-        location: location.trim() || null,
-        website: website.trim() || null,
-      });
-    } catch (e) {
-      Toast.show({ icon: 'fail', content: (e as Error).message });
-    } finally { setSaving(false); }
-  };
-
-  const handlePwd = async () => {
-    if (!newPwd || newPwd !== confirmPwd) { Toast.show({ icon: 'fail', content: 'Passwords do not match' }); return; }
-    if (newPwd.length < 6) { Toast.show({ icon: 'fail', content: 'Password too short' }); return; }
-    setPwdSaving(true);
-    try {
-      await changePassword(curPwd, newPwd);
-      Toast.show({ icon: 'success', content: 'Password changed' });
-      setCurPwd(''); setNewPwd(''); setConfirmPwd('');
-    } catch (e) {
-      Toast.show({ icon: 'fail', content: (e as Error).message });
-    } finally { setPwdSaving(false); }
-  };
-
-  return (
-    <div className="profile-modal-overlay" onClick={onClose}>
-      <div className="profile-modal profile-modal--edit" onClick={(e) => e.stopPropagation()}>
-        <div className="profile-modal-header">
-          <span className="profile-modal-title">Edit Profile</span>
-          <button type="button" className="profile-modal-close" onClick={onClose}>✕</button>
-        </div>
-        <div className="profile-edit-field">
-          <label>Nickname</label>
-          <Input value={name} onChange={setName} maxLength={50} className="profile-edit-input" />
-        </div>
-        <div className="profile-edit-field">
-          <label>{formLabels.bioLabel}</label>
-          <TextArea value={bio} onChange={setBio} placeholder={formLabels.bioPlaceholder} maxLength={500} rows={3} className="profile-edit-input" />
-        </div>
-        <div className="profile-edit-field">
-          <label>{formLabels.locationLabel}</label>
-          <Input value={location} onChange={setLocation} placeholder={formLabels.locationPlaceholder} maxLength={200} className="profile-edit-input" />
-        </div>
-        <div className="profile-edit-field">
-          <label>{formLabels.websiteLabel}</label>
-          <Input value={website} onChange={setWebsite} placeholder={formLabels.websitePlaceholder} maxLength={500} className="profile-edit-input" />
-        </div>
-        <button type="button" className="profile-edit-save-btn" disabled={saving} onClick={handleSave}>
-          {saving ? '...' : 'Save'}
-        </button>
-        <div className="profile-edit-divider" />
-        <div className="profile-edit-field">
-          <label>Change Password</label>
-          {isGoogleUser ? (
-            <p className="profile-edit-hint">Google accounts cannot set a password here.</p>
-          ) : (
-            <>
-              <Input type="password" value={curPwd} onChange={setCurPwd} placeholder="Current password" className="profile-edit-input" />
-              <Input type="password" value={newPwd} onChange={setNewPwd} placeholder="New password" className="profile-edit-input" />
-              <Input type="password" value={confirmPwd} onChange={setConfirmPwd} placeholder="Confirm new password" className="profile-edit-input" />
-              <button type="button" className="profile-edit-pwd-btn" disabled={pwdSaving} onClick={handlePwd}>
-                {pwdSaving ? '...' : 'Change Password'}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function ProfilePage() {
   const { userId: userIdParam } = useParams<{ userId?: string }>();
   const navigate = useNavigate();
-  const { user, loading: authLoading, updateProfile, changePassword } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { openProfileDialog } = useLayout();
   const { t } = useI18n();
   const p = t.seedance.profile;
   const worksT = t.seedance.works;
@@ -430,28 +316,6 @@ export function ProfilePage() {
           onUserClick={handleUserClick}
         />
       )}
-      {modal === 'edit' && (
-        <EditProfileModal
-          initialName={profile.name}
-          initialBio={profile.bio}
-          initialLocation={profile.location}
-          initialWebsite={profile.website}
-          isGoogleUser={user?.isGoogleUser}
-          onClose={() => setModal(null)}
-          onSave={(updates) => { setProfile(prev => prev ? { ...prev, ...updates } : null); setModal(null); }}
-          updateProfile={updateProfile}
-          changePassword={changePassword}
-          formLabels={{
-            bioLabel: t.seedance.layout.bioLabel,
-            bioPlaceholder: t.seedance.layout.bioPlaceholder,
-            locationLabel: t.seedance.layout.locationLabel,
-            locationPlaceholder: t.seedance.layout.locationPlaceholder,
-            websiteLabel: t.seedance.layout.websiteLabel,
-            websitePlaceholder: t.seedance.layout.websitePlaceholder,
-          }}
-        />
-      )}
-
       <div className="profile-hero">
         <div className="profile-hero-top">
           <div className="profile-avatar">
@@ -463,7 +327,7 @@ export function ProfilePage() {
           </div>
           <h1 className="profile-name">{displayName(profile.name)}</h1>
           {isMe ? (
-            <button type="button" className="profile-edit-btn" onClick={() => setModal('edit')}>
+            <button type="button" className="profile-edit-btn" onClick={openProfileDialog}>
               {p.editProfile}
             </button>
           ) : (
