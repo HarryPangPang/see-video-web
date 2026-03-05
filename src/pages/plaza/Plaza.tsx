@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { LoginDialog } from '../../components/LoginDialog';
 import './Plaza.scss';
 
-type SortType = 'foryou' | 'newest' | 'likes';
+type SortType = 'foryou' | 'newest' | 'likes' | 'following';
 
 function PlazaCardMedia({ videoUrl, coverUrl, fullUrl }: {
   videoUrl: string;
@@ -76,6 +76,7 @@ export function Plaza() {
     { key: 'foryou', label: p.tabForYou },
     { key: 'newest', label: p.tabNewest },
     { key: 'likes', label: p.tabLikes },
+    { key: 'following', label: p.tabFollowing },
   ];
 
   const [sort, setSort] = useState<SortType>('foryou');
@@ -88,6 +89,13 @@ export function Plaza() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [loginVisible, setLoginVisible] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Following feed state
+  const [followingList, setFollowingList] = useState<WorkItem[]>([]);
+  const [followingPage, setFollowingPage] = useState(1);
+  const [followingHasMore, setFollowingHasMore] = useState(true);
+  const [followingLoading, setFollowingLoading] = useState(false);
+  const [followingLoadingMore, setFollowingLoadingMore] = useState(false);
 
   const totalPages = total > 0 ? Math.ceil(total / PAGE_SIZE) : 1;
 
@@ -103,8 +111,29 @@ export function Plaza() {
     }
   }, []);
 
-  // 切换 tab 时重置到第 1 页
+  const fetchFollowingPage = useCallback(async (pg: number) => {
+    const isFirst = pg === 1;
+    if (isFirst) setFollowingLoading(true); else setFollowingLoadingMore(true);
+    try {
+      const res = await getWorksList({ sort: 'following', page: pg, limit: PAGE_SIZE });
+      if (res.data) {
+        setFollowingList(prev => isFirst ? res.data!.list : [...prev, ...res.data!.list]);
+        setFollowingPage(pg);
+        setFollowingHasMore(res.data!.hasMore);
+      }
+    } catch (e) {
+      Toast.show({ content: (e as Error).message, icon: 'fail' });
+    } finally {
+      if (isFirst) setFollowingLoading(false); else setFollowingLoadingMore(false);
+    }
+  }, []);
+
+  // 切换 tab 时加载对应数据
   useEffect(() => {
+    if (sort === 'following') {
+      fetchFollowingPage(1);
+      return;
+    }
     setPage(1);
     if (list.length === 0) {
       setLoading(true);
@@ -204,6 +233,20 @@ export function Plaza() {
     }
   };
 
+  const handleFollowingLike = async (e: React.MouseEvent, work: WorkItem) => {
+    e.stopPropagation();
+    if (!user) { setLoginVisible(true); return; }
+    const liked = !work.liked;
+    setFollowingList(prev => prev.map(w => w.id === work.id ? { ...w, liked, like_count: (w.like_count ?? 0) + (liked ? 1 : -1) } : w));
+    try {
+      const res = liked ? await likeWork(work.id) : await unlikeWork(work.id);
+      if (res.data) setFollowingList(prev => prev.map(w => w.id === work.id ? { ...w, liked, like_count: res.data!.like_count } : w));
+    } catch (e) {
+      setFollowingList(prev => prev.map(w => w.id === work.id ? { ...w, liked: !liked, like_count: (w.like_count ?? 0) + (liked ? -1 : 1) } : w));
+      Toast.show({ content: (e as Error).message, icon: 'fail' });
+    }
+  };
+
   const fullUrl = (url: string) => (url?.startsWith('http') ? url : `${window.location.origin}${url || ''}`);
   const displayAuthor = (author: string | undefined) => {
     if (!author) return '?';
@@ -233,7 +276,69 @@ export function Plaza() {
         ))}
       </div>
 
-      {loading ? (
+      {sort === 'following' ? (
+        followingLoading ? (
+          <div className="plaza-loading">
+            <DotLoading color="primary" />
+            <p>{p.loading}</p>
+          </div>
+        ) : followingList.length === 0 ? (
+          <div className="plaza-empty">
+            <div className="plaza-empty-icon">✦</div>
+            <p>{p.emptyFollowing}</p>
+          </div>
+        ) : (
+          <div className="plaza-content">
+            <div className="plaza-grid">
+              {followingList.map((work) => (
+                <button
+                  key={work.id}
+                  type="button"
+                  className="plaza-card"
+                  onClick={() => navigate(`/works/${work.id}`)}
+                >
+                  <div className="plaza-card-cover">
+                    <PlazaCardMedia
+                      videoUrl={work.video_url}
+                      coverUrl={work.cover_url ?? undefined}
+                      fullUrl={fullUrl}
+                    />
+                    <div className="plaza-card-overlay" />
+                    <button
+                      type="button"
+                      className={`plaza-card-likes${work.liked ? ' plaza-card-likes--liked' : ''}`}
+                      onClick={(e) => handleFollowingLike(e, work)}
+                    >
+                      <span className="plaza-card-likes-heart">♥</span> {work.like_count ?? 0}
+                    </button>
+                  </div>
+                  <div className="plaza-card-body">
+                    <div className="plaza-card-title">{work.title || '—'}</div>
+                    <div className="plaza-card-author">
+                      <span className="plaza-card-avatar">{displayAuthor(work.author)?.[0]?.toUpperCase() ?? '?'}</span>
+                      {displayAuthor(work.author)}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="plaza-load-more">
+              {followingHasMore ? (
+                <button
+                  type="button"
+                  className="plaza-load-more-btn"
+                  onClick={() => { if (!followingLoadingMore) fetchFollowingPage(followingPage + 1); }}
+                  disabled={followingLoadingMore}
+                >
+                  {followingLoadingMore ? <DotLoading color="primary" /> : p.loadMore}
+                </button>
+              ) : (
+                <span className="plaza-no-more">{p.noMore}</span>
+              )}
+            </div>
+          </div>
+        )
+      ) : loading ? (
         <div className="plaza-loading">
           <DotLoading color="primary" />
           <p>{p.loading}</p>

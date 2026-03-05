@@ -251,7 +251,7 @@ export interface WorkDetail extends WorkItem {
 }
 
 export interface WorksListParams {
-  sort?: 'newest' | 'likes' | 'foryou';
+  sort?: 'newest' | 'likes' | 'foryou' | 'following';
   page?: number;
   limit?: number;
   mine?: boolean;
