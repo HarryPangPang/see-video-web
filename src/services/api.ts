@@ -117,23 +117,68 @@ export async function getCreditsBalance(): Promise<ApiResponse<{ credits: number
   return result;
 }
 
-// 更新用户资料（昵称）
-export interface UserProfile {
+// 当前用户资料（/me、更新资料、头像接口返回）
+export interface AuthUserProfile {
   id: number;
   email: string;
   username: string | null;
+  avatar?: string | null;
+  bio?: string | null;
+  location?: string | null;
+  website?: string | null;
   isGoogleUser?: boolean;
 }
-export async function updateUserProfile(username: string): Promise<ApiResponse<UserProfile>> {
+
+export interface UpdateProfileParams {
+  username: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+}
+
+export async function updateUserProfile(params: UpdateProfileParams): Promise<ApiResponse<AuthUserProfile>> {
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
   if (!token) throw new Error('Unauthorized');
+  const body: Record<string, string> = { username: params.username.trim() };
+  if (params.bio !== undefined) body.bio = params.bio;
+  if (params.location !== undefined) body.location = params.location;
+  if (params.website !== undefined) body.website = params.website;
   const response = await fetch(`${API_BASE_URL}/user/profile`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ username: username.trim() }),
+    body: JSON.stringify(body),
   });
-  const result: ApiResponse<UserProfile> = await response.json();
+  const result: ApiResponse<AuthUserProfile> = await response.json();
   if (!response.ok || !result.success) throw new Error(result.message || '更新失败');
+  return result;
+}
+
+// 上传头像
+export async function uploadAvatar(file: File): Promise<ApiResponse<AuthUserProfile>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const form = new FormData();
+  form.append('avatar', file);
+  const response = await fetch(`${API_BASE_URL}/user/avatar`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  const result: ApiResponse<AuthUserProfile> = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || '上传头像失败');
+  return result;
+}
+
+// 恢复默认头像（清除自定义头像）
+export async function removeAvatar(): Promise<ApiResponse<AuthUserProfile>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/user/avatar`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result: ApiResponse<AuthUserProfile> = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || '恢复默认头像失败');
   return result;
 }
 
@@ -446,9 +491,14 @@ export async function unfollowUser(userId: number): Promise<ApiResponse<{ is_fol
   return result;
 }
 
+// 公开主页资料（GET /users/:id/profile）
 export interface UserProfile {
   id: number;
   name: string;
+  avatar?: string | null;
+  bio?: string | null;
+  location?: string | null;
+  website?: string | null;
   followers: number;
   following: number;
   likes_received: number;

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { DotLoading, Toast } from 'antd-mobile';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
-import { Input } from 'antd-mobile';
+import { Input, TextArea } from 'antd-mobile';
 import {
   getUserProfile, getMyStats, getWorksList, getUserFollowers, getUserFollowing,
   followUser, unfollowUser,
@@ -111,20 +111,31 @@ function UserListModal({
 /** 编辑资料内联弹窗（仅自己主页使用） */
 function EditProfileModal({
   initialName,
+  initialBio,
+  initialLocation,
+  initialWebsite,
   isGoogleUser,
   onSave,
   onClose,
   updateProfile,
   changePassword,
+  formLabels,
 }: {
   initialName: string;
+  initialBio?: string | null;
+  initialLocation?: string | null;
+  initialWebsite?: string | null;
   isGoogleUser?: boolean;
-  onSave: (name: string) => void;
+  onSave: (updates: { name: string; bio?: string | null; location?: string | null; website?: string | null }) => void;
   onClose: () => void;
-  updateProfile: (name: string) => Promise<void>;
+  updateProfile: (params: { username: string; bio?: string; location?: string; website?: string }) => Promise<void>;
   changePassword: (cur: string, next: string) => Promise<void>;
+  formLabels: { bioLabel: string; bioPlaceholder: string; locationLabel: string; locationPlaceholder: string; websiteLabel: string; websitePlaceholder: string };
 }) {
   const [name, setName] = useState(initialName);
+  const [bio, setBio] = useState(initialBio ?? '');
+  const [location, setLocation] = useState(initialLocation ?? '');
+  const [website, setWebsite] = useState(initialWebsite ?? '');
   const [saving, setSaving] = useState(false);
   const [curPwd, setCurPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
@@ -135,8 +146,18 @@ function EditProfileModal({
     if (!name.trim()) return;
     setSaving(true);
     try {
-      await updateProfile(name.trim());
-      onSave(name.trim());
+      await updateProfile({
+        username: name.trim(),
+        bio: bio.trim() || undefined,
+        location: location.trim() || undefined,
+        website: website.trim() || undefined,
+      });
+      onSave({
+        name: name.trim(),
+        bio: bio.trim() || null,
+        location: location.trim() || null,
+        website: website.trim() || null,
+      });
     } catch (e) {
       Toast.show({ icon: 'fail', content: (e as Error).message });
     } finally { setSaving(false); }
@@ -165,6 +186,18 @@ function EditProfileModal({
         <div className="profile-edit-field">
           <label>Nickname</label>
           <Input value={name} onChange={setName} maxLength={50} className="profile-edit-input" />
+        </div>
+        <div className="profile-edit-field">
+          <label>{formLabels.bioLabel}</label>
+          <TextArea value={bio} onChange={setBio} placeholder={formLabels.bioPlaceholder} maxLength={500} rows={3} className="profile-edit-input" />
+        </div>
+        <div className="profile-edit-field">
+          <label>{formLabels.locationLabel}</label>
+          <Input value={location} onChange={setLocation} placeholder={formLabels.locationPlaceholder} maxLength={200} className="profile-edit-input" />
+        </div>
+        <div className="profile-edit-field">
+          <label>{formLabels.websiteLabel}</label>
+          <Input value={website} onChange={setWebsite} placeholder={formLabels.websitePlaceholder} maxLength={500} className="profile-edit-input" />
         </div>
         <button type="button" className="profile-edit-save-btn" disabled={saving} onClick={handleSave}>
           {saving ? '...' : 'Save'}
@@ -223,6 +256,10 @@ export function ProfilePage() {
         setProfile({
           id: user.id,
           name: user.username || user.email?.split('@')[0] || '',
+          avatar: user.avatar ?? null,
+          bio: user.bio ?? null,
+          location: user.location ?? null,
+          website: user.website ?? null,
           followers: statsRes.data!.followers,
           following: statsRes.data!.following,
           likes_received: statsRes.data!.likes_received,
@@ -252,6 +289,19 @@ export function ProfilePage() {
     }
     load();
   }, [authLoading, targetId, load]);
+
+  // 自己主页时，侧栏修改资料/头像后同步到 profile 显示
+  useEffect(() => {
+    if (isMe && profile && user) {
+      setProfile(prev => prev ? {
+        ...prev,
+        avatar: user.avatar ?? null,
+        bio: user.bio ?? null,
+        location: user.location ?? null,
+        website: user.website ?? null,
+      } : null);
+    }
+  }, [isMe, user?.avatar, user?.bio, user?.location, user?.website]);
 
   const openFollowers = async () => {
     if (!targetId) return;
@@ -329,6 +379,7 @@ export function ProfilePage() {
   }
 
   const avatarLetter = displayName(profile.name)[0]?.toUpperCase() ?? '?';
+  const avatarUrl = profile.avatar ? fullUrl(profile.avatar) : null;
 
   return (
     <div className="profile-page">
@@ -352,17 +403,34 @@ export function ProfilePage() {
       {modal === 'edit' && (
         <EditProfileModal
           initialName={profile.name}
+          initialBio={profile.bio}
+          initialLocation={profile.location}
+          initialWebsite={profile.website}
           isGoogleUser={user?.isGoogleUser}
           onClose={() => setModal(null)}
-          onSave={(name) => { setProfile(prev => prev ? { ...prev, name } : null); setModal(null); }}
+          onSave={(updates) => { setProfile(prev => prev ? { ...prev, ...updates } : null); setModal(null); }}
           updateProfile={updateProfile}
           changePassword={changePassword}
+          formLabels={{
+            bioLabel: t.seedance.layout.bioLabel,
+            bioPlaceholder: t.seedance.layout.bioPlaceholder,
+            locationLabel: t.seedance.layout.locationLabel,
+            locationPlaceholder: t.seedance.layout.locationPlaceholder,
+            websiteLabel: t.seedance.layout.websiteLabel,
+            websitePlaceholder: t.seedance.layout.websitePlaceholder,
+          }}
         />
       )}
 
       <div className="profile-hero">
         <div className="profile-hero-top">
-          <div className="profile-avatar">{avatarLetter}</div>
+          <div className="profile-avatar">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="profile-avatar-img" />
+            ) : (
+              <span className="profile-avatar-letter">{avatarLetter}</span>
+            )}
+          </div>
           <h1 className="profile-name">{displayName(profile.name)}</h1>
           {isMe ? (
             <button type="button" className="profile-edit-btn" onClick={() => setModal('edit')}>
@@ -394,6 +462,21 @@ export function ProfilePage() {
             <span className="profile-stat-label">{p.likesReceived}</span>
           </div>
         </div>
+        {(profile.bio || profile.location || profile.website) && (
+          <div className="profile-meta">
+            {profile.bio && <p className="profile-bio">{profile.bio}</p>}
+            {(profile.location || profile.website) && (
+              <div className="profile-links">
+                {profile.location && <span className="profile-location">{profile.location}</span>}
+                {profile.website && (
+                  <a href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} target="_blank" rel="noopener noreferrer" className="profile-website">
+                    {profile.website.replace(/^https?:\/\//, '')}
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="profile-works-section">
