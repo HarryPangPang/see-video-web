@@ -1,21 +1,8 @@
 import { ConfigEnv, defineConfig, loadEnv, ProxyOptions, UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
-import fs from 'node:fs';
 
 const outDir = path.resolve(__dirname, '../see-video-server/dist');
-
-/** 构建前删除 see-video-server/dist */
-function cleanServerDist() {
-  return {
-    name: 'clean-server-dist',
-    buildStart() {
-      if (fs.existsSync(outDir)) {
-        fs.rmSync(outDir, { recursive: true });
-      }
-    },
-  };
-}
 const proxy = (target: string) => {
   const ProxyList: Record<string, string | ProxyOptions> = {
     '/api': {
@@ -42,7 +29,7 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig=>{
       emptyOutDir: true,
       sourcemap: false,
     },
-    plugins: [react(), cleanServerDist()],
+    plugins: [react()],
     optimizeDeps: {
       exclude: ['esbuild-wasm']
     },
