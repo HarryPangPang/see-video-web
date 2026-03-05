@@ -166,13 +166,19 @@ export function WorkDetail() {
             </div>
           ) : null}
           <div className="work-detail-actions">
-            <button
-              type="button"
-              className={`work-detail-like ${work.liked ? 'liked' : ''}`}
-              onClick={handleLike}
-            >
-              ♥ {work.like_count ?? 0}
-            </button>
+            {user && work.user_id === user.id ? (
+              <span className="work-detail-like work-detail-like--own">
+                ♥ {work.like_count ?? 0}
+              </span>
+            ) : (
+              <button
+                type="button"
+                className={`work-detail-like ${work.liked ? 'liked' : ''}`}
+                onClick={handleLike}
+              >
+                ♥ {work.like_count ?? 0}
+              </button>
+            )}
           </div>
           <div className="work-detail-comments">
             <h3>{w.comments.replace('{count}', String(work.comments.length))}</h3>

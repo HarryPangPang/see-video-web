@@ -328,13 +328,19 @@ export function Plaza() {
                       fullUrl={fullUrl}
                     />
                     <div className="plaza-card-overlay" />
-                    <button
-                      type="button"
-                      className={`plaza-card-likes${work.liked ? ' plaza-card-likes--liked' : ''}`}
-                      onClick={(e) => handleFollowingLike(e, work)}
-                    >
-                      <span className="plaza-card-likes-heart">♥</span> {work.like_count ?? 0}
-                    </button>
+                    {user && work.user_id === user.id ? (
+                      <span className="plaza-card-likes plaza-card-likes--own">
+                        <span className="plaza-card-likes-heart">♥</span> {work.like_count ?? 0}
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        className={`plaza-card-likes${work.liked ? ' plaza-card-likes--liked' : ''}`}
+                        onClick={(e) => handleFollowingLike(e, work)}
+                      >
+                        <span className="plaza-card-likes-heart">♥</span> {work.like_count ?? 0}
+                      </button>
+                    )}
                   </div>
                   <div className="plaza-card-body">
                     <div className="plaza-card-title">{work.title || '—'}</div>
@@ -392,13 +398,20 @@ export function Plaza() {
                     fullUrl={fullUrl}
                   />
                   <div className="plaza-card-overlay" />
-                  <button
-                    type="button"
-                    className={`plaza-card-likes${work.liked ? ' plaza-card-likes--liked' : ''}`}
-                    onClick={(e) => handleCardLike(e, work)}
-                  >
-                    <span className="plaza-card-likes-heart">♥</span> {work.like_count ?? 0}
-                  </button>
+                  {!isOwn && (
+                    <button
+                      type="button"
+                      className={`plaza-card-likes${work.liked ? ' plaza-card-likes--liked' : ''}`}
+                      onClick={(e) => handleCardLike(e, work)}
+                    >
+                      <span className="plaza-card-likes-heart">♥</span> {work.like_count ?? 0}
+                    </button>
+                  )}
+                  {isOwn && (
+                    <span className="plaza-card-likes plaza-card-likes--own">
+                      <span className="plaza-card-likes-heart">♥</span> {work.like_count ?? 0}
+                    </span>
+                  )}
 
                   {!!work.is_private && (
                     <span className="plaza-card-private-badge">{p.privateLabel}</span>

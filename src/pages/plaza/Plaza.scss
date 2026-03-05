@@ -324,6 +324,13 @@
       background: rgba(190, 24, 93, 0.95);
     }
   }
+
+  &--own {
+    cursor: default;
+    opacity: 0.6;
+    pointer-events: none;
+    &:hover { background: rgba(124, 58, 237, 0.75); transform: none; }
+  }
 }
 
 // 私密 tab 卡片上的「重新上架」按钮

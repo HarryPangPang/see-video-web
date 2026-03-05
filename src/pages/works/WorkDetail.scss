@@ -260,6 +260,12 @@
       background: rgba(219, 39, 119, 0.1);
       color: #db2777;
     }
+
+    &--own {
+      cursor: default;
+      opacity: 0.55;
+      pointer-events: none;
+    }
   }
 }
 

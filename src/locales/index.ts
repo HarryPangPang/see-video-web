@@ -538,7 +538,7 @@ export const enUS = {
             editProfile: 'Edit Profile',
             followers: 'Followers',
             following: 'Following',
-            likesReceived: 'Likes',
+            likesReceived: 'Likes Received',
             works: 'Works',
             noWorks: 'No public works yet.',
             followersTitle: 'Followers',
