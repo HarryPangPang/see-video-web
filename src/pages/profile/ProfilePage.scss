@@ -19,38 +19,90 @@
   font-size: 14px;
 }
 
-// ─── Hero ───────────────────────────────────────────
+// ─── Banner ─────────────────────────────────────────
+// Banner 独立在上方，不再与下方内容重叠，避免头像被挡住（参考 PixAI 等：头像在 banner 下方完整展示）
+.profile-banner {
+  height: 200px;
+  border-radius: 20px;
+  margin-bottom: 0;
+  position: relative;
+  overflow: hidden;
+
+  @media (max-width: 640px) {
+    height: 160px;
+    border-radius: 16px;
+  }
+}
+
+.profile-banner-edit {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: none;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background 0.2s ease;
+
+  &:hover { background: rgba(0, 0, 0, 0.65); }
+}
+
+// 头像在 banner 下方完整展示，不再使用负 margin 重叠
+.profile-avatar--banner {
+  border: 3px solid #ffffff;
+}
+
+// ─── Hero（参考 PixAI：banner 下独立区域，头像在左、姓名与按钮在右、统计在下）───────────────────────
 .profile-hero {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding-bottom: 28px;
+  gap: 16px;
+  padding: 24px 0 28px;
+  margin-top: 24px;
   border-bottom: 1px solid rgba(124, 58, 237, 0.1);
   margin-bottom: 32px;
+
+  @media (max-width: 640px) {
+    margin-top: 20px;
+    padding-top: 20px;
+  }
 }
 
 .profile-hero-top {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  align-items: flex-start;
+  gap: 20px;
 }
 
 .profile-avatar {
-  width: 64px;
-  height: 64px;
-  min-width: 64px;
-  min-height: 64px;
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
+  min-height: 80px;
   border-radius: 50%;
-  background: #7c3aed;
+  background: linear-gradient(145deg, #a78bfa, #7c3aed);
   color: #fff;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
   flex-shrink: 0;
   overflow: hidden;
+
+  @media (max-width: 640px) {
+    width: 72px;
+    height: 72px;
+    min-width: 72px;
+    min-height: 72px;
+    font-size: 24px;
+  }
 }
 
 .profile-avatar-img {
@@ -70,22 +122,60 @@
   font-weight: 700;
   color: #111827;
   line-height: 1.2;
+  flex: 1 1 100%;
+  min-width: 0;
+
+  @media (max-width: 640px) {
+    font-size: 18px;
+  }
+}
+
+.profile-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
   flex: 1;
+  min-width: 0;
 }
 
 .profile-edit-btn {
-  padding: 5px 14px;
-  border-radius: 100px;
-  border: none;
-  background: #ede9fe;
-  color: #5b21b6;
-  font-size: 12px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: #fff;
+  color: #111827;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
 
-  &:hover { background: #ddd6fe; }
+  &:hover { background: #f9fafb; }
+}
+
+.profile-follow-btn {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+  transition: background 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:hover { background: #6d28d9; transform: translateY(-1px); }
+
+  &--following {
+    background: #fff;
+    color: #111827;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-shadow: none;
+    &:hover { background: #f9fafb; transform: none; }
+  }
 }
 
 .profile-follow-btn {
@@ -632,4 +722,73 @@
   font-weight: 600;
   cursor: pointer;
   &:hover { background: #ddd6fe; }
+}
+
+// ─── BackgroundPicker modal ─────────────────────────
+.profile-modal--bg-picker {
+  width: 380px;
+}
+
+.bg-picker-body {
+  padding: 16px 20px 20px;
+}
+
+.bg-picker-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9167e0;
+  margin-bottom: 10px;
+}
+
+.bg-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.bg-picker-swatch {
+  aspect-ratio: 16/9;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+
+  &:hover { transform: scale(1.05); }
+
+  &--active {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.3);
+  }
+}
+
+.bg-picker-upload-btn {
+  width: 100%;
+  padding: 10px 0;
+  border-radius: 100px;
+  border: 1.5px dashed rgba(124, 58, 237, 0.4);
+  background: #faf8ff;
+  color: #5b21b6;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+
+  &:hover { background: #ede9fe; border-color: #7c3aed; }
+}
+
+.bg-picker-reset-btn {
+  width: 100%;
+  padding: 9px 0;
+  border-radius: 100px;
+  border: none;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover { background: #e5e7eb; }
 }

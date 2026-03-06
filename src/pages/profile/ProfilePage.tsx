@@ -9,6 +9,8 @@ import {
   followUser, unfollowUser, getMyLikes, getUserLikes, updateLikesVisibility,
   type UserProfile, type UserListItem, type WorkItem,
 } from '../../services/api';
+import { BackgroundPicker } from './BackgroundPicker';
+import { getBackgroundStyle } from './presets';
 import './ProfilePage.scss';
 
 const fullUrl = (url: string) =>
@@ -73,7 +75,7 @@ function ProfileCardMedia({ videoUrl, coverUrl }: {
   );
 }
 
-/** 粉丝/关注列表弹窗 */
+/** followers/following list modal */
 function UserListModal({
   title,
   users,
@@ -90,11 +92,11 @@ function UserListModal({
       <div className="profile-modal" onClick={(e) => e.stopPropagation()}>
         <div className="profile-modal-header">
           <span className="profile-modal-title">{title}</span>
-          <button type="button" className="profile-modal-close" onClick={onClose}>✕</button>
+          <button type="button" className="profile-modal-close" onClick={onClose}>&#x2715;</button>
         </div>
         <ul className="profile-modal-list">
           {users.length === 0 && (
-            <li className="profile-modal-empty">—</li>
+            <li className="profile-modal-empty">&mdash;</li>
           )}
           {users.map((u) => (
             <li key={u.id} className="profile-modal-item" onClick={() => onUserClick(u.id)}>
@@ -111,13 +113,13 @@ function UserListModal({
 export function ProfilePage() {
   const { userId: userIdParam } = useParams<{ userId?: string }>();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, uploadBackground, removeBackground, setBackground } = useAuth();
   const { openProfileDialog } = useLayout();
   const { t } = useI18n();
   const p = t.seedance.profile;
   const worksT = t.seedance.works;
 
-  // 目标用户 id：有 param 就用 param，否则用自己
+  // target user id: use param if present, otherwise use self
   const targetId = userIdParam ? parseInt(userIdParam) : user?.id ?? null;
   const isMe = !userIdParam || (user != null && parseInt(userIdParam) === user.id);
 
@@ -138,12 +140,14 @@ export function ProfilePage() {
   const [modalUsers, setModalUsers] = useState<UserListItem[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
 
+  const [showBgPicker, setShowBgPicker] = useState(false);
+
   const load = useCallback(async () => {
     if (!targetId) return;
     setLoadingProfile(true);
     try {
       if (isMe && user) {
-        // 自己的主页：用 me/stats 接口获取统计，profile 字段手动填
+        // own profile: use me/stats for statistics, fill profile fields manually
         const [statsRes, worksRes, profileRes] = await Promise.all([
           getMyStats(),
           getWorksList({ userId: user.id, sort: 'newest', limit: 50 }),
@@ -156,6 +160,7 @@ export function ProfilePage() {
           bio: user.bio ?? null,
           location: user.location ?? null,
           website: user.website ?? null,
+          background: user.background ?? null,
           followers: statsRes.data!.followers,
           following: statsRes.data!.following,
           likes_received: statsRes.data!.likes_received,
@@ -179,7 +184,7 @@ export function ProfilePage() {
   }, [targetId, isMe, user]);
 
   useEffect(() => {
-    if (authLoading) return; // 等 token 验证完再加载
+    if (authLoading) return; // wait for token verification before loading
     if (!targetId) {
       if (!authLoading) navigate('/login', { replace: true });
       return;
@@ -187,7 +192,7 @@ export function ProfilePage() {
     load();
   }, [authLoading, targetId, load]);
 
-  // 自己主页时，侧栏修改资料/头像后同步到 profile 显示
+  // sync user changes to profile display when on own profile page
   useEffect(() => {
     if (isMe && profile && user) {
       setProfile(prev => prev ? {
@@ -196,9 +201,10 @@ export function ProfilePage() {
         bio: user.bio ?? null,
         location: user.location ?? null,
         website: user.website ?? null,
+        background: user.background ?? null,
       } : null);
     }
-  }, [isMe, user?.avatar, user?.bio, user?.location, user?.website]);
+  }, [isMe, user?.avatar, user?.bio, user?.location, user?.website, user?.background]);
 
   const openFollowers = async () => {
     if (!targetId) return;
@@ -239,6 +245,32 @@ export function ProfilePage() {
   const handleUserClick = (id: number) => {
     setModal(null);
     navigate(`/profile/${id}`);
+  };
+
+  const handleSelectPreset = async (key: string) => {
+    try {
+      await setBackground(`preset:${key}`);
+      setShowBgPicker(false);
+      Toast.show({ content: p.backgroundUpdated });
+      setProfile(prev => prev ? { ...prev, background: `preset:${key}` } : null);
+    } catch (e) { Toast.show({ icon: 'fail', content: (e as Error).message }); }
+  };
+
+  const handleUploadBackground = async (file: File) => {
+    try {
+      await uploadBackground(file);
+      setShowBgPicker(false);
+      Toast.show({ content: p.backgroundUpdated });
+    } catch (e) { Toast.show({ icon: 'fail', content: (e as Error).message }); }
+  };
+
+  const handleResetBackground = async () => {
+    try {
+      await removeBackground();
+      setShowBgPicker(false);
+      Toast.show({ content: p.backgroundReset });
+      setProfile(prev => prev ? { ...prev, background: null } : null);
+    } catch (e) { Toast.show({ icon: 'fail', content: (e as Error).message }); }
   };
 
   const loadLikes = useCallback(async (page: number) => {
@@ -301,7 +333,7 @@ export function ProfilePage() {
 
   const handleWorkClick = (workId: string) => navigate(`/works/${workId}`);
 
-  // 等 auth loading
+  // wait for auth loading
   if (authLoading) {
     return (
       <div className="profile-page profile-loading">
@@ -310,7 +342,7 @@ export function ProfilePage() {
     );
   }
 
-  // /profile（无 param）但未登录
+  // /profile (no param) but not logged in
   if (!targetId) {
     navigate('/login', { replace: true });
     return null;
@@ -338,7 +370,7 @@ export function ProfilePage() {
 
   return (
     <div className="profile-page">
-      {/* Likes 公开确认弹窗 */}
+      {/* modals */}
       {showLikesConfirm && (
         <div className="profile-modal-overlay" onClick={() => setShowLikesConfirm(false)}>
           <div className="profile-modal profile-likes-confirm" onClick={(e) => e.stopPropagation()}>
@@ -358,7 +390,6 @@ export function ProfilePage() {
           </div>
         </div>
       )}
-      {/* 弹窗 */}
       {modal === 'followers' && (
         <UserListModal
           title={p.followersTitle}
@@ -375,31 +406,52 @@ export function ProfilePage() {
           onUserClick={handleUserClick}
         />
       )}
+
+      {showBgPicker && (
+        <BackgroundPicker
+          currentBackground={profile.background ?? null}
+          onSelectPreset={handleSelectPreset}
+          onUpload={handleUploadBackground}
+          onReset={handleResetBackground}
+          onClose={() => setShowBgPicker(false)}
+        />
+      )}
+
+      <div className="profile-banner" style={getBackgroundStyle(profile.background)}>
+        {isMe && (
+          <button type="button" className="profile-banner-edit" onClick={() => setShowBgPicker(true)}>
+            {p.changeBackground}
+          </button>
+        )}
+      </div>
+
       <div className="profile-hero">
         <div className="profile-hero-top">
-          <div className="profile-avatar">
+          <div className="profile-avatar profile-avatar--banner">
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="profile-avatar-img" />
             ) : (
               <span className="profile-avatar-letter">{avatarLetter}</span>
             )}
           </div>
-          <h1 className="profile-name">{displayName(profile.name)}</h1>
-          {isMe ? (
-            <button type="button" className="profile-edit-btn" onClick={openProfileDialog}>
-              {p.editProfile}
-            </button>
-          ) : (
-            !authLoading && user && (
-              <button
-                type="button"
-                className={`profile-follow-btn${profile.is_following ? ' profile-follow-btn--following' : ''}`}
-                onClick={handleFollow}
-              >
-                {profile.is_following ? worksT.following : worksT.follow}
+          <div className="profile-hero-actions">
+            <h1 className="profile-name">{displayName(profile.name)}</h1>
+            {isMe ? (
+              <button type="button" className="profile-edit-btn" onClick={openProfileDialog}>
+                {p.editProfile}
               </button>
-            )
-          )}
+            ) : (
+              !authLoading && user && (
+                <button
+                  type="button"
+                  className={`profile-follow-btn${profile.is_following ? ' profile-follow-btn--following' : ''}`}
+                  onClick={handleFollow}
+                >
+                  {profile.is_following ? worksT.following : worksT.follow}
+                </button>
+              )
+            )}
+          </div>
         </div>
         <div className="profile-stats">
           <button type="button" className="profile-stat" onClick={openFollowers}>
