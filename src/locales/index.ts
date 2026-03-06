@@ -440,6 +440,7 @@ export const enUS = {
             sendCodeFailed: 'Failed to send verification code',
             registerFailed: 'Registration failed',
             loginFailed: 'Login failed',
+            imageLimitReached: 'Image limit reached, no more can be added',
         },
         date: {
             unknownDate: 'Unknown date',

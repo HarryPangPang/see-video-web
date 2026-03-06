@@ -119,6 +119,46 @@ export function Canvas() {
     if (endInputRef.current) endInputRef.current.value = '';
   };
 
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const imageFiles = Array.from(e.clipboardData.items)
+      .filter(item => item.type.startsWith('image/'))
+      .map(item => item.getAsFile())
+      .filter((f): f is File => f !== null);
+    if (imageFiles.length === 0) return;
+    e.preventDefault();
+
+    if (isOmniMode) {
+      if (omniFrames.length >= 5) {
+        Toast.show({ icon: 'fail', content: $l('seedance.toast.imageLimitReached') });
+        return;
+      }
+      const canAdd = 5 - omniFrames.length;
+      if (imageFiles.length > canAdd) {
+        Toast.show({ icon: 'fail', content: $l('seedance.toast.imageLimitReached') });
+      }
+      const newItems: ImageUploadItem[] = [];
+      for (const file of imageFiles.slice(0, canAdd)) {
+        try { newItems.push(await mockUpload(file)); } catch {}
+      }
+      if (newItems.length) setOmniFrames(prev => [...prev, ...newItems]);
+    } else if (isStartEndMode) {
+      const file = imageFiles[0];
+      if (startFrame.length === 0) {
+        try { setStartFrame([await mockUpload(file)]); } catch {}
+      } else if (endFrame.length === 0) {
+        try { setEndFrame([await mockUpload(file)]); } catch {}
+      } else {
+        Toast.show({ icon: 'fail', content: $l('seedance.toast.imageLimitReached') });
+      }
+    } else {
+      if (startFrame.length >= 1) {
+        Toast.show({ icon: 'fail', content: $l('seedance.toast.imageLimitReached') });
+        return;
+      }
+      try { setStartFrame([await mockUpload(imageFiles[0])]); } catch {}
+    }
+  };
+
   const creationTypeLabel = {
     agent: p.agentMode,
     image: g.creationTypeImage,
@@ -357,7 +397,7 @@ export function Canvas() {
 
       <div>
         <div className="canvas-card-body">
-          <div className="canvas-input-wrapper">
+          <div className="canvas-input-wrapper" onPaste={handlePaste}>
             <TextArea
               value={prompt}
               onChange={setPrompt}
