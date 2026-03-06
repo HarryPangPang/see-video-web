@@ -14,6 +14,8 @@ import { useI18n } from '../context/I18nContext';
 import { LayoutProvider } from '../context/LayoutContext';
 import { Credits } from '../components/Credits';
 import { LoginDialog } from '../components/LoginDialog';
+import { NotificationBell, NotificationsPanel } from '../components/NotificationsPanel';
+import { getNotificationUnreadCount } from '../services/api';
 import dazeitLogo from '../assets/logo.png';
 import './MainLayout.scss';
 
@@ -44,6 +46,25 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [pendingAvatar, setPendingAvatar] = useState<File | 'reset' | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const notificationBellRef = useRef<HTMLButtonElement>(null);
+  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
+  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
+
+  const fetchNotificationUnreadCount = React.useCallback(async () => {
+    try {
+      const res = await getNotificationUnreadCount();
+      if (res.success && res.data) setNotificationUnreadCount(res.data.count);
+    } catch {
+      setNotificationUnreadCount(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchNotificationUnreadCount();
+    const interval = setInterval(fetchNotificationUnreadCount, 60000);
+    return () => clearInterval(interval);
+  }, [user, fetchNotificationUnreadCount]);
 
   const fullUrl = (path: string) => (path?.startsWith('http') ? path : `${window.location.origin}${path || ''}`);
 
@@ -331,9 +352,28 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </button>
 
           <div className="sidebar-footer">
-            <Credits />
-
-            <div className="sidebar-user" ref={userMenuRef}>
+            <div className="sidebar-footer-card">
+              <div className="sidebar-footer-card-credits">
+                <Credits />
+              </div>
+              <div className="sidebar-footer-card-actions">
+                {user && (
+                  <div className="sidebar-notifications-wrap">
+                    <NotificationBell
+                      ref={notificationBellRef}
+                      isOpen={notificationPanelOpen}
+                      unreadCount={notificationUnreadCount}
+                      onClick={() => setNotificationPanelOpen((v) => !v)}
+                    />
+                    <NotificationsPanel
+                      isOpen={notificationPanelOpen}
+                      onClose={() => setNotificationPanelOpen(false)}
+                      anchorRef={notificationBellRef}
+                      onMarkedRead={fetchNotificationUnreadCount}
+                    />
+                  </div>
+                )}
+                <div className="sidebar-user" ref={userMenuRef}>
               {user ? (
                 <>
                   <button
@@ -389,6 +429,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   <span className="sidebar-login-text">{layout.login}</span>
                 </button>
               )}
+                </div>
+              </div>
             </div>
 
             <div className="sidebar-legal sidebar-legal--mobile">
