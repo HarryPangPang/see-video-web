@@ -599,6 +599,12 @@ export const enUS = {
             noLikes: 'No liked videos yet.',
             loadMore: 'Load more',
             noMore: 'All loaded',
+            likesPublicOn: 'Public',
+            likesPublicOff: 'Private',
+            likesPublicConfirmTitle: 'Make Likes Public?',
+            likesPublicConfirmDesc: 'Your liked videos will be visible to everyone who visits your profile. You can turn this off anytime.',
+            likesPublicConfirmBtn: 'Make Public',
+            likesPublicCancelBtn: 'Cancel',
         },
         assetDetail: {
             back: '← Back to Assets',

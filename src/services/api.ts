@@ -627,6 +627,7 @@ export interface UserProfile {
   following: number;
   likes_received: number;
   is_following: boolean;
+  likes_public: number;
 }
 
 export interface UserListItem {
@@ -649,6 +650,27 @@ export async function getMyLikes(page = 1, limit = 20): Promise<ApiResponse<{ li
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   const response = await fetch(`${API_BASE_URL}/users/me/likes?${params}`, {
     headers: { Authorization: `Bearer ${token}` },
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Failed');
+  return result;
+}
+
+export async function getUserLikes(userId: number, page = 1, limit = 20): Promise<ApiResponse<{ list: WorkItem[]; total: number; hasMore: boolean }>> {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/likes?${params}`);
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Failed');
+  return result;
+}
+
+export async function updateLikesVisibility(isPublic: boolean): Promise<ApiResponse<unknown>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/user/likes-visibility`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ likes_public: isPublic ? 1 : 0 }),
   });
   const result = await response.json();
   if (!response.ok || !result.success) throw new Error(result.message || 'Failed');

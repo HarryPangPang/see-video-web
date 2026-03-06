@@ -179,6 +179,100 @@
   }
 }
 
+// ─── Likes tab eye toggle ────────────────────────────
+.profile-tab-likes-wrap {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.profile-tab-eye {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: #c4b5fd;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.18s ease, background 0.18s ease;
+  flex-shrink: 0;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+  }
+
+  &:hover:not(:disabled) {
+    color: #7c3aed;
+    background: #f5f0ff;
+  }
+
+  &--open {
+    color: #7c3aed;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+// ─── Likes confirm modal ─────────────────────────────
+.profile-likes-confirm {
+  width: 360px;
+  padding-bottom: 20px;
+}
+
+.profile-likes-confirm-desc {
+  margin: 0;
+  padding: 14px 20px 20px;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.profile-likes-confirm-actions {
+  display: flex;
+  gap: 10px;
+  padding: 0 20px;
+}
+
+.profile-likes-confirm-cancel {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 100px;
+  border: none;
+  background: #ede9fe;
+  color: #5b21b6;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover { background: #ddd6fe; }
+}
+
+.profile-likes-confirm-ok {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 100px;
+  border: none;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+  transition: background 0.2s ease;
+
+  &:hover { background: #6d28d9; }
+}
+
 // ─── Load more ──────────────────────────────────────
 .profile-load-more {
   display: flex;

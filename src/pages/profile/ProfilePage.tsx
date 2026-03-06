@@ -6,7 +6,7 @@ import { useI18n } from '../../context/I18nContext';
 import { useLayout } from '../../context/LayoutContext';
 import {
   getUserProfile, getMyStats, getWorksList, getUserFollowers, getUserFollowing,
-  followUser, unfollowUser, getMyLikes,
+  followUser, unfollowUser, getMyLikes, getUserLikes, updateLikesVisibility,
   type UserProfile, type UserListItem, type WorkItem,
 } from '../../services/api';
 import './ProfilePage.scss';
@@ -131,6 +131,8 @@ export function ProfilePage() {
   const [likesHasMore, setLikesHasMore] = useState(false);
   const [likesLoading, setLikesLoading] = useState(false);
   const [likesLoaded, setLikesLoaded] = useState(false);
+  const [showLikesConfirm, setShowLikesConfirm] = useState(false);
+  const [likesVisibilityLoading, setLikesVisibilityLoading] = useState(false);
 
   const [modal, setModal] = useState<'followers' | 'following' | 'edit' | null>(null);
   const [modalUsers, setModalUsers] = useState<UserListItem[]>([]);
@@ -142,9 +144,10 @@ export function ProfilePage() {
     try {
       if (isMe && user) {
         // 自己的主页：用 me/stats 接口获取统计，profile 字段手动填
-        const [statsRes, worksRes] = await Promise.all([
+        const [statsRes, worksRes, profileRes] = await Promise.all([
           getMyStats(),
           getWorksList({ userId: user.id, sort: 'newest', limit: 50 }),
+          getUserProfile(user.id),
         ]);
         setProfile({
           id: user.id,
@@ -157,6 +160,7 @@ export function ProfilePage() {
           following: statsRes.data!.following,
           likes_received: statsRes.data!.likes_received,
           is_following: false,
+          likes_public: profileRes.data?.likes_public ?? 0,
         });
         setWorks(worksRes.data?.list ?? []);
       } else {
@@ -240,7 +244,9 @@ export function ProfilePage() {
   const loadLikes = useCallback(async (page: number) => {
     setLikesLoading(true);
     try {
-      const res = await getMyLikes(page, 20);
+      const res = isMe
+        ? await getMyLikes(page, 20)
+        : await getUserLikes(targetId!, page, 20);
       const incoming = res.data?.list ?? [];
       setLikes(prev => page === 1 ? incoming : [...prev, ...incoming]);
       setLikesHasMore(res.data?.hasMore ?? false);
@@ -251,7 +257,40 @@ export function ProfilePage() {
     } finally {
       setLikesLoading(false);
     }
-  }, []);
+  }, [isMe, targetId]);
+
+  const handleLikesVisibilityToggle = async () => {
+    if (!profile) return;
+    const currentlyPublic = profile.likes_public === 1;
+    if (currentlyPublic) {
+      // 直接关闭，无需确认
+      setLikesVisibilityLoading(true);
+      try {
+        await updateLikesVisibility(false);
+        setProfile(prev => prev ? { ...prev, likes_public: 0 } : null);
+      } catch (e) {
+        Toast.show({ icon: 'fail', content: (e as Error).message });
+      } finally {
+        setLikesVisibilityLoading(false);
+      }
+    } else {
+      // 打开公开需要二次确认
+      setShowLikesConfirm(true);
+    }
+  };
+
+  const confirmLikesPublic = async () => {
+    setShowLikesConfirm(false);
+    setLikesVisibilityLoading(true);
+    try {
+      await updateLikesVisibility(true);
+      setProfile(prev => prev ? { ...prev, likes_public: 1 } : null);
+    } catch (e) {
+      Toast.show({ icon: 'fail', content: (e as Error).message });
+    } finally {
+      setLikesVisibilityLoading(false);
+    }
+  };
 
   const handleTabChange = (tab: 'works' | 'likes') => {
     setActiveTab(tab);
@@ -299,6 +338,26 @@ export function ProfilePage() {
 
   return (
     <div className="profile-page">
+      {/* Likes 公开确认弹窗 */}
+      {showLikesConfirm && (
+        <div className="profile-modal-overlay" onClick={() => setShowLikesConfirm(false)}>
+          <div className="profile-modal profile-likes-confirm" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-modal-header">
+              <span className="profile-modal-title">{p.likesPublicConfirmTitle}</span>
+              <button type="button" className="profile-modal-close" onClick={() => setShowLikesConfirm(false)}>✕</button>
+            </div>
+            <p className="profile-likes-confirm-desc">{p.likesPublicConfirmDesc}</p>
+            <div className="profile-likes-confirm-actions">
+              <button type="button" className="profile-likes-confirm-cancel" onClick={() => setShowLikesConfirm(false)}>
+                {p.likesPublicCancelBtn}
+              </button>
+              <button type="button" className="profile-likes-confirm-ok" onClick={confirmLikesPublic}>
+                {p.likesPublicConfirmBtn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* 弹窗 */}
       {modal === 'followers' && (
         <UserListModal
@@ -382,14 +441,38 @@ export function ProfilePage() {
           >
             {p.tabWorks}
           </button>
-          {isMe && (
-            <button
-              type="button"
-              className={`profile-tab${activeTab === 'likes' ? ' profile-tab--active' : ''}`}
-              onClick={() => handleTabChange('likes')}
-            >
-              {p.tabLikes}
-            </button>
+          {(isMe || profile.likes_public === 1) && (
+            <div className="profile-tab-likes-wrap">
+              <button
+                type="button"
+                className={`profile-tab${activeTab === 'likes' ? ' profile-tab--active' : ''}`}
+                onClick={() => handleTabChange('likes')}
+              >
+                {p.tabLikes}
+              </button>
+              {isMe && (
+                <button
+                  type="button"
+                  className={`profile-tab-eye${profile.likes_public === 1 ? ' profile-tab-eye--open' : ''}`}
+                  onClick={handleLikesVisibilityToggle}
+                  disabled={likesVisibilityLoading}
+                  title={profile.likes_public === 1 ? p.likesPublicOn : p.likesPublicOff}
+                >
+                  {profile.likes_public === 1 ? (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  )}
+                </button>
+              )}
+            </div>
           )}
         </div>
 
