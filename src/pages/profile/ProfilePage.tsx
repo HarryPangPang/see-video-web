@@ -379,14 +379,9 @@ export function ProfilePage() {
           <div className="profile-hero-actions">
             <h1 className="profile-name">{displayName(profile.name)}</h1>
             {isMe ? (
-              <>
-                <button type="button" className="profile-edit-btn" onClick={openProfileDialog}>
-                  {p.editProfile}
-                </button>
-                <button type="button" className="profile-edit-banner-btn" onClick={() => setShowBgPicker(true)}>
-                  {p.editBanner}
-                </button>
-              </>
+              <button type="button" className="profile-edit-btn" onClick={openProfileDialog}>
+                {p.editProfile}
+              </button>
             ) : (
               !authLoading && user && (
                 <button

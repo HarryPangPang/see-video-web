@@ -600,7 +600,6 @@ export const enUS = {
             loadMore: 'Load more',
             noMore: 'All loaded',
             changeBackground: 'Change Background',
-            editBanner: 'Edit Banner',
             backgroundPickerTitle: 'Choose Background',
             presetGradients: 'Preset Gradients',
             uploadCustom: 'Upload Custom Image',

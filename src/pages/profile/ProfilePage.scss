@@ -139,29 +139,17 @@
   min-width: 0;
 }
 
-.profile-edit-btn,
-.profile-edit-banner-btn {
+.profile-edit-btn {
   padding: 6px 16px;
   border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: #fff;
+  color: #111827;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.profile-edit-btn {
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  background: #fff;
-  color: #111827;
-
-  &:hover { background: #f9fafb; }
-}
-
-.profile-edit-banner-btn {
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  background: #fff;
-  color: #111827;
 
   &:hover { background: #f9fafb; }
 }
