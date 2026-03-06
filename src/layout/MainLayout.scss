@@ -18,7 +18,7 @@
   flex-direction: column;
   background: #f8f7ff;
   border-right: 1px solid rgba(124, 58, 237, 0.1);
-  overflow: hidden;
+  overflow: visible;
 }
 
 // 桌面端：sidebar-top 不参与布局，子元素直接作为 sidebar 的 flex 子项，用 order 保证顺序为 brand → nav → footer
@@ -165,14 +165,15 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  overflow: visible;
 }
 
-// 底部一张卡片：积分区 + 操作行（铃铛 + 用户）
+// 底部一张卡片：积分区 + 操作行（铃铛 + 用户），overflow: visible 避免用户下拉被裁掉
 .sidebar-footer-card {
   background: linear-gradient(168deg, #faf8ff 0%, #f3eeff 100%);
   border: 1px solid rgba(124, 58, 237, 0.12);
   border-radius: 16px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 2px 16px rgba(124, 58, 237, 0.06);
 }
 
@@ -328,7 +329,7 @@
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(124, 58, 237, 0.18);
   padding: 8px;
-  z-index: 100;
+  z-index: 1100;
   animation: sidebarDropdownIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -523,7 +524,9 @@
   border-radius: 16px;
   padding: 22px 24px;
   width: 100%;
-  max-width: 340px;
+  max-width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
   border: 1px solid rgba(124, 58, 237, 0.2);
   box-shadow: 0 8px 32px rgba(124, 58, 237, 0.12);
 }
