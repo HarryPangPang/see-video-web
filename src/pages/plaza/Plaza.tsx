@@ -213,7 +213,7 @@ export function Plaza() {
   // IntersectionObserver 监听哨兵元素，有更多数据时自动加载（foryou/newest/likes）
   useEffect(() => {
     if (sort === 'following') return;
-    if (!hasMore || loading) return;
+    if (!hasMore || loading || loadingMore) return;
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
     const observer = new IntersectionObserver(
@@ -222,12 +222,12 @@ export function Plaza() {
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [sort, hasMore, loading]);
+  }, [sort, hasMore, loading, loadingMore]);
 
   // IntersectionObserver 监听哨兵元素（following）
   useEffect(() => {
     if (sort !== 'following') return;
-    if (!followingHasMore || followingLoading) return;
+    if (!followingHasMore || followingLoading || followingLoadingMore) return;
     const sentinel = followingSentinelRef.current;
     if (!sentinel) return;
     const observer = new IntersectionObserver(
@@ -236,7 +236,7 @@ export function Plaza() {
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [sort, followingHasMore, followingLoading]);
+  }, [sort, followingHasMore, followingLoading, followingLoadingMore]);
 
   // 点击外部关闭卡片菜单
   useEffect(() => {
