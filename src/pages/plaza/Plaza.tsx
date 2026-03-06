@@ -11,8 +11,8 @@ type SortType = 'foryou' | 'newest' | 'likes' | 'following';
 
 // For You 列表模块级缓存（跨 tab 切换保持内容稳定，5 分钟 TTL）
 const FORYOU_CACHE_TTL = 5 * 60 * 1000;
-const foryouCache: { list: WorkItem[]; total: number; timestamp: number } = {
-  list: [], total: 0, timestamp: 0,
+const foryouCache: { list: WorkItem[]; seed: number | null; page: number; hasMore: boolean; timestamp: number } = {
+  list: [], seed: null, page: 1, hasMore: false, timestamp: 0,
 };
 
 /** 胖胖的实心爱心 SVG，与卡片点赞数同用 currentColor */
@@ -118,16 +118,28 @@ export function Plaza() {
   const [followingLoading, setFollowingLoading] = useState(false);
   const [followingLoadingMore, setFollowingLoadingMore] = useState(false);
 
+  const foryouSeedRef = useRef<number | null>(null);
+
   const fetchPage = useCallback(async (params: WorksListParams, forceRefresh = false, append = false) => {
+    if (params.sort === 'foryou' && forceRefresh) {
+      foryouSeedRef.current = null; // 强制刷新时重置 seed，拿到全新顺序
+    }
     if (params.sort === 'foryou' && !forceRefresh) {
       const age = Date.now() - foryouCache.timestamp;
       if (age < FORYOU_CACHE_TTL && foryouCache.list.length > 0) {
         setList([...foryouCache.list]);
+        setHasMore(foryouCache.hasMore);
+        setPage(foryouCache.page);
+        foryouSeedRef.current = foryouCache.seed;
         return;
       }
     }
+    // foryou 追加时带上当前 seed，保证分页顺序稳定
+    const requestParams = (params.sort === 'foryou' && foryouSeedRef.current !== null)
+      ? { ...params, seed: foryouSeedRef.current }
+      : params;
     try {
-      const res = await getWorksList(params);
+      const res = await getWorksList(requestParams);
       if (res.data) {
         if (append) {
           setList(prev => [...prev, ...res.data!.list]);
@@ -136,15 +148,18 @@ export function Plaza() {
         }
         setHasMore(!!res.data.hasMore);
         if (params.sort === 'foryou') {
-          foryouCache.list = res.data.list;
-          foryouCache.total = res.data.total;
+          if (res.data.seed !== undefined) foryouSeedRef.current = res.data.seed;
+          foryouCache.list = append ? [...foryouCache.list, ...res.data.list] : res.data.list;
+          foryouCache.seed = foryouSeedRef.current;
+          foryouCache.page = params.page ?? 1;
+          foryouCache.hasMore = !!res.data.hasMore;
           foryouCache.timestamp = Date.now();
         }
       }
     } catch (e) {
       Toast.show({ content: (e as Error).message, icon: 'fail' });
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchFollowingPage = useCallback(async (pg: number) => {
     const isFirst = pg === 1;
@@ -195,9 +210,9 @@ export function Plaza() {
     };
   });
 
-  // IntersectionObserver 监听哨兵元素，有更多数据时自动加载（newest/likes）
+  // IntersectionObserver 监听哨兵元素，有更多数据时自动加载（foryou/newest/likes）
   useEffect(() => {
-    if (sort === 'foryou' || sort === 'following') return;
+    if (sort === 'following') return;
     if (!hasMore || loading) return;
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
@@ -548,31 +563,32 @@ export function Plaza() {
             ); })}
           </div>
 
-          {sort === 'foryou' && list.length >= PAGE_SIZE && (
-            <div className="plaza-refresh-bar">
-              <button
-                type="button"
-                className={`plaza-refresh-btn${transitioning ? ' plaza-refresh-btn--spinning' : ''}`}
-                onClick={async () => {
-                  if (transitioning) return;
-                  setTransitioning(true);
-                  await fetchPage({ sort: 'foryou', page: 1, limit: PAGE_SIZE }, true);
-                  setTransitioning(false);
-                }}
-                disabled={transitioning}
-              >
-                <span className="plaza-refresh-icon">↻</span>
-                {p.refreshFeed}
-              </button>
-            </div>
-          )}
-          {sort !== 'foryou' && (
-            <div className="plaza-load-more">
-              {loadingMore && <DotLoading color="primary" />}
-              {!hasMore && list.length > 0 && <span className="plaza-no-more">{p.noMore}</span>}
-              <div ref={sentinelRef} />
-            </div>
-          )}
+          <div className="plaza-load-more">
+            {loadingMore && <DotLoading color="primary" />}
+            {!hasMore && list.length > 0 && (
+              sort === 'foryou' ? (
+                <button
+                  type="button"
+                  className={`plaza-refresh-btn${transitioning ? ' plaza-refresh-btn--spinning' : ''}`}
+                  onClick={async () => {
+                    if (transitioning) return;
+                    setTransitioning(true);
+                    setList([]);
+                    setPage(1);
+                    await fetchPage({ sort: 'foryou', page: 1, limit: PAGE_SIZE }, true);
+                    setTransitioning(false);
+                  }}
+                  disabled={transitioning}
+                >
+                  <span className="plaza-refresh-icon">↻</span>
+                  {p.refreshFeed}
+                </button>
+              ) : (
+                <span className="plaza-no-more">{p.noMore}</span>
+              )
+            )}
+            <div ref={sentinelRef} />
+          </div>
         </div>
       )}
 

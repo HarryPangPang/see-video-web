@@ -459,12 +459,14 @@ export interface WorksListParams {
   source?: 'jimeng' | 'upload';
   isPrivate?: boolean;
   userId?: number;
+  seed?: number;
 }
 
 export interface WorksListData {
   list: WorkItem[];
   total: number;
   hasMore: boolean;
+  seed?: number;
 }
 
 export async function getWorksList(params?: WorksListParams): Promise<ApiResponse<WorksListData>> {
@@ -476,6 +478,7 @@ export async function getWorksList(params?: WorksListParams): Promise<ApiRespons
   if (params?.source) qs.set('source', params.source);
   if (params?.isPrivate !== undefined) qs.set('isPrivate', String(params.isPrivate));
   if (params?.userId !== undefined) qs.set('userId', String(params.userId));
+  if (params?.seed !== undefined) qs.set('seed', String(params.seed));
   const query = qs.toString() ? `?${qs}` : '';
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
   const headers: Record<string, string> = {};
