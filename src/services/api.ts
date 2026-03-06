@@ -287,6 +287,65 @@ export async function getReferralCommissions(limit?: number, offset?: number): P
   return result;
 }
 
+// ========== 消息通知 ==========
+
+export type NotificationType = 'like' | 'comment' | 'follow';
+
+export interface NotificationItem {
+  id: number;
+  type: NotificationType;
+  actor_id: number;
+  actor_username: string | null;
+  actor_avatar: string | null;
+  related_id: string | null;
+  extra: string | null;
+  work_title: string | null;
+  read: number;
+  created_at: number;
+}
+
+export async function getNotifications(type?: NotificationType | null, limit?: number, offset?: number): Promise<ApiResponse<{ list: NotificationItem[]; total: number }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const params = new URLSearchParams();
+  if (type) params.set('type', type);
+  if (limit != null) params.set('limit', String(limit));
+  if (offset != null) params.set('offset', String(offset));
+  const response = await fetch(`${API_BASE_URL}/notifications?${params}`, { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Failed to get notifications');
+  return result;
+}
+
+export async function getNotificationUnreadCount(type?: NotificationType | null): Promise<ApiResponse<{ count: number }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const params = type ? `?type=${type}` : '';
+  const response = await fetch(`${API_BASE_URL}/notifications/unread-count${params}`, { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Failed to get unread count');
+  return result;
+}
+
+export async function markNotificationRead(id: number): Promise<ApiResponse<void>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/notifications/${id}/read`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Failed to mark read');
+  return result;
+}
+
+export async function markAllNotificationsRead(type?: NotificationType | null): Promise<ApiResponse<void>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const params = type ? `?type=${type}` : '';
+  const response = await fetch(`${API_BASE_URL}/notifications/read-all${params}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Failed to mark all read');
+  return result;
+}
+
 // 获取所有视频列表
 
 export async function getList(taskId: string): Promise<ApiResponse> {

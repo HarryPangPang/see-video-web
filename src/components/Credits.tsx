@@ -52,8 +52,9 @@ export const Credits: React.FC = () => {
           type="button"
           className="credits-recharge-btn"
           onClick={() => setRechargeDialogVisible(true)}
+          title={c.recharge}
         >
-          {c.recharge}
+          {'rechargeShort' in c && c.rechargeShort ? c.rechargeShort : c.recharge}
         </button>
       </div>
     </>
