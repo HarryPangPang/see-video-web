@@ -124,7 +124,7 @@ export function Plaza() {
     if (params.sort === 'foryou' && forceRefresh) {
       foryouSeedRef.current = null; // 强制刷新时重置 seed，拿到全新顺序
     }
-    if (params.sort === 'foryou' && !forceRefresh) {
+    if (params.sort === 'foryou' && !forceRefresh && !append) {
       const age = Date.now() - foryouCache.timestamp;
       if (age < FORYOU_CACHE_TTL && foryouCache.list.length > 0) {
         setList([...foryouCache.list]);
