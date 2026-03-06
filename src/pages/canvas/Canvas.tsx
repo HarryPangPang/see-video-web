@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useI18n } from '../../context/I18nContext';
 import { useNavigate } from 'react-router-dom';
-import { Button, TextArea, ImageUploader, Toast } from 'antd-mobile';
+import { Button, TextArea, Toast } from 'antd-mobile';
 import type { ImageUploadItem } from 'antd-mobile/es/components/image-uploader';
 import { createGeneration, fileToBase64, getCreditsBalance, type CreateGenerationRequest } from '../../services/api';
 import { RechargeDialog } from '../../components/RechargeDialog';
@@ -82,6 +82,9 @@ export function Canvas() {
   const frameModeRef = useRef<HTMLDivElement>(null);
   const ratioRef = useRef<HTMLDivElement>(null);
   const durationRef = useRef<HTMLDivElement>(null);
+  const omniInputRef = useRef<HTMLInputElement>(null);
+  const startInputRef = useRef<HTMLInputElement>(null);
+  const endInputRef = useRef<HTMLInputElement>(null);
 
   const mockUpload = (file: File): Promise<ImageUploadItem> =>
     new Promise((resolve, reject) => {
@@ -92,6 +95,28 @@ export function Canvas() {
       }
       setTimeout(() => resolve({ url: URL.createObjectURL(file) }), 300);
     });
+
+  const handleOmniFiles = async (files: FileList | null) => {
+    if (!files) return;
+    const newItems: ImageUploadItem[] = [];
+    for (const file of Array.from(files)) {
+      try { newItems.push(await mockUpload(file)); } catch {}
+    }
+    if (newItems.length) setOmniFrames(prev => [...prev, ...newItems].slice(0, 5));
+    if (omniInputRef.current) omniInputRef.current.value = '';
+  };
+
+  const handleStartFile = async (files: FileList | null) => {
+    if (!files?.[0]) return;
+    try { setStartFrame([await mockUpload(files[0])]); } catch {}
+    if (startInputRef.current) startInputRef.current.value = '';
+  };
+
+  const handleEndFile = async (files: FileList | null) => {
+    if (!files?.[0]) return;
+    try { setEndFrame([await mockUpload(files[0])]); } catch {}
+    if (endInputRef.current) endInputRef.current.value = '';
+  };
 
   const creationTypeLabel = {
     agent: p.agentMode,
@@ -325,89 +350,68 @@ export function Canvas() {
 
       <div>
         <div className="canvas-card-body">
-          <div className="canvas-frames-col">
-            {isOmniMode ? (
-              // 全能参考模式：支持1-5张图片多选，平铺展示
-              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div className="canvas-frame-box-omni">
-                  <ImageUploader
-                    value={omniFrames}
-                    onChange={setOmniFrames}
-                    upload={mockUpload}
-                    maxCount={5}
-                    accept="image/*"
-                    className="canvas-frame-uploader"
-                    multiple
-                    style={{
-                      '--cell-size': '120px',
-                      '--gap-horizontal': '12px',
-                      '--gap-vertical': '12px',
-                    }}
-                  >
-                    <div className="canvas-frame-placeholder">
-                      <span className="canvas-frame-plus">+</span>
-                      <span className="canvas-frame-label">{g.uploadReferenceImages}</span>
-                    </div>
-                  </ImageUploader>
-                </div>
-                {omniFrames.length > 0 && (
-                  <div className="canvas-omni-count">
-                    {g.uploadedCount.replace('{count}', omniFrames.length.toString())}
-                  </div>
-                )}
-              </div>
-            ) : (
-              // 起始帧+结束帧模式
-              <>
-                <div className="canvas-frame-box">
-                  <ImageUploader
-                    value={startFrame}
-                    onChange={setStartFrame}
-                    upload={mockUpload}
-                    maxCount={1}
-                    accept="image/*"
-                    className="canvas-frame-uploader"
-                  >
-                    <div className="canvas-frame-placeholder">
-                      <span className="canvas-frame-plus">+</span>
-                      <span className="canvas-frame-label">{g.startFrame}</span>
-                    </div>
-                  </ImageUploader>
-                </div>
-                {isStartEndMode && (
-                  <>
-                    <div className="canvas-frames-arrow">
-                      +
-                    </div>
-                    <div className="canvas-frame-box">
-                      <ImageUploader
-                        value={endFrame}
-                        onChange={setEndFrame}
-                        upload={mockUpload}
-                        maxCount={1}
-                        accept="image/*"
-                        className="canvas-frame-uploader"
-                      >
-                        <div className="canvas-frame-placeholder">
-                          <span className="canvas-frame-plus">+</span>
-                          <span className="canvas-frame-label">{g.endFrame}</span>
-                        </div>
-                      </ImageUploader>
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-          <div className="canvas-prompt-col">
+          <div className="canvas-input-wrapper">
             <TextArea
               value={prompt}
               onChange={setPrompt}
               placeholder={g.promptPlaceholder}
-              rows={6}
               className="canvas-prompt-input"
               autoSize={{ minRows: 5, maxRows: 10 }}
             />
+            <div className="canvas-attachments-bar">
+              {/* Omni 模式缩略图 */}
+              {isOmniMode && omniFrames.map((frame, index) => (
+                <div key={index} className="canvas-attachment-thumb">
+                  <img src={frame.url} alt="" className="canvas-attachment-img" />
+                  <button
+                    type="button"
+                    className="canvas-attachment-remove"
+                    onClick={() => setOmniFrames(prev => prev.filter((_, i) => i !== index))}
+                  >×</button>
+                </div>
+              ))}
+              {/* StartEnd 模式缩略图 */}
+              {!isOmniMode && startFrame.length > 0 && (
+                <div className="canvas-attachment-thumb">
+                  <img src={startFrame[0].url} alt="" className="canvas-attachment-img" />
+                  <span className="canvas-attachment-badge">{g.startFrame}</span>
+                  <button type="button" className="canvas-attachment-remove" onClick={() => setStartFrame([])}>×</button>
+                </div>
+              )}
+              {!isOmniMode && isStartEndMode && endFrame.length > 0 && (
+                <div className="canvas-attachment-thumb">
+                  <img src={endFrame[0].url} alt="" className="canvas-attachment-img" />
+                  <span className="canvas-attachment-badge">{g.endFrame}</span>
+                  <button type="button" className="canvas-attachment-remove" onClick={() => setEndFrame([])}>×</button>
+                </div>
+              )}
+              {/* 上传触发按钮 */}
+              {isOmniMode && omniFrames.length === 0 && (
+                <button type="button" className="canvas-attach-btn" onClick={() => omniInputRef.current?.click()}>
+                  <span className="canvas-attach-icon">📎</span>
+                  <span>{g.uploadReferenceImages}</span>
+                </button>
+              )}
+              {isOmniMode && omniFrames.length > 0 && omniFrames.length < 5 && (
+                <button type="button" className="canvas-attach-add" onClick={() => omniInputRef.current?.click()}>+</button>
+              )}
+              {!isOmniMode && startFrame.length === 0 && (
+                <button type="button" className="canvas-attach-btn" onClick={() => startInputRef.current?.click()}>
+                  <span className="canvas-attach-icon">📎</span>
+                  <span>{g.startFrame}</span>
+                </button>
+              )}
+              {!isOmniMode && isStartEndMode && startFrame.length > 0 && endFrame.length === 0 && (
+                <button type="button" className="canvas-attach-btn" onClick={() => endInputRef.current?.click()}>
+                  <span className="canvas-attach-icon">📎</span>
+                  <span>{g.endFrame}</span>
+                </button>
+              )}
+              {/* 隐藏的文件输入 */}
+              <input ref={omniInputRef} type="file" accept="image/*" multiple hidden onChange={(e) => handleOmniFiles(e.target.files)} />
+              <input ref={startInputRef} type="file" accept="image/*" hidden onChange={(e) => handleStartFile(e.target.files)} />
+              <input ref={endInputRef} type="file" accept="image/*" hidden onChange={(e) => handleEndFile(e.target.files)} />
+            </div>
           </div>
         </div>
         <div className="canvas-card-options">
