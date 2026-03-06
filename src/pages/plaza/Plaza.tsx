@@ -97,14 +97,19 @@ export function Plaza() {
   const [sort, setSort] = useState<SortType>('foryou');
   const [list, setList] = useState<WorkItem[]>([]);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [loginVisible, setLoginVisible] = useState(false);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const menuRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const loadMoreCallbackRef = useRef<() => void>(() => {});
+  const followingSentinelRef = useRef<HTMLDivElement>(null);
+  const followingLoadMoreCallbackRef = useRef<() => void>(() => {});
 
   // Following feed state
   const [followingList, setFollowingList] = useState<WorkItem[]>([]);
@@ -113,22 +118,23 @@ export function Plaza() {
   const [followingLoading, setFollowingLoading] = useState(false);
   const [followingLoadingMore, setFollowingLoadingMore] = useState(false);
 
-  const totalPages = total > 0 ? Math.ceil(total / PAGE_SIZE) : 1;
-
-  const fetchPage = useCallback(async (params: WorksListParams, forceRefresh = false) => {
+  const fetchPage = useCallback(async (params: WorksListParams, forceRefresh = false, append = false) => {
     if (params.sort === 'foryou' && !forceRefresh) {
       const age = Date.now() - foryouCache.timestamp;
       if (age < FORYOU_CACHE_TTL && foryouCache.list.length > 0) {
         setList([...foryouCache.list]);
-        setTotal(foryouCache.total);
         return;
       }
     }
     try {
       const res = await getWorksList(params);
       if (res.data) {
-        setList(res.data.list);
-        setTotal(res.data.total);
+        if (append) {
+          setList(prev => [...prev, ...res.data!.list]);
+        } else {
+          setList(res.data.list);
+        }
+        setHasMore(!!res.data.hasMore);
         if (params.sort === 'foryou') {
           foryouCache.list = res.data.list;
           foryouCache.total = res.data.total;
@@ -163,15 +169,59 @@ export function Plaza() {
       fetchFollowingPage(1);
       return;
     }
+    setList([]);
     setPage(1);
-    if (list.length === 0) {
-      setLoading(true);
-      fetchPage({ sort, page: 1, limit: PAGE_SIZE }).finally(() => setLoading(false));
-    } else {
-      setTransitioning(true);
-      fetchPage({ sort, page: 1, limit: PAGE_SIZE }).finally(() => setTransitioning(false));
-    }
+    setHasMore(false);
+    setLoadingMore(false);
+    setLoading(true);
+    fetchPage({ sort, page: 1, limit: PAGE_SIZE }).finally(() => setLoading(false));
   }, [sort]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // loadMore 函数（newest/likes 下拉加载下一页）
+  const loadMore = useCallback(async () => {
+    if (!hasMore || loadingMore) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    await fetchPage({ sort, page: nextPage, limit: PAGE_SIZE }, false, true);
+    setPage(nextPage);
+    setLoadingMore(false);
+  }, [hasMore, loadingMore, page, sort, fetchPage]);
+
+  // 始终保持 ref 指向最新 loadMore，避免 IntersectionObserver 内闭包过期
+  useEffect(() => { loadMoreCallbackRef.current = loadMore; });
+  useEffect(() => {
+    followingLoadMoreCallbackRef.current = () => {
+      if (followingHasMore && !followingLoadingMore) fetchFollowingPage(followingPage + 1);
+    };
+  });
+
+  // IntersectionObserver 监听哨兵元素，有更多数据时自动加载（newest/likes）
+  useEffect(() => {
+    if (sort === 'foryou' || sort === 'following') return;
+    if (!hasMore || loading) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMoreCallbackRef.current(); },
+      { rootMargin: '200px' }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [sort, hasMore, loading]);
+
+  // IntersectionObserver 监听哨兵元素（following）
+  useEffect(() => {
+    if (sort !== 'following') return;
+    if (!followingHasMore || followingLoading) return;
+    const sentinel = followingSentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) followingLoadMoreCallbackRef.current(); },
+      { rootMargin: '200px' }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [sort, followingHasMore, followingLoading]);
 
   // 点击外部关闭卡片菜单
   useEffect(() => {
@@ -186,24 +236,6 @@ export function Plaza() {
 
   const handleTabChange = (key: SortType) => {
     if (key !== sort) setSort(key);
-  };
-
-  const handlePrevPage = async () => {
-    if (page <= 1 || transitioning) return;
-    const prevPage = page - 1;
-    setTransitioning(true);
-    await fetchPage({ sort, page: prevPage, limit: PAGE_SIZE });
-    setPage(prevPage);
-    setTransitioning(false);
-  };
-
-  const handleNextPage = async () => {
-    if (page >= totalPages || transitioning) return;
-    const nextPage = page + 1;
-    setTransitioning(true);
-    await fetchPage({ sort, page: nextPage, limit: PAGE_SIZE });
-    setPage(nextPage);
-    setTransitioning(false);
   };
 
   const handleToggleMenu = (e: React.MouseEvent, workId: string) => {
@@ -384,18 +416,9 @@ export function Plaza() {
               ))}
             </div>
             <div className="plaza-load-more">
-              {followingHasMore ? (
-                <button
-                  type="button"
-                  className="plaza-load-more-btn"
-                  onClick={() => { if (!followingLoadingMore) fetchFollowingPage(followingPage + 1); }}
-                  disabled={followingLoadingMore}
-                >
-                  {followingLoadingMore ? <DotLoading color="primary" /> : p.loadMore}
-                </button>
-              ) : (
-                <span className="plaza-no-more">{p.noMore}</span>
-              )}
+              {followingLoadingMore && <DotLoading color="primary" />}
+              {!followingHasMore && followingList.length > 0 && <span className="plaza-no-more">{p.noMore}</span>}
+              <div ref={followingSentinelRef} />
             </div>
           </div>
         )
@@ -543,25 +566,11 @@ export function Plaza() {
               </button>
             </div>
           )}
-          {sort !== 'foryou' && totalPages > 1 && (
-            <div className="plaza-pagination">
-              <button
-                type="button"
-                className="plaza-page-btn"
-                onClick={handlePrevPage}
-                disabled={page <= 1 || transitioning}
-              >
-                ← {p.prevPage}
-              </button>
-              <span className="plaza-page-info">{page} / {totalPages}</span>
-              <button
-                type="button"
-                className="plaza-page-btn"
-                onClick={handleNextPage}
-                disabled={page >= totalPages || transitioning}
-              >
-                {p.nextPage} →
-              </button>
+          {sort !== 'foryou' && (
+            <div className="plaza-load-more">
+              {loadingMore && <DotLoading color="primary" />}
+              {!hasMore && list.length > 0 && <span className="plaza-no-more">{p.noMore}</span>}
+              <div ref={sentinelRef} />
             </div>
           )}
         </div>
