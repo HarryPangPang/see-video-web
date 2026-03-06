@@ -126,6 +126,7 @@ export interface AuthUserProfile {
   bio?: string | null;
   location?: string | null;
   website?: string | null;
+  background?: string | null;
   isGoogleUser?: boolean;
 }
 
@@ -134,6 +135,7 @@ export interface UpdateProfileParams {
   bio?: string;
   location?: string;
   website?: string;
+  background?: string;
 }
 
 export async function updateUserProfile(params: UpdateProfileParams): Promise<ApiResponse<AuthUserProfile>> {
@@ -143,6 +145,7 @@ export async function updateUserProfile(params: UpdateProfileParams): Promise<Ap
   if (params.bio !== undefined) body.bio = params.bio;
   if (params.location !== undefined) body.location = params.location;
   if (params.website !== undefined) body.website = params.website;
+  if (params.background !== undefined) body.background = params.background;
   const response = await fetch(`${API_BASE_URL}/user/profile`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -179,6 +182,35 @@ export async function removeAvatar(): Promise<ApiResponse<AuthUserProfile>> {
   });
   const result: ApiResponse<AuthUserProfile> = await response.json();
   if (!response.ok || !result.success) throw new Error(result.message || '恢复默认头像失败');
+  return result;
+}
+
+// Upload background image
+export async function uploadBackground(file: File): Promise<ApiResponse<AuthUserProfile>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const form = new FormData();
+  form.append('background', file);
+  const response = await fetch(`${API_BASE_URL}/user/background`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  const result: ApiResponse<AuthUserProfile> = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Upload background failed');
+  return result;
+}
+
+// Remove custom background
+export async function removeBackground(): Promise<ApiResponse<AuthUserProfile>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (!token) throw new Error('Unauthorized');
+  const response = await fetch(`${API_BASE_URL}/user/background`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result: ApiResponse<AuthUserProfile> = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || 'Remove background failed');
   return result;
 }
 
@@ -623,6 +655,7 @@ export interface UserProfile {
   bio?: string | null;
   location?: string | null;
   website?: string | null;
+  background?: string | null;
   followers: number;
   following: number;
   likes_received: number;

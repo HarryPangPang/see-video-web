@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
-import { updateUserProfile as apiUpdateUserProfile, changePassword as apiChangePassword, uploadAvatar as apiUploadAvatar, removeAvatar as apiRemoveAvatar } from '../services/api';
+import { updateUserProfile as apiUpdateUserProfile, changePassword as apiChangePassword, uploadAvatar as apiUploadAvatar, removeAvatar as apiRemoveAvatar, uploadBackground as apiUploadBackground, removeBackground as apiRemoveBackground } from '../services/api';
 
 interface User {
   id: number;
@@ -10,6 +10,7 @@ interface User {
   bio?: string | null;
   location?: string | null;
   website?: string | null;
+  background?: string | null;
   isGoogleUser?: boolean;
 }
 
@@ -27,6 +28,9 @@ interface AuthContextType {
   uploadAvatar: (file: File) => Promise<void>;
   removeAvatar: () => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  uploadBackground: (file: File) => Promise<void>;
+  removeBackground: () => Promise<void>;
+  setBackground: (value: string | null) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -198,6 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         bio: res.data.bio ?? undefined,
         location: res.data.location ?? undefined,
         website: res.data.website ?? undefined,
+        background: res.data.background ?? undefined,
         isGoogleUser: res.data.isGoogleUser,
       };
       setUser(next);
@@ -217,6 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         bio: res.data.bio ?? undefined,
         location: res.data.location ?? undefined,
         website: res.data.website ?? undefined,
+        background: res.data.background ?? undefined,
         isGoogleUser: res.data.isGoogleUser,
       };
       setUser(next);
@@ -236,6 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         bio: res.data.bio ?? undefined,
         location: res.data.location ?? undefined,
         website: res.data.website ?? undefined,
+        background: res.data.background ?? undefined,
         isGoogleUser: res.data.isGoogleUser,
       };
       setUser(next);
@@ -245,6 +252,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const changePassword = async (currentPassword: string, newPassword: string) => {
     await apiChangePassword(currentPassword, newPassword);
+  };
+
+  const uploadBackground = async (file: File) => {
+    const res = await apiUploadBackground(file);
+    if (res.success && res.data) {
+      const next = {
+        id: res.data.id,
+        email: res.data.email,
+        username: res.data.username,
+        avatar: res.data.avatar ?? undefined,
+        bio: res.data.bio ?? undefined,
+        location: res.data.location ?? undefined,
+        website: res.data.website ?? undefined,
+        background: res.data.background ?? undefined,
+        isGoogleUser: res.data.isGoogleUser,
+      };
+      setUser(next);
+      localStorage.setItem('auth_user', JSON.stringify(next));
+    }
+  };
+
+  const removeBackground = async () => {
+    const res = await apiRemoveBackground();
+    if (res.success && res.data) {
+      const next = {
+        id: res.data.id,
+        email: res.data.email,
+        username: res.data.username,
+        avatar: res.data.avatar ?? undefined,
+        bio: res.data.bio ?? undefined,
+        location: res.data.location ?? undefined,
+        website: res.data.website ?? undefined,
+        background: null,
+        isGoogleUser: res.data.isGoogleUser,
+      };
+      setUser(next);
+      localStorage.setItem('auth_user', JSON.stringify(next));
+    }
+  };
+
+  const setBackground = async (value: string | null) => {
+    if (user) {
+      await apiUpdateUserProfile({ username: user.username || '', background: value || '' });
+      const next = { ...user, background: value };
+      setUser(next);
+      localStorage.setItem('auth_user', JSON.stringify(next));
+    }
   };
 
   return (
@@ -263,6 +317,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         uploadAvatar,
         removeAvatar,
         changePassword,
+        uploadBackground,
+        removeBackground,
+        setBackground,
       }}
     >
       {children}
