@@ -51,6 +51,7 @@ export function Canvas() {
   const [rechargeDialogVisible, setRechargeDialogVisible] = useState(false);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [currentCredits, setCurrentCredits] = useState(0);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // 登录后刷新积分
   useEffect(() => {
@@ -324,6 +325,12 @@ export function Canvas() {
 
   return (
     <div className="canvas-page">
+      {previewUrl && (
+        <div className="canvas-preview-overlay" onClick={() => setPreviewUrl(null)}>
+          <img src={previewUrl} alt="" className="canvas-preview-img" onClick={e => e.stopPropagation()} />
+          <button type="button" className="canvas-preview-close" onClick={() => setPreviewUrl(null)}>×</button>
+        </div>
+      )}
       <LoginDialog
         visible={loginDialogVisible}
         onClose={() => setLoginDialogVisible(false)}
@@ -362,7 +369,7 @@ export function Canvas() {
               {/* Omni 模式缩略图 */}
               {isOmniMode && omniFrames.map((frame, index) => (
                 <div key={index} className="canvas-attachment-thumb">
-                  <img src={frame.url} alt="" className="canvas-attachment-img" />
+                  <img src={frame.url} alt="" className="canvas-attachment-img" onClick={() => setPreviewUrl(frame.url!)} />
                   <button
                     type="button"
                     className="canvas-attachment-remove"
@@ -373,14 +380,14 @@ export function Canvas() {
               {/* StartEnd 模式缩略图 */}
               {!isOmniMode && startFrame.length > 0 && (
                 <div className="canvas-attachment-thumb">
-                  <img src={startFrame[0].url} alt="" className="canvas-attachment-img" />
+                  <img src={startFrame[0].url} alt="" className="canvas-attachment-img" onClick={() => setPreviewUrl(startFrame[0].url!)} />
                   <span className="canvas-attachment-badge">{g.startFrame}</span>
                   <button type="button" className="canvas-attachment-remove" onClick={() => setStartFrame([])}>×</button>
                 </div>
               )}
               {!isOmniMode && isStartEndMode && endFrame.length > 0 && (
                 <div className="canvas-attachment-thumb">
-                  <img src={endFrame[0].url} alt="" className="canvas-attachment-img" />
+                  <img src={endFrame[0].url} alt="" className="canvas-attachment-img" onClick={() => setPreviewUrl(endFrame[0].url!)} />
                   <span className="canvas-attachment-badge">{g.endFrame}</span>
                   <button type="button" className="canvas-attachment-remove" onClick={() => setEndFrame([])}>×</button>
                 </div>
