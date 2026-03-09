@@ -22,6 +22,7 @@ import { UploadVideo } from './pages/upload/UploadVideo';
 import { My } from './pages/my/My';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { Referral } from './pages/referral/Referral';
+import { CreditPacks } from './pages/credit-packs/CreditPacks';
 import 'antd-mobile/es/global';
 import './index.scss';
 
@@ -98,6 +99,7 @@ export default function App() {
         <Route path="/profile" element={<MainLayout><ProfilePage /></MainLayout>} />
         <Route path="/profile/:userId" element={<MainLayout><ProfilePage /></MainLayout>} />
         <Route path="/referral" element={<MainLayout><Referral /></MainLayout>} />
+        <Route path="/credit-packs" element={<MainLayout><CreditPacks /></MainLayout>} />
         <Route path="/payment/success" element={<PaymentSuccess />} />
         <Route path="/payment/cancel" element={<PaymentCancel />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />

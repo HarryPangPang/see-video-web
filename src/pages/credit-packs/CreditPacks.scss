@@ -1,0 +1,386 @@
+.credit-packs-page {
+  min-height: 100%;
+  background: #ffffff;
+  padding: 24px 28px 48px;
+  margin: 0 auto;
+}
+
+// ── Header ──────────────────────────────────────────────────────────────────
+.cp-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.cp-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 100px;
+  background: #ede9fe;
+  color: #7c3aed;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex-shrink: 0;
+
+  &:hover {
+    background: #ddd6fe;
+    transform: translateX(-2px);
+  }
+}
+
+.cp-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cp-header-icon {
+  font-size: 24px;
+}
+
+.cp-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+// ── Balance card ─────────────────────────────────────────────────────────────
+.cp-balance-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: #f5f0ff;
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  border-radius: 14px;
+  margin-bottom: 24px;
+}
+
+.cp-balance-label {
+  font-size: 13px;
+  color: #9167e0;
+}
+
+.cp-balance-value {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.cp-balance-gem {
+  font-size: 16px;
+}
+
+.cp-balance-num {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1;
+}
+
+.cp-balance-unit {
+  font-size: 13px;
+  color: #9167e0;
+}
+
+// ── Plans grid ───────────────────────────────────────────────────────────────
+// 与 Plaza 同一套断点逻辑，从 4 列起步（笔记本 ≤1280px）
+// ≥1601px → 5 列 | ≤1280px → 4 列 | ≤900px → 3 列 | ≤600px → 2 列
+.cp-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+
+  @media (min-width: 1601px) {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.cp-plan-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 12px 14px;
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 20px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:hover {
+    border-color: #7c3aed;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.18);
+
+    .cp-plan-cta {
+      background: #6d28d9;
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+    }
+  }
+
+  &--popular {
+    border-color: rgba(124, 58, 237, 0.45);
+    background: #faf8ff;
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.12);
+  }
+}
+
+.cp-plan-badge {
+  position: absolute;
+  top: -11px;
+  right: 10px;
+  padding: 2px 10px;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 100px;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+  letter-spacing: 0.3px;
+}
+
+// Credits (top, largest element)
+.cp-plan-credits {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.cp-plan-credits-num {
+  font-size: 32px;
+  font-weight: 700;
+  color: #7c3aed;
+  line-height: 1.1;
+}
+
+.cp-plan-credits-label {
+  font-size: 11px;
+  color: #9167e0;
+  margin-top: 1px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+// Divider between credits and price
+.cp-plan-divider {
+  width: 32px;
+  height: 1px;
+  background: #e5e7eb;
+  margin: 8px 0;
+}
+
+// Price (middle, prominent)
+.cp-plan-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+// Label (small, muted)
+.cp-plan-label {
+  font-size: 11px;
+  color: #9167e0;
+  margin-bottom: 14px;
+}
+
+// CTA button at bottom
+.cp-plan-cta {
+  width: 100%;
+  padding: 8px 0;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 100px;
+  transition: background 0.2s, box-shadow 0.2s;
+  margin-top: auto;
+}
+
+// ── Info section ─────────────────────────────────────────────────────────────
+.cp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 18px;
+  background: #f8f7ff;
+  border-radius: 14px;
+}
+
+.cp-info-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  color: #9167e0;
+  line-height: 1.5;
+}
+
+.cp-info-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.cp-discord-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: #7c3aed;
+  text-decoration: none;
+  margin-top: 2px;
+
+  &:hover {
+    color: #6d28d9;
+    text-decoration: underline;
+  }
+}
+
+// ── Confirm overlay ───────────────────────────────────────────────────────────
+.cp-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  animation: cp-overlay-in 0.18s ease;
+}
+
+@keyframes cp-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.cp-confirm-dialog {
+  position: relative;
+  width: min(440px, calc(100vw - 32px));
+  background: #fff;
+  border-radius: 28px;
+  padding: 36px 32px 28px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+  text-align: center;
+  animation: cp-dialog-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes cp-dialog-in {
+  from { opacity: 0; transform: scale(0.92) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.cp-confirm-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.cp-confirm-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 20px;
+}
+
+.cp-confirm-plan-summary {
+  background: #f5f0ff;
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  border-radius: 16px;
+  padding: 18px 24px;
+  margin-bottom: 24px;
+}
+
+.cp-confirm-plan-credits {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.cp-confirm-plan-num {
+  font-size: 44px;
+  font-weight: 700;
+  color: #7c3aed;
+  line-height: 1;
+}
+
+.cp-confirm-plan-unit {
+  font-size: 16px;
+  color: #9167e0;
+}
+
+.cp-confirm-plan-price {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.cp-confirm-plan-label {
+  font-size: 13px;
+  color: #9167e0;
+}
+
+.cp-confirm-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.cp-confirm-btn {
+  flex: 1;
+  height: 50px;
+  border: none;
+  border-radius: 100px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &--cancel {
+    background: #ede9fe;
+    color: #111827;
+
+    &:hover:not(:disabled) {
+      background: #ddd6fe;
+      transform: translateY(-1px);
+    }
+  }
+
+  &--pay {
+    background: #7c3aed;
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background: #6d28d9;
+      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4);
+      transform: translateY(-1px);
+    }
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
