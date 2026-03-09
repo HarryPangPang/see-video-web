@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Toast } from 'antd-mobile';
-import { createPayment, getCreditsBalance } from '../../services/api';
+import { createPayment, getCreditsBalance, getPlanPurchaseStatus } from '../../services/api';
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { LoginDialog } from '../../components/LoginDialog';
@@ -12,9 +12,11 @@ const DISCORD_INVITE_URL = 'https://discord.com/invite/94YKekdH';
 interface RechargePlan {
   id: string;
   amount: number;
-  credits: number;
+  baseCredits: number;
+  firstBonus: number;
   label: string;
   popular?: boolean;
+  valuePct: number; // extra value percentage vs $1 baseline (0 = no badge)
 }
 
 function getPayButtonText(
@@ -35,10 +37,12 @@ export const CreditPacks: React.FC = () => {
   const c = t.common;
 
   const rechargePlans: RechargePlan[] = [
-    { id: 'plan_1', amount: 1, credits: 1, label: r.planPayPerUse, popular: true },
-    { id: 'plan_10', amount: 10, credits: 10, label: r.planStandard },
-    { id: 'plan_30', amount: 30, credits: 30, label: r.planStandard },
-    { id: 'plan_50', amount: 50, credits: 50, label: r.planProfessional },
+    { id: 'plan_1',   amount: 1,   baseCredits: 1,   firstBonus: 0,  label: r.planPayPerUse,    valuePct: 0   },
+    // { id: 'plan_5', amount: 5, baseCredits: 6, firstBonus: 2, label: r.planStarter, valuePct: 20 },  // 待配置 STRIPE_PRICE_ID_5
+    { id: 'plan_10',  amount: 10,  baseCredits: 13,  firstBonus: 4,  label: r.planStandard,     valuePct: 30, popular: true },
+    { id: 'plan_30',  amount: 30,  baseCredits: 45,  firstBonus: 10, label: r.planPlus,         valuePct: 50  },
+    { id: 'plan_50',  amount: 50,  baseCredits: 80,  firstBonus: 20, label: r.planProfessional, valuePct: 60  },
+    // { id: 'plan_100', amount: 100, baseCredits: 200, firstBonus: 50, label: r.planUltimate, valuePct: 100 },  // 待配置 STRIPE_PRICE_ID_100
   ];
 
   const [credits, setCredits] = useState<number>(0);
@@ -46,6 +50,7 @@ export const CreditPacks: React.FC = () => {
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
+  const [purchasedPlans, setPurchasedPlans] = useState<string[]>([]);
 
   useEffect(() => {
     getCreditsBalance()
@@ -54,6 +59,21 @@ export const CreditPacks: React.FC = () => {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    getPlanPurchaseStatus()
+      .then((res) => {
+        if (res.data?.purchasedPlans) setPurchasedPlans(res.data.purchasedPlans);
+      })
+      .catch(() => {});
+  }, [user]);
+
+  const isFirstPurchase = (plan: RechargePlan) =>
+    plan.firstBonus > 0 && !purchasedPlans.includes(plan.id);
+
+  const totalCredits = (plan: RechargePlan) =>
+    isFirstPurchase(plan) ? plan.baseCredits + plan.firstBonus : plan.baseCredits;
 
   const handlePlanClick = (plan: RechargePlan) => {
     if (!user) {
@@ -68,7 +88,7 @@ export const CreditPacks: React.FC = () => {
     if (!selectedPlan) return;
     setLoading(true);
     try {
-      const result = await createPayment(selectedPlan.amount, selectedPlan.credits);
+      const result = await createPayment(selectedPlan.amount);
       if (result.data?.checkoutUrl) {
         window.open(result.data.checkoutUrl, '_blank');
         Toast.show({ content: $l('seedance.toast.paymentOpened'), icon: 'success', duration: 3000 });
@@ -108,24 +128,43 @@ export const CreditPacks: React.FC = () => {
 
       {/* Plans grid */}
       <div className="cp-plans-grid">
-        {rechargePlans.map((plan) => (
-          <button
-            key={plan.id}
-            type="button"
-            className={`cp-plan-card ${plan.popular ? 'cp-plan-card--popular' : ''}`}
-            onClick={() => handlePlanClick(plan)}
-          >
-            {plan.popular && <span className="cp-plan-badge">{r.recommended}</span>}
-            <div className="cp-plan-credits">
-              <span className="cp-plan-credits-num">{plan.credits}</span>
-              <span className="cp-plan-credits-label">{c.credits}</span>
-            </div>
-            <div className="cp-plan-divider" />
-            <div className="cp-plan-price">${plan.amount}</div>
-            <div className="cp-plan-label">{plan.label}</div>
-            <div className="cp-plan-cta">Buy now</div>
-          </button>
-        ))}
+        {rechargePlans.map((plan) => {
+          const firstTime = isFirstPurchase(plan);
+          return (
+            <button
+              key={plan.id}
+              type="button"
+              className={`cp-plan-card ${plan.popular ? 'cp-plan-card--popular' : ''}`}
+              onClick={() => handlePlanClick(plan)}
+            >
+              {/* Top badge: Recommended OR extra-value */}
+              {plan.popular && <span className="cp-plan-badge">{r.recommended}</span>}
+              {!plan.popular && plan.valuePct > 0 && (
+                <span className="cp-plan-badge cp-plan-badge--value">
+                  {r.extraValue.replace('{pct}', String(plan.valuePct))}
+                </span>
+              )}
+
+              <div className="cp-plan-credits">
+                <span className="cp-plan-credits-num">{plan.baseCredits}</span>
+                <span className="cp-plan-credits-label">{c.credits}</span>
+              </div>
+
+              <div className="cp-plan-divider" />
+              <div className="cp-plan-price">${plan.amount}</div>
+              <div className="cp-plan-label">{plan.label}</div>
+
+              {/* First-purchase bonus tag */}
+              {firstTime && plan.firstBonus > 0 && (
+                <div className="cp-plan-bonus-tag">
+                  🎁 {r.firstBonusCredits.replace('{n}', String(plan.firstBonus))}
+                </div>
+              )}
+
+              <div className="cp-plan-cta">Buy now</div>
+            </button>
+          );
+        })}
       </div>
 
       {/* Info section */}
@@ -136,7 +175,7 @@ export const CreditPacks: React.FC = () => {
         </p>
         <p className="cp-info-tip">{r.tipShort}</p>
         <a href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer" className="cp-discord-link">
-          {r.needHelp ?? 'Need help? Join our Discord'}
+          {r.needHelp}
         </a>
       </div>
 
@@ -150,13 +189,21 @@ export const CreditPacks: React.FC = () => {
         <div className="cp-confirm-overlay" onClick={() => !loading && setConfirmVisible(false)}>
           <div className="cp-confirm-dialog" onClick={(e) => e.stopPropagation()}>
             <div className="cp-confirm-icon">💎</div>
-            <h2 className="cp-confirm-title">Confirm Purchase</h2>
+            <h2 className="cp-confirm-title">{r.confirmTitle}</h2>
 
             <div className="cp-confirm-plan-summary">
               <div className="cp-confirm-plan-credits">
-                <span className="cp-confirm-plan-num">{selectedPlan.credits}</span>
+                <span className="cp-confirm-plan-num">{totalCredits(selectedPlan)}</span>
                 <span className="cp-confirm-plan-unit">{c.credits}</span>
               </div>
+              {isFirstPurchase(selectedPlan) && selectedPlan.firstBonus > 0 && (
+                <div className="cp-confirm-bonus-row">
+                  🎁 {r.confirmTotalCredits
+                    .replace('{base}', String(selectedPlan.baseCredits))
+                    .replace('{bonus}', String(selectedPlan.firstBonus))
+                    .replace('{total}', String(totalCredits(selectedPlan)))}
+                </div>
+              )}
               <div className="cp-confirm-plan-price">${selectedPlan.amount}</div>
               <div className="cp-confirm-plan-label">{selectedPlan.label}</div>
             </div>

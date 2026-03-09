@@ -154,6 +154,23 @@
   border-radius: 100px;
   box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
   letter-spacing: 0.3px;
+
+  &--value {
+    background: #0891b2;
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.35);
+  }
+}
+
+.cp-plan-bonus-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: #db2777;
+  background: #fdf2f8;
+  border: 1px solid rgba(219, 39, 119, 0.2);
+  border-radius: 100px;
+  padding: 2px 8px;
+  margin-bottom: 8px;
+  white-space: nowrap;
 }
 
 // Credits (top, largest element)
@@ -325,6 +342,13 @@
 .cp-confirm-plan-unit {
   font-size: 16px;
   color: #9167e0;
+}
+
+.cp-confirm-bonus-row {
+  font-size: 12px;
+  font-weight: 600;
+  color: #db2777;
+  margin-bottom: 10px;
 }
 
 .cp-confirm-plan-price {

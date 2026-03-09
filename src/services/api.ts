@@ -228,28 +228,37 @@ export async function changePassword(currentPassword: string, newPassword: strin
   return result;
 }
 
-// 创建支付订单
-export async function createPayment(amount: number, credits: number): Promise<ApiResponse<{ orderId: string; checkoutUrl: string }>> {
+// 创建支付订单（仅传 amount，服务端根据套餐配置计算积分）
+export async function createPayment(amount: number): Promise<ApiResponse<{ orderId: string; checkoutUrl: string }>> {
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const response = await fetch(`${API_BASE_URL}/payment/create`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ amount, credits }),
+    body: JSON.stringify({ amount }),
   });
 
-  if (!response.ok) {
-    throw new Error(`请求失败: ${response.status}`);
-  }
+  if (!response.ok) throw new Error(`请求失败: ${response.status}`);
 
   const result: ApiResponse = await response.json();
-  if (!result.success) {
-    throw new Error(result.message || 'Failed to create payment order');
-  }
+  if (!result.success) throw new Error(result.message || 'Failed to create payment order');
+
+  return result;
+}
+
+// 获取用户已首购过的套餐列表
+export async function getPlanPurchaseStatus(): Promise<ApiResponse<{ purchasedPlans: string[] }>> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE_URL}/payment/plan-status`, { headers });
+  if (!response.ok) throw new Error(`请求失败: ${response.status}`);
+
+  const result: ApiResponse = await response.json();
+  if (!result.success) throw new Error(result.message || 'Failed to get plan status');
 
   return result;
 }
